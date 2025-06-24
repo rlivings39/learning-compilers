@@ -1,0 +1,24 @@
+{
+  "name": "learning-compilers",
+  "version": "1.0.0",
+  "description": "Compiler implementation from Writing a C Compiler",
+  "main": "src/main.ts",
+  "scripts": {
+    "test": "sfdsa",
+    "ts-watch": "tsc --watch",
+    "ts-build": "tsc -b"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rlivings39/learning-compilers.git"
+  },
+  "author": "Ryan Livingston",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rlivings39/learning-compilers/issues"
+  },
+  "homepage": "https://github.com/rlivings39/learning-compilers#readme",
+  "dependencies": {
+    "typescript": "^5.8.3"
+  }
+}
