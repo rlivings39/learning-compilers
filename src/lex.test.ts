@@ -10,6 +10,8 @@ const stripComments = (s: string) => {
 test("Comment handling", () => {
   expect(stripComments("// Comment\nfoo()")).toEqual("          \nfoo()");
   expect(stripComments("//f\nfoo()")).toEqual("   \nfoo()");
+  expect(stripComments("///*")).toEqual("    ");
+  expect(stripComments("/*//\n*/()")).toEqual("    \n  ()");
   expect(stripComments("foo()")).toEqual("foo()");
   expect(stripComments("")).toEqual("");
   expect(stripComments("  \n")).toEqual("  \n");

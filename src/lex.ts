@@ -84,7 +84,8 @@ function stripComments(code: string[]) {
       } else if (code[index + 1] === "*") {
         /* Block comment: Look for closing tag and replace with spaces
          */
-        let i = index;
+        code.splice(index, 2, " ", " ");
+        let i = index + 2;
         while (
           i < code.length - 1 &&
           !(code[i] === "*" && code[i + 1] === "/")
@@ -97,8 +98,7 @@ function stripComments(code: string[]) {
         if (i === code.length - 1) {
           throw new Error("Unterminated block comment");
         } else {
-          code[i] = " ";
-          code[i + 1] = " ";
+          code.splice(i, 2, " ", " ");
         }
         index = i + 1;
       } else {
