@@ -1,12 +1,16 @@
 import { test, expect } from "vitest";
-import { driverMain } from "./driverMain.js";
+import { parseAndCheckArguments } from "./driverMain.js";
+import path from "path";
 
 test("Test driver cli", () => {
-  expect(() => driverMain([])).toThrow();
-  expect(() => driverMain(["/path/to/file.c"])).to.not.throw();
-  expect(() => driverMain(["file.c", "--lex", "--codegen"])).toThrow();
-  expect(() => driverMain(["file.c", "--lex"])).to.not.throw();
-  expect(() => driverMain(["file.c", "--parse"])).to.not.throw();
-  expect(() => driverMain(["file.c", "--codegen"])).to.not.throw();
-  expect(() => driverMain(["file.c", "--asdfsdaf"])).toThrow();
+  expect(() => parseAndCheckArguments([])).toThrow();
+  expect(() => parseAndCheckArguments(["foo.c"])).to.not.throw();
+  expect(() =>
+    parseAndCheckArguments(["file.c", "--lex", "--codegen"])
+  ).toThrow();
+  expect(() => parseAndCheckArguments(["file.c", "--lex"])).to.not.throw();
+  expect(() => parseAndCheckArguments(["file.c", "--parse"])).to.not.throw();
+  expect(() => parseAndCheckArguments(["file.c", "--codegen"])).to.not.throw();
+  expect(() => parseAndCheckArguments(["file.c", "--asdfsdaf"])).toThrow();
+  expect(() => parseAndCheckArguments(["-h"])).to.not.throw();
 });

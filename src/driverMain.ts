@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { lex } from "./lex";
 
 const USAGE = `
-Usage: the-cc [flags] input-file.c
+Usage: notcc [flags] input-file.c
 
 Options:
 
@@ -12,7 +12,19 @@ Options:
 --codegen - Run the lexer, parser, codegen but stop before assembly generation
 `;
 
-function checkArguments<S extends object, T>(values: S, positionals: T[]) {
+export function parseAndCheckArguments(argv: string[]) {
+  const { values, positionals } = parseArguments(argv);
+  checkArguments(values, positionals);
+  return { values, positionals };
+}
+
+function checkArguments<S extends { help?: boolean }, T>(
+  values: S,
+  positionals: T[]
+) {
+  if (values?.help) {
+    return;
+  }
   if (positionals.length !== 1) {
     throw Error("No input file specified\n" + USAGE);
   }
@@ -59,8 +71,7 @@ function readCode(fileName: string): string {
 }
 
 export function driverMain(argv: string[]) {
-  const { values, positionals } = parseArguments(argv);
-  checkArguments(values, positionals);
+  const { values, positionals } = parseAndCheckArguments(argv);
   if (values.help) {
     console.log(USAGE);
     return;
