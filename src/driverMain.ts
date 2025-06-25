@@ -7,12 +7,6 @@ import {
 import * as fs from "fs";
 import { lex, TokenKind } from "./lex";
 
-export function parseAndCheckArguments(argv: string[]) {
-  const { values, positionals } = parseArguments(argv);
-  //checkArguments(values, positionals);
-  return { values, positionals };
-}
-
 interface NotccFlag extends ParseArgsOptionDescriptor {
   help: string;
 }
@@ -72,7 +66,7 @@ const NOTCC_CLI_FLAGS: NotccFlags = {
   },
 };
 
-function parseArguments(argv: string[]) {
+export function parseArguments(argv: string[]) {
   try {
     const { values, positionals } = parseArgs({
       args: argv,
@@ -109,7 +103,7 @@ function readCode(fileName: string): string {
 }
 
 export function driverMain(argv: string[]) {
-  const { values, positionals } = parseAndCheckArguments(argv);
+  const { values, positionals } = parseArguments(argv);
   if (values.help) {
     console.log(renderUsage(NOTCC_CLI_FLAGS));
     return;
