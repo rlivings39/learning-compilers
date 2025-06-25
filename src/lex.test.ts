@@ -11,6 +11,7 @@ test("Lex token tests", () => {
     },
   ]);
 
+  // TODO comments fail lexer
   // TODO verify locations later
   expect(() => lex("12ab")).toThrow();
 });

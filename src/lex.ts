@@ -84,7 +84,10 @@ export function lex(code: string): Token[] {
     }
     // TODO error location
     if (match === null) {
-      throw new LexError({ line: 0, column: 0 }, "Unable to lex code");
+      throw new LexError(
+        { line: 0, column: 0 },
+        `Unable to lex code: ${code.substring(0, 10)}`
+      );
     }
 
     code = code.slice(match[0].length).trimStart();
