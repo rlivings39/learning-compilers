@@ -1,4 +1,6 @@
 import { parseArgs } from "util";
+import * as fs from "fs";
+import { lex } from "./lex";
 
 const USAGE = `
 Usage: the-cc [flags] input-file.c
@@ -48,6 +50,14 @@ function parseArguments(argv: string[]) {
   }
 }
 
+function readCode(fileName: string): string {
+  const code = fs.readFileSync(fileName, {
+    encoding: "utf-8",
+  });
+
+  return code;
+}
+
 export function driverMain(argv: string[]) {
   const { values, positionals } = parseArguments(argv);
   checkArguments(values, positionals);
@@ -55,4 +65,8 @@ export function driverMain(argv: string[]) {
     console.log(USAGE);
     return;
   }
+
+  const fileName = positionals[0];
+  const code = readCode(fileName);
+  const tokens = lex(code);
 }

@@ -70,8 +70,8 @@ export class LexError extends Error {
  */
 export function lex(code: string): Token[] {
   let tokens: Token[] = [];
+  code = code.trimStart();
   while (code.length > 0) {
-    code.trimStart();
     let match: RegExpMatchArray | null = null;
     let matchKind: TokenKind | null = null;
     for (let [kind, pattern] of PATTERN_MAP.entries()) {
@@ -87,7 +87,7 @@ export function lex(code: string): Token[] {
       throw new LexError({ line: 0, column: 0 }, "Unable to lex code");
     }
 
-    code = code.slice(match[0].length);
+    code = code.slice(match[0].length).trimStart();
     switch (matchKind) {
       case TokenKind.LEFT_PAREN: {
         tokens.push({ kind: matchKind });
