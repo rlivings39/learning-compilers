@@ -1,63 +1,101 @@
-import { parseArgs } from "util";
+import {
+  inspect,
+  parseArgs,
+  ParseArgsOptionDescriptor,
+  ParseArgsOptionsConfig,
+} from "util";
 import * as fs from "fs";
-import { lex } from "./lex";
+import { lex, TokenKind } from "./lex";
 
-const USAGE = `
+export function parseAndCheckArguments(argv: string[]) {
+  const { values, positionals } = parseArguments(argv);
+  //checkArguments(values, positionals);
+  return { values, positionals };
+}
+
+interface NotccFlag extends ParseArgsOptionDescriptor {
+  help: string;
+}
+interface NotccFlags extends ParseArgsOptionsConfig {
+  [longOption: string]: NotccFlag;
+}
+
+function renderUsage(flags: NotccFlags) {
+  let usage = `
 Usage: notcc [flags] input-file.c
 
 Options:
 
---lex - Run the lexer but stop before parsing
---parse - Run the lexer and parser but stop before codegen
---codegen - Run the lexer, parser, codegen but stop before assembly generation
 `;
+  let flagList = [];
+  let maxLen = 0;
+  for (let [flag, opts] of Object.entries(flags)) {
+    if (opts.short) {
+      flag += ` (-${opts.short})`;
+    }
+    flagList.push([flag, opts.help]);
+    maxLen = Math.max(maxLen, flag.length);
+  }
 
-export function parseAndCheckArguments(argv: string[]) {
-  const { values, positionals } = parseArguments(argv);
-  checkArguments(values, positionals);
-  return { values, positionals };
+  flagList.forEach((flagAndHelp) => {
+    let [flag, help] = flagAndHelp;
+    const padding = maxLen - flag.length;
+    usage += `--${flag}` + " ".repeat(padding) + ` ${help}\n`;
+  });
+  return usage;
 }
 
-function checkArguments<S extends { help?: boolean }, T>(
-  values: S,
-  positionals: T[]
-) {
-  if (values?.help) {
-    return;
-  }
-  if (positionals.length !== 1) {
-    throw Error("No input file specified\n" + USAGE);
-  }
-
-  if (Object.keys(values).length > 1) {
-    throw Error("At most 1 flag may be passed\n" + USAGE);
-  }
-}
+const NOTCC_CLI_FLAGS: NotccFlags = {
+  lex: {
+    type: "boolean",
+    default: false,
+    help: "Run the lexer but stop before parsing",
+  },
+  "print-tokens": {
+    type: "boolean",
+    help: "Print out the tokens found by the lexer",
+  },
+  parse: {
+    type: "boolean",
+    default: false,
+    help: "Run the lexer and parser but stop before codegen",
+  },
+  codegen: {
+    type: "boolean",
+    default: false,
+    help: "Run the lexer, parser, codegen but stop before assembly generation",
+  },
+  help: {
+    type: "boolean",
+    short: "h",
+    help: "Show the help",
+  },
+};
 
 function parseArguments(argv: string[]) {
   try {
     const { values, positionals } = parseArgs({
       args: argv,
       allowPositionals: true,
-      options: {
-        lex: {
-          type: "boolean",
-        },
-        parse: {
-          type: "boolean",
-        },
-        codegen: {
-          type: "boolean",
-        },
-        help: {
-          type: "boolean",
-          short: "h",
-        },
-      },
+      options: NOTCC_CLI_FLAGS,
     });
+    if (values?.help) {
+      return { values, positionals };
+    }
+    if (positionals.length !== 1) {
+      throw Error("No input file specified");
+    }
+
+    if (
+      Number(values.lex) + Number(values.codegen) + Number(values.parse) >
+      1
+    ) {
+      throw Error("At most 1 flag may be passed");
+    }
+
     return { values, positionals };
   } catch (e: any) {
-    const newError = new Error(`${e.message}\n${USAGE}`);
+    const newError = new Error(`${e.message}\n${renderUsage(NOTCC_CLI_FLAGS)}`);
     throw newError;
   }
 }
@@ -73,11 +111,24 @@ function readCode(fileName: string): string {
 export function driverMain(argv: string[]) {
   const { values, positionals } = parseAndCheckArguments(argv);
   if (values.help) {
-    console.log(USAGE);
+    console.log(renderUsage(NOTCC_CLI_FLAGS));
     return;
   }
 
   const fileName = positionals[0];
   const code = readCode(fileName);
   const tokens = lex(code);
+  if (values["print-tokens"]) {
+    console.log(
+      "Tokens\n" +
+        inspect(
+          tokens.map((t) => {
+            return { ...t, kind: TokenKind[t.kind] };
+          })
+        )
+    );
+  }
+  if (values.lex) {
+    return;
+  }
 }
