@@ -39,3 +39,15 @@ where lines starting with `.` are assembler directives. `main` is a label for th
 The `movl` instruction does a long move of the value 2 into the register `eax` to match the calling convention. `long` in x64 assembly is 32-bits and quad is 64-bits. `rax` is the 64-bit corresponding register.
 
 When the linker runs, it adds a bit of code `crt0` which calls `main`, gets the return value, and calls the system `exit` forwarding the output of `main`.
+
+### Lexing
+
+The lexer turns input code into a stream of tokens. It is based on recognizing tokens like keywords and identifiers.
+
+The book summarizes the algorithm as
+
+1. Remove leading whitespace
+2. Apply token regexes
+3. Error if no matches
+4. Choose largest matching one (TODO why?)
+5. Continue on remainder of string until empty

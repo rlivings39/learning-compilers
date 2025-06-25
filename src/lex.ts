@@ -63,12 +63,63 @@ export class LexError extends Error {
 }
 
 /**
+ * Modifies code to strip out comments
+ * replacing them with spaces while preserving
+ * newlines. This is done to preserve source locations.
+ *
+ * @param code Character array of code
+ */
+function stripComments(code: string[]) {
+  let index = 0;
+  while (index < code.length - 1) {
+    if (code[index] === "/") {
+      if (code[index + 1] === "/") {
+        // Line comment: Look for newline and replace with space
+        let i = index;
+        while (i < code.length && code[i] !== "\n") {
+          code[i] = " ";
+          ++i;
+        }
+        index = i + 1;
+      } else if (code[index + 1] === "*") {
+        /* Block comment: Look for closing tag and replace with spaces
+         */
+        let i = index;
+        while (
+          i < code.length - 1 &&
+          !(code[i] === "*" && code[i + 1] === "/")
+        ) {
+          if (code[i] !== "\n") {
+            code[i] = " ";
+          }
+          ++i;
+        }
+        if (i === code.length - 1) {
+          throw new Error("Unterminated block comment");
+        } else {
+          code[i] = " ";
+          code[i + 1] = " ";
+        }
+        index = i + 1;
+      } else {
+        ++index;
+      }
+    } else {
+      ++index;
+    }
+  }
+}
+
+/**
  * Run the lexer on input code
  *
  * @param code the input code as a string
  * @returns array of tokens or throws LexError
  */
 export function lex(code: string): Token[] {
+  let codeBuffer = Array.from(code);
+  stripComments(codeBuffer);
+  code = codeBuffer.join("");
   let tokens: Token[] = [];
   code = code.trimStart();
   while (code.length > 0) {
@@ -100,3 +151,7 @@ export function lex(code: string): Token[] {
   }
   return tokens;
 }
+
+export const forTestingOnly = {
+  stripComments,
+};
