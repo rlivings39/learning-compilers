@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { driverMain } from "./driverMain.js";
 
 try {
