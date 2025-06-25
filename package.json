@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest",
     "ts-watch": "tsc --watch",
-    "ts-build": "tsc -b && chmod a+x dist/main.js"
+    "ts-build": "tsc -b && chmod a+x dist/main.js",
+    "compiler-tests": "../writing-a-c-compiler-tests/test_compiler /usr/bin/notcc"
   },
   "repository": {
     "type": "git",
@@ -15,7 +16,7 @@
   "author": "Ryan Livingston",
   "license": "MIT",
   "bin": {
-    "notcc":"src/main.ts"
+    "notcc":"dist/main.js"
   },
   "bugs": {
     "url": "https://github.com/rlivings39/learning-compilers/issues"
