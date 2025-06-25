@@ -51,3 +51,7 @@ The book summarizes the algorithm as
 3. Error if no matches
 4. Choose largest matching one (TODO why?)
 5. Continue on remainder of string until empty
+
+## Notes on the book
+
+* Chapter 1 pp10 - Testing the lexer involves dealing with comments though the book doesn't mention them. It would have been useful for me to see a few sentences on how those are usually handled in a compiler. E.g. Does the lexer handle them, maybe they're stripped out in a pre-pass, or maybe they're left in place but ignored by the lexer?
