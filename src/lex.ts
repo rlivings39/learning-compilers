@@ -16,20 +16,41 @@ export enum TokenKind {
   INT_CONSTANT,
 }
 
-type TokenPatternMap = Map<TokenKind, RegExp>;
+type TokenFactory = (match: string, kind: TokenKind) => Token;
+interface TokenData {
+  pattern: RegExp;
+  factory: TokenFactory;
+}
+
+function makeSimpleToken(match: string, kind: TokenKind) {
+  return { kind: kind };
+}
+
+function makeIdToken(match: string, kind: TokenKind): IdentifierToken {
+  return { kind, id: match };
+}
+
+function makeIntConstToken(match: string, kind: TokenKind): IntConstToken {
+  return { kind, value: Number(match) };
+}
+
+type TokenPatternMap = Map<TokenKind, TokenData>;
 const PATTERN_MAP: TokenPatternMap = new Map([
-  [TokenKind.LEFT_PAREN, /^\(/],
-  [TokenKind.RIGHT_PAREN, /^\)/],
-  [TokenKind.LEFT_CURLY, /^\{/],
-  [TokenKind.RIGHT_CURLY, /^\}/],
-  [TokenKind.LEFT_SQUARE, /^\[/],
-  [TokenKind.RIGHT_SQUARE, /^\]/],
-  [TokenKind.KW_INT, /^int\b/],
-  [TokenKind.KW_VOID, /^void\b/],
-  [TokenKind.KW_RETURN, /^return\b/],
-  [TokenKind.SEMICOLON, /^;/],
-  [TokenKind.IDENTIFIER, /^[a-zA-z_]\w*\b/],
-  [TokenKind.INT_CONSTANT, /^[0-9]+\b/],
+  [TokenKind.LEFT_PAREN, { pattern: /^\(/, factory: makeSimpleToken }],
+  [TokenKind.RIGHT_PAREN, { pattern: /^\)/, factory: makeSimpleToken }],
+  [TokenKind.LEFT_CURLY, { pattern: /^\{/, factory: makeSimpleToken }],
+  [TokenKind.RIGHT_CURLY, { pattern: /^\}/, factory: makeSimpleToken }],
+  [TokenKind.LEFT_SQUARE, { pattern: /^\[/, factory: makeSimpleToken }],
+  [TokenKind.RIGHT_SQUARE, { pattern: /^\]/, factory: makeSimpleToken }],
+  [TokenKind.KW_INT, { pattern: /^int\b/, factory: makeSimpleToken }],
+  [TokenKind.KW_VOID, { pattern: /^void\b/, factory: makeSimpleToken }],
+  [TokenKind.KW_RETURN, { pattern: /^return\b/, factory: makeSimpleToken }],
+  [TokenKind.SEMICOLON, { pattern: /^;/, factory: makeSimpleToken }],
+  [TokenKind.IDENTIFIER, { pattern: /^[a-zA-z_]\w*\b/, factory: makeIdToken }],
+  [
+    TokenKind.INT_CONSTANT,
+    { pattern: /^[0-9]+\b/, factory: makeIntConstToken },
+  ],
 ]);
 
 // Various token interfaces
@@ -37,7 +58,7 @@ export interface Token {
   kind: TokenKind;
 }
 
-export interface IdentiferToken extends Token {
+export interface IdentifierToken extends Token {
   id: string;
 }
 
@@ -124,12 +145,11 @@ export function lex(code: string): Token[] {
   code = code.trimStart();
   while (code.length > 0) {
     let match: RegExpMatchArray | null = null;
-    let matchKind: TokenKind | null = null;
-    for (let [kind, pattern] of PATTERN_MAP.entries()) {
+    for (let [matchKind, { pattern, factory }] of PATTERN_MAP.entries()) {
       // TODO need to compare match length?
       match = code.match(pattern);
-      matchKind = kind;
       if (match) {
+        tokens.push(factory(match[0], matchKind));
         break;
       }
     }
@@ -140,14 +160,7 @@ export function lex(code: string): Token[] {
         `Unable to lex code: ${code.substring(0, 10)}`
       );
     }
-
     code = code.slice(match[0].length).trimStart();
-    switch (matchKind) {
-      case TokenKind.LEFT_PAREN: {
-        tokens.push({ kind: matchKind });
-        break;
-      }
-    }
   }
   return tokens;
 }

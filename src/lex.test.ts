@@ -37,9 +37,44 @@ test("Lex token tests", () => {
     },
   ]);
 
-  // TODO comments fail lexer
+  expect(lex("(  )\n")).toEqual([
+    {
+      kind: TokenKind.LEFT_PAREN,
+    },
+    {
+      kind: TokenKind.RIGHT_PAREN,
+    },
+  ]);
+
+  expect(lex("int x;")).toEqual([
+    { kind: TokenKind.KW_INT },
+    { kind: TokenKind.IDENTIFIER, id: "x" },
+    { kind: TokenKind.SEMICOLON },
+  ]);
+
+  expect(lex("  int    x\n\n  ;")).toEqual([
+    { kind: TokenKind.KW_INT },
+    { kind: TokenKind.IDENTIFIER, id: "x" },
+    { kind: TokenKind.SEMICOLON },
+  ]);
+
+  const mainProg = `
+  int main  (  void  \n) {
+    return \n\n2;
+  }`;
+  expect(lex(mainProg)).toEqual([
+    { kind: TokenKind.KW_INT },
+    { kind: TokenKind.IDENTIFIER, id: "main" },
+    { kind: TokenKind.LEFT_PAREN },
+    { kind: TokenKind.KW_VOID },
+    { kind: TokenKind.RIGHT_PAREN },
+    { kind: TokenKind.LEFT_CURLY },
+    { kind: TokenKind.KW_RETURN },
+    { kind: TokenKind.INT_CONSTANT, value: 2 },
+    { kind: TokenKind.SEMICOLON },
+    { kind: TokenKind.RIGHT_CURLY },
+  ]);
   expect(lex("//comment\n(")).toEqual([{ kind: TokenKind.LEFT_PAREN }]);
   expect(lex("/*comment*/\n(")).toEqual([{ kind: TokenKind.LEFT_PAREN }]);
-  // TODO verify locations later
   expect(() => lex("12ab")).toThrow();
 });
