@@ -10,6 +10,16 @@ Options:
 --codegen - Run the lexer, parser, codegen but stop before assembly generation
 `;
 
+function checkArguments<S extends object, T>(values: S, positionals: T[]) {
+  if (positionals.length !== 1) {
+    throw Error("No input file specified\n" + USAGE);
+  }
+
+  if (Object.keys(values).length > 1) {
+    throw Error("At most 1 flag may be passed\n" + USAGE);
+  }
+}
+
 function parseArguments(argv: string[]) {
   try {
     const { values, positionals } = parseArgs({
@@ -40,15 +50,9 @@ function parseArguments(argv: string[]) {
 
 export function driverMain(argv: string[]) {
   const { values, positionals } = parseArguments(argv);
+  checkArguments(values, positionals);
   if (values.help) {
     console.log(USAGE);
     return;
-  }
-  if (positionals.length !== 1) {
-    throw Error("No input file specified\n" + USAGE);
-  }
-
-  if (Object.keys(values).length > 1) {
-    throw Error("At most 1 flag may be passed\n" + USAGE);
   }
 }

@@ -3,8 +3,8 @@ import { driverMain } from "./driverMain.js";
 
 try {
   driverMain(process.argv.slice(2));
-} catch (e) {
-  console.log(e);
+} catch (e: any) {
+  console.error(e.message);
   process.exitCode = 1;
 }
 
