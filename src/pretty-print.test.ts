@@ -10,5 +10,11 @@ test("Pretty printer", () => {
   const func2 = ast.Function("main", retS);
   const prog = ast.Program(func);
   const pp = prettyPrint(prog);
-  expect(pp).toEqual("");
+  expect(pp).toEqual(
+    `Program (
+  Function main() {
+    return 12;
+  }
+)\n`
+  );
 });
