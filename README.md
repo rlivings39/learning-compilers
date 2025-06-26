@@ -64,6 +64,8 @@ The book introduces and uses the Zephyr [Abstract Data Syntax Language](https://
 
 The author recommends using algebraic types where possible to implement the AST.
 
+An AST omits details that are necessary for the programming language like "statements end with a semicolon", hence the "abstract". To convert from a token stream to an AST one needs a **formal grammar** that specifies rules showing how to build language constructs from tokens.
+
 ## Notes on the book
 
-* Chapter 1 pp10 - Testing the lexer involves dealing with comments though the book doesn't mention them. It would have been useful for me to see a few sentences on how those are usually handled in a compiler. E.g. Does the lexer handle them, maybe they're stripped out in a pre-pass, or maybe they're left in place but ignored by the lexer?
+* Chapter 1 pp. 10 - Testing the lexer involves dealing with comments though the book doesn't mention them. It would have been useful for me to see a few sentences on how those are usually handled in a compiler. E.g. Does the lexer handle them, maybe they're stripped out in a pre-pass, or maybe they're left in place but ignored by the lexer?
