@@ -22,16 +22,16 @@ interface TokenData {
   factory: TokenFactory;
 }
 
-function makeSimpleToken(match: string, kind: TokenKind) {
+function makeSimpleToken(match: string, kind: TokenKind): SimpleToken {
   return { kind: kind };
 }
 
 function makeIdToken(match: string, kind: TokenKind): IdentifierToken {
-  return { kind, id: match };
+  return { kind: TokenKind.IDENTIFIER, id: match };
 }
 
 function makeIntConstToken(match: string, kind: TokenKind): IntConstToken {
-  return { kind, value: Number(match) };
+  return { kind: TokenKind.INT_CONSTANT, value: Number(match) };
 }
 
 type TokenPatternMap = Map<TokenKind, TokenData>;
@@ -54,17 +54,24 @@ const PATTERN_MAP: TokenPatternMap = new Map([
 ]);
 
 // Various token interfaces
-export interface Token {
+interface SimpleToken {
   kind: TokenKind;
 }
 
-export interface IdentifierToken extends Token {
+interface IdentifierToken extends SimpleToken {
+  kind: TokenKind.IDENTIFIER;
   id: string;
 }
 
-export interface IntConstToken extends Token {
+interface IntConstToken extends SimpleToken {
+  kind: TokenKind.INT_CONSTANT;
   value: number;
 }
+
+/**
+ * Type for tokens returned by the lexer.
+ */
+export type Token = SimpleToken | IdentifierToken | IntConstToken;
 
 export class Location {
   line: number;
