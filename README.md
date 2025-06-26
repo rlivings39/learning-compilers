@@ -52,6 +52,18 @@ The book summarizes the algorithm as
 4. Choose largest matching one (TODO why?)
 5. Continue on remainder of string until empty
 
+### Parsing
+
+After lexing the parser analyzes the tokens and groups them into their hierarchical structure to represent the user's program. A tree structure is natural here. Parsers produce an **abstract syntax tree** (AST).
+
+Parsers can either be handwritten or produced by a parser generator like Bison, Yacc, or ANTLR. Handwritten recursive descent or Pratt parsers can give much better flexibility and error reporting.
+
+GCC and Clang both use handwritten parsers.
+
+The book introduces and uses the Zephyr [Abstract Data Syntax Language](https://www.cs.princeton.edu/~appel/papers/asdl97.pdf) (ASDL) to represent ASTs.
+
+The author recommends using algebraic types where possible to implement the AST.
+
 ## Notes on the book
 
 * Chapter 1 pp10 - Testing the lexer involves dealing with comments though the book doesn't mention them. It would have been useful for me to see a few sentences on how those are usually handled in a compiler. E.g. Does the lexer handle them, maybe they're stripped out in a pre-pass, or maybe they're left in place but ignored by the lexer?
