@@ -1,5 +1,3 @@
-import { Statement } from "typescript";
-
 export type NumericConstant = {
   kind: "numeric-const";
   value: number;
