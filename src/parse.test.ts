@@ -16,4 +16,7 @@ test("Parsing", () => {
     return 2;
   }
 )`);
+  const mainProgJunk = mainProg + "}";
+  const tokens2 = lex(mainProgJunk);
+  expect(() => parse(tokens2)).toThrow();
 });

@@ -21,6 +21,7 @@ function expect(expected: TokenKind, tokens: Token[]): Token {
 
 function parseNumericConst(tokens: Token[]): ast.NumericConstant {
   const tok = expect(TokenKind.INT_CONSTANT, tokens);
+  // TODO shouldn't need this assertion
   assert(tok.kind === TokenKind.INT_CONSTANT);
   return ast.NumericConstant(tok.value);
 }
@@ -42,8 +43,8 @@ function assert(cond: boolean): asserts cond {
   }
 }
 function parseIdentifier(tokens: Token[]): ast.Identifier {
-  // TODO share code with expect
   const tok = expect(TokenKind.IDENTIFIER, tokens);
+  // TODO shouldn't need this
   assert(tok.kind === TokenKind.IDENTIFIER);
   return tok.id;
 }
@@ -62,5 +63,8 @@ function parseFunction(tokens: Token[]): ast.Function {
 
 export function parse(tokens: Token[]): ast.Program {
   const func = parseFunction(tokens);
+  if (tokens.length !== 0) {
+    fail(`Expected end of file. Instead found ${TokenKind[tokens[0].kind]}`);
+  }
   return ast.Program(func);
 }
