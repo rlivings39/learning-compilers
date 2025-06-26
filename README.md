@@ -108,6 +108,12 @@ Parsers that look at the next few tokens to determine what to do are called **pr
 
 A pretty-printer can be useful to visualize your AST and debug. You should also generate informative error messages.
 
+## Assembly generation
+
+The next phase we cover is assembly generation. Here we produce another data structure that represents the assembly in memory so that it can be modified in subsequent passes in the future.
+
+This new data structure is another AST.
+
 ## Notes on the book
 
 * Chapter 1 pp. 10 - Testing the lexer involves dealing with comments though the book doesn't mention them. It would have been useful for me to see a few sentences on how those are usually handled in a compiler. E.g. Does the lexer handle them, maybe they're stripped out in a pre-pass, or maybe they're left in place but ignored by the lexer?
