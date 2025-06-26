@@ -66,6 +66,48 @@ The author recommends using algebraic types where possible to implement the AST.
 
 An AST omits details that are necessary for the programming language like "statements end with a semicolon", hence the "abstract". To convert from a token stream to an AST one needs a **formal grammar** that specifies rules showing how to build language constructs from tokens.
 
+For the simple language supported in chapter 1 the formal grammar is
+
+```
+<program> ::= <function>
+<function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
+<statement> ::= "return" <expr> ";"
+<expr> ::= <int>
+<identifier> ::= ? An identifier token ?
+<int> ::= ? A constant token ?
+```
+
+This is in **extended Backus-Naur form** (ENBF). Each line is a **production** defining how languages constructs are defined in terms of other constructs and tokens. Symbols that appear on the lhs of rules are **non-terminal symbols**. Individual tokens are **terminal symbols**.
+
+Non-terminals are wrapped in `<>` and terminals are wrapped in `""`. Identifiers and constants are terminals without explicit representations. They are **special sequences** shown as English phrases wrapped with `? ?`.
+
+Multiple options for a production are separated by `|` and square brackets show optional parts of a rule.
+
+### Recursive descent parsing
+
+**Recursive descent parsing** uses a different function to parse each non-terminal symbol and return the resulting AST node.
+
+The book shows an example of statement parsing
+
+```
+parse_statement(tokens):
+	expect("return", tokens)
+	return_val = parse_expr(tokens)
+	expect(";", tokens)
+	return Return(return_val)
+
+expect(expected, tokens):
+	actual = take_token(tokens)
+	if actual != expected:
+		fail("Syntax error. Expected {expected}. Found {actual}")
+```
+
+Note that this consumes tokens so that the caller of `parse_statement` then just continues on after finishing this statement. If there are any remaining tokens after parsing the program, that is a syntax error.
+
+Parsers that look at the next few tokens to determine what to do are called **predictive parsers**. The alternative is **recursive descent with backtracking** where each production rule is tried until one is found that works. Failures result in adding the tokens back to the stream.
+
+A pretty-printer can be useful to visualize your AST and debug. You should also generate informative error messages.
+
 ## Notes on the book
 
 * Chapter 1 pp. 10 - Testing the lexer involves dealing with comments though the book doesn't mention them. It would have been useful for me to see a few sentences on how those are usually handled in a compiler. E.g. Does the lexer handle them, maybe they're stripped out in a pre-pass, or maybe they're left in place but ignored by the lexer?
