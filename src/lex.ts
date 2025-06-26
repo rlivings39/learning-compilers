@@ -55,15 +55,25 @@ const PATTERN_MAP: TokenPatternMap = new Map([
 
 // Various token interfaces
 interface SimpleToken {
-  kind: TokenKind;
+  kind:
+    | TokenKind.LEFT_PAREN
+    | TokenKind.RIGHT_PAREN
+    | TokenKind.LEFT_CURLY
+    | TokenKind.RIGHT_CURLY
+    | TokenKind.LEFT_SQUARE
+    | TokenKind.RIGHT_SQUARE
+    | TokenKind.KW_INT
+    | TokenKind.KW_VOID
+    | TokenKind.KW_RETURN
+    | TokenKind.SEMICOLON;
 }
 
-interface IdentifierToken extends SimpleToken {
+interface IdentifierToken {
   kind: TokenKind.IDENTIFIER;
   id: string;
 }
 
-interface IntConstToken extends SimpleToken {
+interface IntConstToken {
   kind: TokenKind.INT_CONSTANT;
   value: number;
 }

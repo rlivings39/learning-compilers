@@ -6,6 +6,8 @@ import {
 } from "util";
 import * as fs from "fs";
 import { lex, TokenKind } from "./lex";
+import { parse } from "./parse";
+import { prettyPrint } from "./pretty-print";
 
 interface NotccFlag extends ParseArgsOptionDescriptor {
   help: string;
@@ -53,6 +55,11 @@ const NOTCC_CLI_FLAGS: NotccFlags = {
     type: "boolean",
     default: false,
     help: "Run the lexer and parser but stop before codegen",
+  },
+  "pretty-print": {
+    type: "boolean",
+    default: false,
+    help: "Pretty print the output of the parser",
   },
   codegen: {
     type: "boolean",
@@ -123,6 +130,13 @@ export function driverMain(argv: string[]) {
     );
   }
   if (values.lex) {
+    return;
+  }
+  const prog = parse(tokens);
+  if (values["pretty-print"]) {
+    console.log(prettyPrint(prog));
+  }
+  if (values.parse) {
     return;
   }
 }
