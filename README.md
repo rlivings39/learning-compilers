@@ -172,7 +172,7 @@ you might see assembly like (assuming C compilers didn't constant fold)
 ```s
   .globl main
 main:
-  ## Function prologue
+  ## // Function prologue
   pushq %rbp
   moveq %rsp, %rbp
   subq  $8, %rsp
