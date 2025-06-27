@@ -114,6 +114,16 @@ The next phase we cover is assembly generation. Here we produce another data str
 
 This new data structure is another AST.
 
+## Code emission
+
+This stage generates assembly code to a file on disk. The format will change a bit depending on the target platform. For linux always include
+
+```
+.section .note.GNU-stack,"",@progbits
+```
+
+This line disables having an **executable stack** so that data in the stack can't be executed. Avoiding an executable stack is a security measure. Executable stacks are normally not needed except under special circumstances.
+
 ## Notes on the book
 
 * Chapter 1 pp. 10 - Testing the lexer involves dealing with comments though the book doesn't mention them. It would have been useful for me to see a few sentences on how those are usually handled in a compiler. E.g. Does the lexer handle them, maybe they're stripped out in a pre-pass, or maybe they're left in place but ignored by the lexer?
