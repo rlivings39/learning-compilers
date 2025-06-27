@@ -100,7 +100,7 @@ An AST omits details that are necessary for the programming language like "state
 
 For the simple language supported in chapter 1 the formal grammar is
 
-```
+```bnf
 <program> ::= <function>
 <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
 <statement> ::= "return" <expr> ";"
@@ -121,7 +121,7 @@ Multiple options for a production are separated by `|` and square brackets show 
 
 The book shows an example of statement parsing
 
-```
+```python
 parse_statement(tokens):
   expect("return", tokens)
   return_val = parse_expr(tokens)
@@ -131,7 +131,7 @@ parse_statement(tokens):
 expect(expected, tokens):
   actual = take_token(tokens)
   if actual != expected:
-    fail("Syntax error. Expected {expected}. Found {actual}")
+    fail(f"Syntax error. Expected {expected}. Found {actual}")
 ```
 
 Note that this consumes tokens so that the caller of `parse_statement` then just continues on after finishing this statement. If there are any remaining tokens after parsing the program, that is a syntax error.
@@ -150,7 +150,7 @@ This new data structure is another AST.
 
 This stage generates assembly code to a file on disk. The format will change a bit depending on the target platform. For linux always include
 
-```
+```s
 .section .note.GNU-stack,"",@progbits
 ```
 
