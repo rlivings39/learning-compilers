@@ -1,6 +1,6 @@
 # learning-compilers
 
-This is my attempt at working through [*Writing a C Compiler*](https://norasandler.com/book/) by Nora Sandler. The compiler is written in TypeScript leveraging it's functional programming abilities.
+This is my attempt at working through [*Writing a C Compiler*](https://norasandler.com/book/) by Nora Sandler. The compiler is written in TypeScript leveraging its functional programming abilities.
 
 [NQCC2](https://github.com/nlsandler/nqcc2) is the author's reference implementation.
 
