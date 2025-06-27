@@ -18,7 +18,19 @@ export function StringConstant(value: string): StringConstant {
 
 export type Constant = NumericConstant | StringConstant;
 
-export type Expr = Constant;
+export type Complement = { kind: "complement"; expr: Expr; op: "~" };
+export function Complement(expr: Expr): Complement {
+  return { kind: "complement", expr, op: "~" };
+}
+
+export type UnaryMinus = { kind: "unary-minus"; expr: Expr; op: "-" };
+export function UnaryMinus(expr: Expr): UnaryMinus {
+  return { kind: "unary-minus", expr, op: "-" };
+}
+
+export type UnaryExpr = Complement | UnaryMinus;
+
+export type Expr = Constant | UnaryExpr;
 
 export type ReturnStmt = {
   kind: "return-stmt";

@@ -1,8 +1,8 @@
 import * as ast from "./ast";
 
-import * as p from "ts-pattern";
+import { match } from "ts-pattern";
 
-import { Token, TokenKind } from "./lex";
+import { Token, TokenKind, UnaryToken, UnaryTokenKind } from "./lex";
 
 function fail(msg: string): never {
   throw Error(msg);
@@ -26,8 +26,69 @@ function parseNumericConst(tokens: Token[]): ast.NumericConstant {
   return ast.NumericConstant(tok.value);
 }
 
+function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
+  const t = expect(token.kind, tokens);
+  const expr = parseExpr(tokens);
+  switch (token.kind) {
+    case TokenKind.UNARY_MINUS: {
+      return ast.UnaryMinus(expr);
+    }
+    case TokenKind.UNARY_BITWISE_COMPLEMENT: {
+      return ast.Complement(expr);
+    }
+    case TokenKind.DECREMENT: {
+      fail(`-- is not supported`);
+      return ast.Complement(expr);
+    }
+    // TODO add guard
+    //   default:
+    //     const _check: never = token;
+    //     return _check;
+  }
+}
+
 function parseExpr(tokens: Token[]): ast.Expr {
-  return parseNumericConst(tokens);
+  const token = tokens[0];
+  switch (token.kind) {
+    case TokenKind.LEFT_PAREN: {
+      expect(TokenKind.LEFT_PAREN, tokens);
+      const expr = parseExpr(tokens);
+      expect(TokenKind.RIGHT_PAREN, tokens);
+      return expr;
+    }
+    case TokenKind.INT_CONSTANT: {
+      return parseNumericConst(tokens);
+    }
+    case TokenKind.UNARY_MINUS:
+    case TokenKind.UNARY_BITWISE_COMPLEMENT:
+    case TokenKind.DECREMENT: {
+      return parseUnary(token, tokens);
+    }
+    default: {
+      fail(`Failed to parse ${TokenKind[token.kind]}. Expected an expression.`);
+    }
+  }
+  // return match(tokens[0])
+  //   .with(
+  //     { kind: TokenKind.UNARY_MINUS },
+  //     { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
+  //     { kind: TokenKind.DECREMENT },
+  //     (token) => {
+  //       return parseUnary(token, tokens);
+  //     }
+  //   )
+  //   .with({ kind: TokenKind.INT_CONSTANT }, () => {
+  //     return parseNumericConst(tokens);
+  //   })
+  //   .with({ kind: TokenKind.LEFT_PAREN }, () => {
+  //     expect(TokenKind.LEFT_PAREN, tokens);
+  //     const expr = parseExpr(tokens);
+  //     expect(TokenKind.RIGHT_PAREN, tokens);
+  //     return expr;
+  //   })
+  //   .otherwise((token) =>
+  //     fail(`Failed to parse ${TokenKind[token.kind]}. Expected an expression.`)
+  //   );
 }
 
 function parseStatement(tokens: Token[]): ast.Stmt {

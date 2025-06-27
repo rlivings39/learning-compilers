@@ -29,7 +29,9 @@ type SimpleTokenKind =
   | TokenKind.KW_INT
   | TokenKind.KW_VOID
   | TokenKind.KW_RETURN
-  | TokenKind.SEMICOLON
+  | TokenKind.SEMICOLON;
+
+export type UnaryTokenKind =
   | TokenKind.UNARY_MINUS
   | TokenKind.UNARY_BITWISE_COMPLEMENT
   | TokenKind.DECREMENT;
@@ -49,10 +51,13 @@ interface IntConstToken {
   value: number;
 }
 
+export interface UnaryToken {
+  kind: UnaryTokenKind;
+}
 /**
  * Type for tokens returned by the lexer.
  */
-export type Token = SimpleToken | IdentifierToken | IntConstToken;
+export type Token = SimpleToken | IdentifierToken | IntConstToken | UnaryToken;
 
 interface TokenData {
   pattern: RegExp;
@@ -72,7 +77,10 @@ function makeToken(match: string, kind: TokenKind): Token {
   }
 }
 
-function makeSimpleToken(match: string, kind: SimpleTokenKind): SimpleToken {
+function makeSimpleToken(
+  match: string,
+  kind: SimpleTokenKind | UnaryTokenKind
+): SimpleToken | UnaryToken {
   return { kind: kind };
 }
 

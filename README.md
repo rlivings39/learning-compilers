@@ -106,9 +106,10 @@ For the simple language supported in chapter 1 the formal grammar is
 <program> ::= <function>
 <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
 <statement> ::= "return" <expr> ";"
-<expr> ::= <int>
+<expr> ::= <int> | <unop> <expr> | "(" <expr> ")"
 <identifier> ::= ? An identifier token ?
 <int> ::= ? A constant token ?
+<unop> ::= "-" | "~"
 ```
 
 This is in **extended Backus-Naur form** (EBNF). Each line is a **production** defining how languages constructs are defined in terms of other constructs and tokens. Symbols that appear on the lhs of rules are **non-terminal symbols**. Individual tokens are **terminal symbols**.

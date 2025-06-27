@@ -1,4 +1,4 @@
-import { Program, Function, Stmt, Expr, Constant } from "./ast";
+import { Program, Function, Stmt, Expr, Constant, UnaryExpr } from "./ast";
 const INDENT_INCREMENT = 2;
 
 function printLine(line: string, indentLevel: number): string {
@@ -19,8 +19,26 @@ function printConstant(c: Constant): string {
     }
   }
 }
+
+function printUnary(u: UnaryExpr): string {
+  // TODO only emit parens when needed
+  return `${u.op}(${printExpr(u.expr)})`;
+}
+
 function printExpr(exp: Expr): string {
-  return printConstant(exp);
+  switch (exp.kind) {
+    case "numeric-const":
+    case "string-const": {
+      return printConstant(exp);
+    }
+    case "complement":
+    case "unary-minus": {
+      return printUnary(exp);
+    }
+    default:
+      const _checker: never = exp;
+      return _checker;
+  }
 }
 function printStmt(stmt: Stmt, indentLevel: number): string {
   let exp = printExpr(stmt.expr);
