@@ -58,12 +58,12 @@ int main(void) {
 produces
 
 ```
-	.text
-	.globl	main
-	.type	main, @function
+  .text
+  .globl main
+  .type main, @function
 main:
-	movl	$2, %eax
-	ret
+  movl $2, %eax
+  ret
 ```
 
 where lines starting with `.` are assembler directives. `main` is a label for the code following it.
@@ -123,15 +123,15 @@ The book shows an example of statement parsing
 
 ```
 parse_statement(tokens):
-	expect("return", tokens)
-	return_val = parse_expr(tokens)
-	expect(";", tokens)
-	return Return(return_val)
+  expect("return", tokens)
+  return_val = parse_expr(tokens)
+  expect(";", tokens)
+  return Return(return_val)
 
 expect(expected, tokens):
-	actual = take_token(tokens)
-	if actual != expected:
-		fail("Syntax error. Expected {expected}. Found {actual}")
+  actual = take_token(tokens)
+  if actual != expected:
+    fail("Syntax error. Expected {expected}. Found {actual}")
 ```
 
 Note that this consumes tokens so that the caller of `parse_statement` then just continues on after finishing this statement. If there are any remaining tokens after parsing the program, that is a syntax error.
