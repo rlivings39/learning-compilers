@@ -161,7 +161,6 @@ This line disables having an **executable stack** so that data in the stack can'
 Chapter 2 adds in unary operators `-` and `~`. For the C program
 
 ```c
-// Comment
 int main(void) {
   return ~(-2);
 }
@@ -172,7 +171,7 @@ you might see assembly like (assuming C compilers didn't constant fold)
 ```s
   .globl main
 main:
-  ## // Function prologue
+  # Function prologue
   pushq %rbp
   moveq %rsp, %rbp
   subq  $8, %rsp
