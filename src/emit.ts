@@ -10,6 +10,11 @@ function emitOperand(op: asm.Operand): string {
     }
     case "register": {
       res += `%eax`;
+      break;
+    }
+    default: {
+      const _check: never = op;
+      return _check;
     }
   }
   return res;
@@ -37,6 +42,10 @@ function emitInstructions(instructions: asm.Instruction[]): string {
       case "return": {
         res += emitReturn(instr);
         break;
+      }
+      default: {
+        const _check: never = instr;
+        return _check;
       }
     }
     res += "\n";

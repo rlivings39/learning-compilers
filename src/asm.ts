@@ -39,6 +39,10 @@ export function Return(): Return {
   return { kind: "return" };
 }
 
+export type Load = {
+  kind: "load";
+};
+
 export type Instruction = Move | Return;
 
 export type Function = {
@@ -68,6 +72,10 @@ function exprToAsm(expr: ast.Expr): Operand {
     }
     case "string-const": {
       throw new Error("string-const not handled yet");
+    }
+    default: {
+      const _check: never = expr;
+      return _check;
     }
   }
 }

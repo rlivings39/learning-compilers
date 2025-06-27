@@ -13,6 +13,10 @@ function printConstant(c: Constant): string {
     case "string-const": {
       return `${c.value}`;
     }
+    default: {
+      const _check: never = c;
+      return _check;
+    }
   }
 }
 function printExpr(exp: Expr): string {
