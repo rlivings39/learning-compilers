@@ -5,8 +5,8 @@
   "main": "src/main.ts",
   "scripts": {
     "test": "vitest",
-    "ts-watch": "tsc --watch",
-    "ts-build": "tsc -b && chmod a+x dist/main.js",
+    "watch": "tsc --watch",
+    "build": "tsc -b && chmod a+x dist/main.js",
     "compiler-tests": "../writing-a-c-compiler-tests/test_compiler /usr/bin/notcc"
   },
   "repository": {

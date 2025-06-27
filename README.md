@@ -1,10 +1,42 @@
 # learning-compilers
 
-This is my attempt at working through [*Writing a C Compiler*](https://norasandler.com/book/) by Nora Sandler.
+This is my attempt at working through [*Writing a C Compiler*](https://norasandler.com/book/) by Nora Sandler. The compiler is written in TypeScript leveraging it's functional programming abilities.
 
 [NQCC2](https://github.com/nlsandler/nqcc2) is the author's reference implementation.
 
 The [tests](https://github.com/nlsandler/writing-a-c-compiler-tests/) provided with the book can be used along with in-project tests.
+
+## Installing and using this repo
+
+Download the repo and
+
+```bash
+cd learning-compilers
+npm install
+npm run build
+```
+
+Then you can run the compiler by executing `./dist/main.js`. See the help for up to date info:
+
+```bash
+$./dist/main.js -h
+
+Usage: notcc [flags] /path/to/input-file.c
+
+Compiles input-file.c creating an executable /path/to/input-file using the system gcc
+
+Options:
+
+--lex           Run the lexer but stop before parsing
+--print-tokens  Print out the tokens found by the lexer
+--parse         Run the lexer and parser but stop before codegen
+--pretty-print  Pretty print the output of the parser
+--codegen       Run the lexer, parser, codegen but stop before assembly generation
+--asm-only (-S) Emit assembly in input-file.s rather than linking an executable
+--help (-h)     Show the help
+```
+
+Running `npm link` will let you refer to this with its name `notcc`.
 
 ## The four compiler passes
 
@@ -19,7 +51,7 @@ Compiling a simple C program
 
 ```c
 int main(void) {
-    return 2;
+  return 2;
 }
 ```
 

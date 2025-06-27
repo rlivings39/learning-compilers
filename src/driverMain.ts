@@ -22,7 +22,9 @@ interface NotccFlags extends ParseArgsOptionsConfig {
 
 function renderUsage(flags: NotccFlags) {
   let usage = `
-Usage: notcc [flags] input-file.c
+Usage: notcc [flags] /path/to/input-file.c
+
+Compiles input-file.c creating an executable /path/to/input-file using the system gcc
 
 Options:
 
@@ -73,7 +75,7 @@ const NOTCC_CLI_FLAGS: NotccFlags = {
   "asm-only": {
     type: "boolean",
     default: false,
-    help: "Emit assembly in file.s rather than linking an executable",
+    help: "Emit assembly in input-file.s rather than linking an executable",
     short: "S",
   },
   help: {
