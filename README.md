@@ -161,6 +161,7 @@ This line disables having an **executable stack** so that data in the stack can'
 Chapter 2 adds in unary operators `-` and `~`. For the C program
 
 ```c
+// Comment
 int main(void) {
   return ~(-2);
 }
