@@ -172,8 +172,11 @@ you might see assembly like (assuming C compilers didn't constant fold)
   .globl main
 main:
   # Function prologue
+  # 1. Save the caller's base pointer on the stack
   pushq %rbp
+  # 2. Save the position of the new stack frame in the base pointer
   moveq %rsp, %rbp
+  # 3. Allocate 8 bytes of space on the stack for the stack frame
   subq  $8, %rsp
   # Store 2 on the stack and negate it
   movl  $2, -4(%rbp)
@@ -187,12 +190,27 @@ main:
   # Move result to return register
   movl  -8(%rbp), %eax
   # Function epilogue
+  # 1. Reset the stack pointer to the base pointer
   movq  %rbp, %rsp
+  # 2. Restore the caller's base pointer
   popq  %rbp
   ret
 ```
 
 ## The program stack
+
+The **stack** is a special part of program memory. The register `%rsp` points to the top of the stack, i.e. it's the **stack pointer**. Namely, the last used entry on the stack rather than the first free entry.
+
+The stack grows in towards decreasing memory addresses.
+
+The `push` and `pop` instructions work on this stack. An instruction like `push $3` does a few things. The value is pushed into the next available entry and the stack pointer is adjusted. On a 64-bit system the next stack entry is `RSP-8`. After the operation `%rsp` is the address of the new entry.
+
+`pop %rax` copies the value at the top of the stack into `rax` and decreases the stack by 1 entry (increments the stack pointer by 8 bytes).
+
+`pushw, popw` can work with **words** or 2-byte values.
+
+When a function is called it allocates space on the stack for local variables and temporaries called a **stack frame**. The base of this frame is stored in `%rbp`, called the **base pointer**. All stack entries for the function can be referred to relative to RBP rather than with an explicit address. So a local variable might look like `-4(%rbp)` (remember, the stack grows toward decreasing addresses).
+
 
 
 ## Notes on the book
