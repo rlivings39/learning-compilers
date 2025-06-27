@@ -168,7 +168,7 @@ int main(void) {
 
 you might see assembly like (assuming C compilers didn't constant fold)
 
-```s
+```asm
   .globl main
 main:
   # Function prologue
