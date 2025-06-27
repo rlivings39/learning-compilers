@@ -143,6 +143,18 @@ Parsers that look at the next few tokens to determine what to do are called **pr
 
 A pretty-printer can be useful to visualize your AST and debug. You should also generate informative error messages.
 
+## Three address code (TAC) and the book's TACKY IR
+
+The book introduces the idea of three address code IR which represents the program using nodes with up to 3 addresses, 2 source addresses and 1 destination address. This works well for values, unary, and binary operations and maps more closely to assembly while being easier to optimize later on.
+
+The TAC for an expression like `1 + 2 * 3` might look like
+
+```
+tmp0 = 2 * 3
+tmp1 = 1 + tmp0
+return tmp1
+```
+
 ## Assembly generation
 
 The next phase we cover is assembly generation. Here we produce another data structure that represents the assembly in memory so that it can be modified in subsequent passes in the future.
