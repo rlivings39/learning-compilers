@@ -8,6 +8,7 @@ import * as fs from "fs";
 import { lex, TokenKind } from "./lex";
 import { parse } from "./parse";
 import { prettyPrint } from "./pretty-print";
+import { astToAsm } from "./asm";
 
 interface NotccFlag extends ParseArgsOptionDescriptor {
   help: string;
@@ -132,11 +133,16 @@ export function driverMain(argv: string[]) {
   if (values.lex) {
     return;
   }
-  const prog = parse(tokens);
+  const ast = parse(tokens);
   if (values["pretty-print"]) {
-    console.log(prettyPrint(prog));
+    console.log(prettyPrint(ast));
   }
   if (values.parse) {
+    return;
+  }
+
+  const asm = astToAsm(ast);
+  if (values.codegen) {
     return;
   }
 }

@@ -1,4 +1,4 @@
-import { Identifier } from "./ast";
+import * as ast from "./ast";
 
 export type ImmediateNumber = {
   kind: "number";
@@ -42,12 +42,12 @@ export function Return(): Return {
 export type Instruction = Move | Return;
 
 export type Function = {
-  name: Identifier;
+  name: ast.Identifier;
   instructions: Instruction[];
 };
 
 export function Function(
-  name: Identifier,
+  name: ast.Identifier,
   instructions: Instruction[]
 ): Function {
   return { name, instructions };
@@ -59,4 +59,43 @@ export type Program = {
 
 export function Program(function_definition: Function): Program {
   return { function_definition };
+}
+
+function exprToAsm(expr: ast.Expr): Operand {
+  switch (expr.kind) {
+    case "numeric-const": {
+      return ImmediateNumber(expr.value);
+    }
+    case "string-const": {
+      throw new Error("string-const not handled yet");
+    }
+  }
+}
+
+function stmtToAsm(stmt: ast.Stmt): Instruction[] {
+  let instructions: Instruction[] = [];
+  // TODO pattern matching?
+  if (stmt.kind === "return-stmt") {
+    const num: Operand = exprToAsm(stmt.expr);
+    const mv = Move(num, Register());
+    const ret = Return();
+    instructions.push(mv, ret);
+  }
+  return instructions;
+}
+
+function functionToAsm(func: ast.Function): Function {
+  const name: ast.Identifier = func.name;
+  let instructions: Instruction[] = [];
+  instructions.push(...stmtToAsm(func.body));
+  return Function(name, instructions);
+}
+
+function programToAsm(prog: ast.Program): Program {
+  const func: Function = functionToAsm(prog.function_definition);
+  return Program(func);
+}
+
+export function astToAsm(prog: ast.Program): Program {
+  return programToAsm(prog);
 }
