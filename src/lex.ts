@@ -92,24 +92,24 @@ function makeIntConstToken(match: string, kind: TokenKind): IntConstToken {
   return { kind: TokenKind.INT_CONSTANT, value: Number(match) };
 }
 
-type TokenPatternMap = Map<TokenKind, TokenData>;
-const PATTERN_MAP: TokenPatternMap = new Map([
-  [TokenKind.LEFT_PAREN, { pattern: /^\(/ }],
-  [TokenKind.RIGHT_PAREN, { pattern: /^\)/ }],
-  [TokenKind.LEFT_CURLY, { pattern: /^\{/ }],
-  [TokenKind.RIGHT_CURLY, { pattern: /^\}/ }],
-  [TokenKind.LEFT_SQUARE, { pattern: /^\[/ }],
-  [TokenKind.RIGHT_SQUARE, { pattern: /^\]/ }],
-  [TokenKind.KW_INT, { pattern: /^int\b/ }],
-  [TokenKind.KW_VOID, { pattern: /^void\b/ }],
-  [TokenKind.KW_RETURN, { pattern: /^return\b/ }],
-  [TokenKind.SEMICOLON, { pattern: /^;/ }],
-  [TokenKind.IDENTIFIER, { pattern: /^[a-zA-z_]\w*\b/ }],
-  [TokenKind.INT_CONSTANT, { pattern: /^[0-9]+\b/ }],
-  [TokenKind.UNARY_MINUS, { pattern: /^-/ }],
-  [TokenKind.DECREMENT, { pattern: /^--/ }],
-  [TokenKind.UNARY_BITWISE_COMPLEMENT, { pattern: /^~/ }],
-]);
+type TokenPatternMap = Record<TokenKind, TokenData>;
+const PATTERN_MAP: TokenPatternMap = {
+  [TokenKind.LEFT_PAREN]: { pattern: /^\(/ },
+  [TokenKind.RIGHT_PAREN]: { pattern: /^\)/ },
+  [TokenKind.LEFT_CURLY]: { pattern: /^\{/ },
+  [TokenKind.RIGHT_CURLY]: { pattern: /^\}/ },
+  [TokenKind.LEFT_SQUARE]: { pattern: /^\[/ },
+  [TokenKind.RIGHT_SQUARE]: { pattern: /^\]/ },
+  [TokenKind.KW_INT]: { pattern: /^int\b/ },
+  [TokenKind.KW_VOID]: { pattern: /^void\b/ },
+  [TokenKind.KW_RETURN]: { pattern: /^return\b/ },
+  [TokenKind.SEMICOLON]: { pattern: /^;/ },
+  [TokenKind.IDENTIFIER]: { pattern: /^[a-zA-z_]\w*\b/ },
+  [TokenKind.INT_CONSTANT]: { pattern: /^[0-9]+\b/ },
+  [TokenKind.UNARY_MINUS]: { pattern: /^-/ },
+  [TokenKind.DECREMENT]: { pattern: /^--/ },
+  [TokenKind.UNARY_BITWISE_COMPLEMENT]: { pattern: /^~/ },
+};
 
 export class Location {
   line: number;
@@ -191,12 +191,13 @@ export function lex(code: string): Token[] {
   while (code.length > 0) {
     let match: string = "";
     let matchKind: TokenKind;
-    for (let [kind, { pattern }] of PATTERN_MAP.entries()) {
+    for (let [kind, { pattern }] of Object.entries(PATTERN_MAP)) {
       let thisMatch = code.match(pattern);
       // Found a longer match
       if (thisMatch && thisMatch[0].length > match.length) {
         match = thisMatch[0];
-        matchKind = kind;
+        // TODO converting to number is sketchy
+        matchKind = Number(kind);
       }
     }
     // TODO error location
