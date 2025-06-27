@@ -81,8 +81,10 @@ The book summarizes the algorithm as
 1. Remove leading whitespace
 2. Apply token regexes
 3. Error if no matches
-4. Choose largest matching one (TODO why?)
+4. Choose largest matching one
 5. Continue on remainder of string until empty
+
+In (4) we choose the longest match to be able to differentiate things like `--` from `-`.
 
 ### Parsing
 

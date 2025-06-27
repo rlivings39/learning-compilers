@@ -14,6 +14,9 @@ export enum TokenKind {
   SEMICOLON,
   IDENTIFIER,
   INT_CONSTANT,
+  UNARY_MINUS,
+  UNARY_BITWISE_COMPLEMENT,
+  DECREMENT,
 }
 
 type SimpleTokenKind =
@@ -26,7 +29,30 @@ type SimpleTokenKind =
   | TokenKind.KW_INT
   | TokenKind.KW_VOID
   | TokenKind.KW_RETURN
-  | TokenKind.SEMICOLON;
+  | TokenKind.SEMICOLON
+  | TokenKind.UNARY_MINUS
+  | TokenKind.UNARY_BITWISE_COMPLEMENT
+  | TokenKind.DECREMENT;
+
+// Various token interfaces
+interface SimpleToken {
+  kind: SimpleTokenKind;
+}
+
+interface IdentifierToken {
+  kind: TokenKind.IDENTIFIER;
+  id: string;
+}
+
+interface IntConstToken {
+  kind: TokenKind.INT_CONSTANT;
+  value: number;
+}
+
+/**
+ * Type for tokens returned by the lexer.
+ */
+export type Token = SimpleToken | IdentifierToken | IntConstToken;
 
 interface TokenData {
   pattern: RegExp;
@@ -72,27 +98,10 @@ const PATTERN_MAP: TokenPatternMap = new Map([
   [TokenKind.SEMICOLON, { pattern: /^;/ }],
   [TokenKind.IDENTIFIER, { pattern: /^[a-zA-z_]\w*\b/ }],
   [TokenKind.INT_CONSTANT, { pattern: /^[0-9]+\b/ }],
+  [TokenKind.UNARY_MINUS, { pattern: /^-/ }],
+  [TokenKind.DECREMENT, { pattern: /^--/ }],
+  [TokenKind.UNARY_BITWISE_COMPLEMENT, { pattern: /^~/ }],
 ]);
-
-// Various token interfaces
-interface SimpleToken {
-  kind: SimpleTokenKind;
-}
-
-interface IdentifierToken {
-  kind: TokenKind.IDENTIFIER;
-  id: string;
-}
-
-interface IntConstToken {
-  kind: TokenKind.INT_CONSTANT;
-  value: number;
-}
-
-/**
- * Type for tokens returned by the lexer.
- */
-export type Token = SimpleToken | IdentifierToken | IntConstToken;
 
 export class Location {
   line: number;
@@ -172,23 +181,25 @@ export function lex(code: string): Token[] {
   let tokens: Token[] = [];
   code = code.trimStart();
   while (code.length > 0) {
-    let match: RegExpMatchArray | null = null;
-    for (let [matchKind, { pattern }] of PATTERN_MAP.entries()) {
-      // TODO need to compare match length?
-      match = code.match(pattern);
-      if (match) {
-        tokens.push(makeToken(match[0], matchKind));
-        break;
+    let match: string = "";
+    let matchKind: TokenKind;
+    for (let [kind, { pattern }] of PATTERN_MAP.entries()) {
+      let thisMatch = code.match(pattern);
+      // Found a longer match
+      if (thisMatch && thisMatch[0].length > match.length) {
+        match = thisMatch[0];
+        matchKind = kind;
       }
     }
     // TODO error location
-    if (match === null) {
+    if (match.length === 0) {
       throw new LexError(
         { line: 0, column: 0 },
         `Unable to lex code: ${code.substring(0, 10)}`
       );
     }
-    code = code.slice(match[0].length).trimStart();
+    tokens.push(makeToken(match, matchKind!));
+    code = code.slice(match.length).trimStart();
   }
   return tokens;
 }

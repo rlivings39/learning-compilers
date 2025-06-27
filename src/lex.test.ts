@@ -78,3 +78,13 @@ test("Lex token tests", () => {
   expect(lex("/*comment*/\n(")).toEqual([{ kind: TokenKind.LEFT_PAREN }]);
   expect(() => lex("12ab")).toThrow();
 });
+
+test("Lex unary ops", () => {
+  expect(lex("-")).toMatchObject([{ kind: TokenKind.UNARY_MINUS }]);
+  expect(lex("--")).toMatchObject([{ kind: TokenKind.DECREMENT }]);
+  expect(lex("~~x")).toMatchObject([
+    { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
+    { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
+    { kind: TokenKind.IDENTIFIER },
+  ]);
+});

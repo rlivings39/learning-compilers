@@ -14,7 +14,7 @@ function expect(expected: TokenKind, tokens: Token[]): Token {
     fail(`Unexpected end of file. Expected ${TokenKind[expected]}`);
   }
   if (token.kind !== expected) {
-    fail(`Expected ${TokenKind[expected]}. Found ${TokenKind[token.kind]}}`);
+    fail(`Expected ${TokenKind[expected]}. Found ${TokenKind[token.kind]}`);
   }
   return token;
 }
