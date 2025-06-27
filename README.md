@@ -94,7 +94,7 @@ GCC and Clang both use handwritten parsers.
 
 The book introduces and uses the Zephyr [Abstract Data Syntax Language](https://www.cs.princeton.edu/~appel/papers/asdl97.pdf) (ASDL) to represent ASTs.
 
-The author recommends using algebraic types where possible to implement the AST.
+The author recommends using algebraic types where possible to implement the AST. See ["Abstract Syntax Tree Implementation Idioms"](https://hillside.net/plop/plop2003/Papers/Jones-ImplementingASTs.pdf) for various strategies in a number of languages.
 
 An AST omits details that are necessary for the programming language like "statements end with a semicolon", hence the "abstract". To convert from a token stream to an AST one needs a **formal grammar** that specifies rules showing how to build language constructs from tokens.
 
@@ -155,6 +155,45 @@ This stage generates assembly code to a file on disk. The format will change a b
 ```
 
 This line disables having an **executable stack** so that data in the stack can't be executed. Avoiding an executable stack is a security measure. Executable stacks are normally not needed except under special circumstances.
+
+## Implementing unary operators
+
+Chapter 2 adds in unary operators `-` and `~`. For the C program
+
+```c
+int main(void) {
+  return ~(-2);
+}
+```
+
+you might see assembly like (assuming C compilers didn't constant fold)
+
+```s
+  .globl main
+main:
+  # Function prologue
+  pushq %rbp
+  moveq %rsp, %rbp
+  subq  $8, %rsp
+  # Store 2 on the stack and negate it
+  movl  $2, -4(%rbp)
+  negl  -4(%rbp)
+  # Move negated value to a register since both operands to
+  # following movl can't be in memory
+  movl  -4(%rbp), %r10d
+  movl  %r10d, -8(%rbp)
+  # Bitwise complement
+  notl  -8(%rbp)
+  # Move result to return register
+  movl  -8(%rbp), %eax
+  # Function epilogue
+  movq  %rbp, %rsp
+  popq  %rbp
+  ret
+```
+
+## The program stack
+
 
 ## Notes on the book
 
