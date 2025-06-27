@@ -159,3 +159,4 @@ This line disables having an **executable stack** so that data in the stack can'
 ## Notes on the book
 
 * Chapter 1 pp. 10 - Testing the lexer involves dealing with comments though the book doesn't mention them. It would have been useful for me to see a few sentences on how those are usually handled in a compiler. E.g. Does the lexer handle them, maybe they're stripped out in a pre-pass, or maybe they're left in place but ignored by the lexer?
+* Chapter 1 - It wasn't clear to me at all that my compiler should be invoking the system compiler to build an executable from my assembly output. After failing the tests and reading the test harness, I finally got the idea. Stating this in the book would have saved me time and confusion.
