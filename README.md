@@ -57,7 +57,7 @@ int main(void) {
 
 produces
 
-```
+```s
   .text
   .globl main
   .type main, @function
