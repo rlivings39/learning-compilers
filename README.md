@@ -109,7 +109,7 @@ For the simple language supported in chapter 1 the formal grammar is
 <int> ::= ? A constant token ?
 ```
 
-This is in **extended Backus-Naur form** (ENBF). Each line is a **production** defining how languages constructs are defined in terms of other constructs and tokens. Symbols that appear on the lhs of rules are **non-terminal symbols**. Individual tokens are **terminal symbols**.
+This is in **extended Backus-Naur form** (EBNF). Each line is a **production** defining how languages constructs are defined in terms of other constructs and tokens. Symbols that appear on the lhs of rules are **non-terminal symbols**. Individual tokens are **terminal symbols**.
 
 Non-terminals are wrapped in `<>` and terminals are wrapped in `""`. Identifiers and constants are terminals without explicit representations. They are **special sequences** shown as English phrases wrapped with `? ?`.
 
