@@ -11,6 +11,7 @@ import { prettyPrint } from "./pretty-print";
 import { astToAsm } from "./asm";
 import { emitAsm } from "./emit";
 import path from "path";
+import * as cp from "child_process";
 
 interface NotccFlag extends ParseArgsOptionDescriptor {
   help: string;
@@ -68,6 +69,12 @@ const NOTCC_CLI_FLAGS: NotccFlags = {
     type: "boolean",
     default: false,
     help: "Run the lexer, parser, codegen but stop before assembly generation",
+  },
+  "asm-only": {
+    type: "boolean",
+    default: false,
+    help: "Emit assembly in file.s rather than linking an executable",
+    short: "S",
   },
   help: {
     type: "boolean",
@@ -149,10 +156,16 @@ export function driverMain(argv: string[]) {
   }
 
   const asmCode = emitAsm(asm);
-  const outFileName = path.format({
+  const outAsmFilePath = {
     ...path.parse(fileName),
     ext: ".s",
     base: "",
-  });
-  fs.writeFileSync(outFileName, asmCode, { encoding: "utf-8" });
+  };
+  const outAsmFileName = path.format(outAsmFilePath);
+  fs.writeFileSync(outAsmFileName, asmCode, { encoding: "utf-8", flush: true });
+  if (values["asm-only"]) {
+    return;
+  }
+  const outExeFileName = path.format({ ...outAsmFilePath, ext: "" });
+  cp.exec(`gcc ${outAsmFileName} -o ${outExeFileName}`);
 }
