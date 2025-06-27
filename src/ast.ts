@@ -27,6 +27,12 @@ export type UnaryMinus = { kind: "unary-minus"; expr: Expr; op: "-" };
 export function UnaryMinus(expr: Expr): UnaryMinus {
   return { kind: "unary-minus", expr, op: "-" };
 }
+// TODO Or is class better?
+// export class UnaryMinus {
+//   readonly kind = "unary-minus";
+//   readonly op = "-";
+//   constructor(public expr: Expr) {}
+// }
 
 export type UnaryExpr = Complement | UnaryMinus;
 
