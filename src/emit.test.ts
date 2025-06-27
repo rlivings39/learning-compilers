@@ -11,5 +11,11 @@ test("Emitter", () => {
   const prog = asm.Program(func);
 
   let asmCode = emitAsm(prog);
-  expect(asmCode).toEqual("adsfasdf");
+  const expected = `  .globl main
+main:
+  movl $12, %eax
+  ret
+  .section .note.GNU-stack,"",@progbits
+`;
+  expect(asmCode).toEqual(expected);
 });

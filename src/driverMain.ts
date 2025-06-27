@@ -9,6 +9,8 @@ import { lex, TokenKind } from "./lex";
 import { parse } from "./parse";
 import { prettyPrint } from "./pretty-print";
 import { astToAsm } from "./asm";
+import { emitAsm } from "./emit";
+import path from "path";
 
 interface NotccFlag extends ParseArgsOptionDescriptor {
   help: string;
@@ -145,4 +147,12 @@ export function driverMain(argv: string[]) {
   if (values.codegen) {
     return;
   }
+
+  const asmCode = emitAsm(asm);
+  const outFileName = path.format({
+    ...path.parse(fileName),
+    ext: ".s",
+    base: "",
+  });
+  fs.writeFileSync(outFileName, asmCode, { encoding: "utf-8" });
 }

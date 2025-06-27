@@ -46,7 +46,7 @@ function emitInstructions(instructions: asm.Instruction[]): string {
 
 function emitFunction(func: asm.Function): string {
   let res = `${INDENT}.globl ${func.name}
-${func.name}
+${func.name}:
 ${emitInstructions(func.instructions)}`;
   return res;
 }
@@ -59,6 +59,6 @@ function emitProgram(prog: asm.Program): string {
 export function emitAsm(prog: asm.Program): string {
   let res = emitProgram(prog);
 
-  res += INDENT + '.section .note.GNU-stack,",@progbits';
+  res += INDENT + '.section .note.GNU-stack,"",@progbits\n';
   return res;
 }
