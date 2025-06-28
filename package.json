@@ -4,7 +4,8 @@
   "description": "Compiler implementation from Writing a C Compiler",
   "main": "src/main.ts",
   "scripts": {
-    "test": "vitest",
+    "test": "vitest --no-watch",
+    "test:watch": "vitest --watch",
     "watch": "tsc --watch",
     "build": "tsc -b && chmod a+x dist/main.js",
     "compiler-tests": "../writing-a-c-compiler-tests/test_compiler /usr/bin/notcc"

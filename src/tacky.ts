@@ -30,18 +30,18 @@ export function Return(val: Value): Return {
 export type UnaryMinus = {
   kind: "unary-minus";
   src: Value;
-  dst: Value;
+  dst: Assignable;
 };
-export function UnaryMinus(src: Value, dst: Value): UnaryMinus {
+export function UnaryMinus(src: Value, dst: Assignable): UnaryMinus {
   return { kind: "unary-minus", src, dst };
 }
 
 export type Complement = {
   kind: "complement";
   src: Value;
-  dst: Value;
+  dst: Assignable;
 };
-export function Complement(src: Value, dst: Value): Complement {
+export function Complement(src: Value, dst: Assignable): Complement {
   return { kind: "complement", src, dst };
 }
 
@@ -65,4 +65,12 @@ export function Var(name: Identifier): Var {
   return { kind: "var", name };
 }
 
+/**
+ * Values can store values and include things which cannot be written
+ */
 export type Value = Constant | Var;
+
+/**
+ * Assignable entities can be written to, i.e. be the `dst` of an operation
+ */
+export type Assignable = Var;
