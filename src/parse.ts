@@ -40,10 +40,9 @@ function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
       fail(`-- is not supported`);
       return ast.Complement(expr);
     }
-    // TODO add guard
-    //   default:
-    //     const _check: never = token;
-    //     return _check;
+    default:
+      const _check: never = token.kind;
+      return _check;
   }
 }
 
