@@ -1,5 +1,6 @@
 import * as tacky from "./tacky";
 import * as ast from "./ast";
+import { NotccError } from "./errors";
 
 let VAR_ID = 0;
 function makeTemp(): tacky.Var {
