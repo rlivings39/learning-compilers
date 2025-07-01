@@ -36,15 +36,15 @@ Options:
     if (opts.short) {
       newFlag += `-${opts.short}, `;
     }
-    newFlag += flag;
+    newFlag += `--${flag}`;
     flagList.push([newFlag, opts.help]);
-    maxLen = Math.max(maxLen, flag.length);
+    maxLen = Math.max(maxLen, newFlag.length);
   }
 
   flagList.forEach((flagAndHelp) => {
     const [flag, help] = flagAndHelp;
     const padding = maxLen - flag.length;
-    usage += `--${flag}` + " ".repeat(padding) + ` ${help}\n`;
+    usage += `${flag}` + " ".repeat(padding) + ` ${help}\n`;
   });
   return usage;
 }
