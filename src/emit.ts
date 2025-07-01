@@ -20,12 +20,12 @@ function emitOperand(op: asm.Operand): string {
   return res;
 }
 
-function emitReturn(ret: asm.Return): string {
+function emitReturn(_ret: asm.Return): string {
   return "ret";
 }
 
 function emitMove(mv: asm.Move): string {
-  let res = `movl ${emitOperand(mv.src)}, ${emitOperand(mv.dst)}`;
+  const res = `movl ${emitOperand(mv.src)}, ${emitOperand(mv.dst)}`;
 
   return res;
 }
@@ -54,7 +54,7 @@ function emitInstructions(instructions: asm.Instruction[]): string {
 }
 
 function emitFunction(func: asm.Function): string {
-  let res = `${INDENT}.globl ${func.name}
+  const res = `${INDENT}.globl ${func.name}
 ${func.name}:
 ${emitInstructions(func.instructions)}`;
   return res;

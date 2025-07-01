@@ -10,7 +10,7 @@ test("Emitter", () => {
   const func = asm.Function("main", [mv, ret]);
   const prog = asm.Program(func);
 
-  let asmCode = emitAsm(prog);
+  const asmCode = emitAsm(prog);
   const expected = `  .globl main
 main:
   movl $12, %eax

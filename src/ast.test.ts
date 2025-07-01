@@ -1,7 +1,6 @@
 import { test, expect } from "vitest";
 
 import * as ast from "./ast";
-import { umask } from "process";
 
 test("AST construction", () => {
   const numC = ast.NumericConstant(12);

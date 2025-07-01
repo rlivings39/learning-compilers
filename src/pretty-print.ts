@@ -35,18 +35,19 @@ function printExpr(exp: Expr): string {
     case "unary-minus": {
       return printUnary(exp);
     }
-    default:
+    default: {
       const _checker: never = exp;
       return _checker;
+    }
   }
 }
 function printStmt(stmt: Stmt, indentLevel: number): string {
-  let exp = printExpr(stmt.expr);
+  const exp = printExpr(stmt.expr);
   return printLine(`return ${exp};`, indentLevel);
 }
 
 function printFunction(func: Function, indentLevel: number): string {
-  let b = printStmt(func.body, indentLevel + INDENT_INCREMENT);
+  const b = printStmt(func.body, indentLevel + INDENT_INCREMENT);
   let ret = printLine(`Function ${func.name}() {`, indentLevel);
   ret += b;
   ret += printLine("}", indentLevel);
@@ -54,7 +55,7 @@ function printFunction(func: Function, indentLevel: number): string {
 }
 
 function printProgram(program: Program, indentLevel: number): string {
-  let f = printFunction(
+  const f = printFunction(
     program.function_definition,
     indentLevel + INDENT_INCREMENT
   );

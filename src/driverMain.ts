@@ -29,18 +29,20 @@ Compiles input-file.c creating an executable /path/to/input-file using the syste
 Options:
 
 `;
-  let flagList = [];
+  const flagList = [];
   let maxLen = 0;
-  for (let [flag, opts] of Object.entries(flags)) {
+  for (const [flag, opts] of Object.entries(flags)) {
+    let newFlag = "";
     if (opts.short) {
-      flag += ` (-${opts.short})`;
+      newFlag += `-${opts.short}, `;
     }
-    flagList.push([flag, opts.help]);
+    newFlag += flag;
+    flagList.push([newFlag, opts.help]);
     maxLen = Math.max(maxLen, flag.length);
   }
 
   flagList.forEach((flagAndHelp) => {
-    let [flag, help] = flagAndHelp;
+    const [flag, help] = flagAndHelp;
     const padding = maxLen - flag.length;
     usage += `--${flag}` + " ".repeat(padding) + ` ${help}\n`;
   });
@@ -107,8 +109,10 @@ export function parseArguments(argv: string[]) {
     }
 
     return { values, positionals };
-  } catch (e: any) {
-    const newError = new Error(`${e.message}\n${renderUsage(NOTCC_CLI_FLAGS)}`);
+  } catch (e: unknown) {
+    const newError = new Error(
+      `${e instanceof Error ? e.message : e}\n${renderUsage(NOTCC_CLI_FLAGS)}`
+    );
     throw newError;
   }
 }

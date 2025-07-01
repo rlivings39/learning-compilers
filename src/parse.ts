@@ -1,15 +1,13 @@
 import * as ast from "./ast";
 
-import { match } from "ts-pattern";
-
-import { Token, TokenKind, UnaryToken, UnaryTokenKind } from "./lex";
+import { Token, TokenKind, UnaryToken } from "./lex";
 
 function fail(msg: string): never {
   throw Error(msg);
 }
 
 function expect(expected: TokenKind, tokens: Token[]): Token {
-  let token = tokens.shift();
+  const token = tokens.shift();
   if (!token) {
     fail(`Unexpected end of file. Expected ${TokenKind[expected]}`);
   }
@@ -27,7 +25,7 @@ function parseNumericConst(tokens: Token[]): ast.NumericConstant {
 }
 
 function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
-  const t = expect(token.kind, tokens);
+  expect(token.kind, tokens);
   const expr = parseExpr(tokens);
   switch (token.kind) {
     case TokenKind.UNARY_MINUS: {
@@ -40,9 +38,10 @@ function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
       fail(`-- is not supported`);
       return ast.Complement(expr);
     }
-    default:
+    default: {
       const _check: never = token.kind;
       return _check;
+    }
   }
 }
 
@@ -63,6 +62,17 @@ function parseExpr(tokens: Token[]): ast.Expr {
     case TokenKind.DECREMENT: {
       return parseUnary(token, tokens);
     }
+    // TODO is it good to list these out? Probably
+    case TokenKind.RIGHT_PAREN:
+    case TokenKind.LEFT_CURLY:
+    case TokenKind.RIGHT_CURLY:
+    case TokenKind.LEFT_SQUARE:
+    case TokenKind.RIGHT_SQUARE:
+    case TokenKind.KW_INT:
+    case TokenKind.KW_VOID:
+    case TokenKind.KW_RETURN:
+    case TokenKind.SEMICOLON:
+    case TokenKind.IDENTIFIER:
     default: {
       fail(`Failed to parse ${TokenKind[token.kind]}. Expected an expression.`);
     }
@@ -111,12 +121,12 @@ function parseIdentifier(tokens: Token[]): ast.Identifier {
 
 function parseFunction(tokens: Token[]): ast.Function {
   expect(TokenKind.KW_INT, tokens);
-  let id = parseIdentifier(tokens);
+  const id = parseIdentifier(tokens);
   expect(TokenKind.LEFT_PAREN, tokens);
   expect(TokenKind.KW_VOID, tokens);
   expect(TokenKind.RIGHT_PAREN, tokens);
   expect(TokenKind.LEFT_CURLY, tokens);
-  let body = parseStatement(tokens);
+  const body = parseStatement(tokens);
   expect(TokenKind.RIGHT_CURLY, tokens);
   return ast.Function(id, body);
 }

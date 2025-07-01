@@ -71,7 +71,19 @@ function makeToken(match: string, kind: TokenKind): Token {
     case TokenKind.INT_CONSTANT: {
       return makeIntConstToken(match, kind);
     }
-    default: {
+    case TokenKind.LEFT_PAREN:
+    case TokenKind.RIGHT_PAREN:
+    case TokenKind.LEFT_CURLY:
+    case TokenKind.RIGHT_CURLY:
+    case TokenKind.LEFT_SQUARE:
+    case TokenKind.RIGHT_SQUARE:
+    case TokenKind.KW_INT:
+    case TokenKind.KW_VOID:
+    case TokenKind.KW_RETURN:
+    case TokenKind.SEMICOLON:
+    case TokenKind.UNARY_MINUS:
+    case TokenKind.UNARY_BITWISE_COMPLEMENT:
+    case TokenKind.DECREMENT: {
       return makeSimpleToken(match, kind);
     }
   }
@@ -84,11 +96,11 @@ function makeSimpleToken(
   return { kind: kind };
 }
 
-function makeIdToken(match: string, kind: TokenKind): IdentifierToken {
+function makeIdToken(match: string, _kind: TokenKind): IdentifierToken {
   return { kind: TokenKind.IDENTIFIER, id: match };
 }
 
-function makeIntConstToken(match: string, kind: TokenKind): IntConstToken {
+function makeIntConstToken(match: string, _kind: TokenKind): IntConstToken {
   return { kind: TokenKind.INT_CONSTANT, value: Number(match) };
 }
 
@@ -183,16 +195,16 @@ function stripComments(code: string[]) {
  * @returns array of tokens or throws LexError
  */
 export function lex(code: string): Token[] {
-  let codeBuffer = Array.from(code);
+  const codeBuffer = Array.from(code);
   stripComments(codeBuffer);
   code = codeBuffer.join("");
-  let tokens: Token[] = [];
+  const tokens: Token[] = [];
   code = code.trimStart();
   while (code.length > 0) {
     let match: string = "";
-    let matchKind: TokenKind;
-    for (let [kind, { pattern }] of Object.entries(PATTERN_MAP)) {
-      let thisMatch = code.match(pattern);
+    let matchKind: TokenKind = 0;
+    for (const [kind, { pattern }] of Object.entries(PATTERN_MAP)) {
+      const thisMatch = code.match(pattern);
       // Found a longer match
       if (thisMatch && thisMatch[0].length > match.length) {
         match = thisMatch[0];
@@ -207,7 +219,7 @@ export function lex(code: string): Token[] {
         `Unable to lex code: ${code.substring(0, 10)}`
       );
     }
-    tokens.push(makeToken(match, matchKind!));
+    tokens.push(makeToken(match, matchKind));
     code = code.slice(match.length).trimStart();
   }
   return tokens;

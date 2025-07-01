@@ -81,7 +81,7 @@ function exprToAsm(expr: ast.Expr): Operand {
 }
 
 function stmtToAsm(stmt: ast.Stmt): Instruction[] {
-  let instructions: Instruction[] = [];
+  const instructions: Instruction[] = [];
   // TODO pattern matching?
   if (stmt.kind === "return-stmt") {
     const num: Operand = exprToAsm(stmt.expr);
@@ -94,7 +94,7 @@ function stmtToAsm(stmt: ast.Stmt): Instruction[] {
 
 function functionToAsm(func: ast.Function): Function {
   const name: ast.Identifier = func.name;
-  let instructions: Instruction[] = [];
+  const instructions: Instruction[] = [];
   instructions.push(...stmtToAsm(func.body));
   return Function(name, instructions);
 }

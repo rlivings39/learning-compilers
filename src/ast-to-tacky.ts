@@ -1,6 +1,5 @@
 import * as tacky from "./tacky";
 import * as ast from "./ast";
-import { fail } from "assert";
 
 let VAR_ID = 0;
 function makeTemp(): tacky.Var {
@@ -26,9 +25,10 @@ function convertUnary(unaryExpr: ast.UnaryExpr): ValAndInstructions {
       maker = tacky.UnaryMinus;
       break;
     }
-    default:
+    default: {
       const _check: never = kind;
       return _check;
+    }
   }
   const tackyUnary = maker(expr, tmpVar);
   instrs.push(tackyUnary);
@@ -37,8 +37,6 @@ function convertUnary(unaryExpr: ast.UnaryExpr): ValAndInstructions {
 
 function convertExpr(expr: ast.Expr): ValAndInstructions {
   const kind = expr.kind;
-  // TODO could this need to add more instructions?
-  let ret;
   switch (kind) {
     case "string-const": {
       throw new Error("String constants not supported");

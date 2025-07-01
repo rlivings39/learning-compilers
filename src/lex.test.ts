@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { lex, TokenKind, forTestingOnly } from "./lex";
 
 const stripComments = (s: string) => {
-  let sbuf = Array.from(s);
+  const sbuf = Array.from(s);
   forTestingOnly.stripComments(sbuf);
   return sbuf.join("");
 };
