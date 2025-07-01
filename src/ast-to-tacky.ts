@@ -38,6 +38,7 @@ function convertUnary(unaryExpr: ast.UnaryExpr): ValAndInstructions {
 function convertExpr(expr: ast.Expr): ValAndInstructions {
   const kind = expr.kind;
   // TODO could this need to add more instructions?
+  let ret;
   switch (kind) {
     case "string-const": {
       throw new Error("String constants not supported");
@@ -57,13 +58,13 @@ function convertExpr(expr: ast.Expr): ValAndInstructions {
 }
 
 function convertStatement(stmt: ast.Stmt): tacky.Instruction[] {
-  let instructions: tacky.Instruction[] = [];
+  const instructions: tacky.Instruction[] = [];
   switch (stmt.kind) {
     case "return-stmt": {
       const { val, instrs } = convertExpr(stmt.expr);
       instructions.push(...instrs);
       instructions.push(tacky.Return(val));
-      return instructions;
+      break;
     }
     default: {
       const _check: never = stmt.kind;

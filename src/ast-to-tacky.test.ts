@@ -25,4 +25,5 @@ test("AST to TACKY", () => {
   const ast2 = parse(lex(main2));
   const tacky2 = astToTacky(ast2);
   // TODO
+  expect(tacky2).not.toBeNull();
 });
