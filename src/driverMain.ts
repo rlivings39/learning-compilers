@@ -110,6 +110,7 @@ export function parseArguments(argv: string[]) {
 
     return { values, positionals };
   } catch (e: unknown) {
+    // TODO have my own error type so that unhandled errors show stacks
     const newError = new Error(
       `${e instanceof Error ? e.message : e}\n${renderUsage(NOTCC_CLI_FLAGS)}`
     );
