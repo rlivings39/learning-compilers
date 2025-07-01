@@ -1,9 +1,10 @@
 import * as ast from "./ast";
+import { NotccError } from "./errors";
 
 import { Token, TokenKind, UnaryToken } from "./lex";
 
 function fail(msg: string): never {
-  throw Error(msg);
+  throw new NotccError(msg);
 }
 
 function expect(expected: TokenKind, tokens: Token[]): Token {
@@ -109,7 +110,7 @@ function parseStatement(tokens: Token[]): ast.Stmt {
 
 function assert(cond: boolean): asserts cond {
   if (!cond) {
-    throw new Error("Assertion failed");
+    throw new NotccError("Assertion failed");
   }
 }
 function parseIdentifier(tokens: Token[]): ast.Identifier {

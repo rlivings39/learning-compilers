@@ -39,7 +39,7 @@ function convertExpr(expr: ast.Expr): ValAndInstructions {
   const kind = expr.kind;
   switch (kind) {
     case "string-const": {
-      throw new Error("String constants not supported");
+      throw new NotccError("String constants not supported");
     }
     case "numeric-const": {
       return { val: tacky.Constant(expr.value), instrs: [] };

@@ -12,7 +12,9 @@ import { astToAsm } from "./asm";
 import { emitAsm } from "./emit";
 import path from "path";
 import * as cp from "child_process";
+import { NotccError } from "./errors";
 
+class CliError extends NotccError {}
 interface NotccFlag extends ParseArgsOptionDescriptor {
   help: string;
 }
@@ -98,23 +100,25 @@ export function parseArguments(argv: string[]) {
       return { values, positionals };
     }
     if (positionals.length !== 1) {
-      throw Error("No input file specified");
+      throw new CliError("No input file specified");
     }
 
     if (
       Number(values.lex) + Number(values.codegen) + Number(values.parse) >
       1
     ) {
-      throw Error("At most 1 flag may be passed");
+      throw new CliError("At most 1 flag may be passed");
     }
 
     return { values, positionals };
   } catch (e: unknown) {
-    // TODO have my own error type so that unhandled errors show stacks
-    const newError = new Error(
-      `${e instanceof Error ? e.message : e}\n${renderUsage(NOTCC_CLI_FLAGS)}`
-    );
-    throw newError;
+    if (e instanceof CliError) {
+      const newError = new CliError(
+        `${e.message}\n${renderUsage(NOTCC_CLI_FLAGS)}`
+      );
+      throw newError;
+    }
+    throw e;
   }
 }
 

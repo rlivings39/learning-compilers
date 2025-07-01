@@ -1,4 +1,5 @@
 import * as ast from "./ast";
+import { NotccError } from "./errors";
 
 export type ImmediateNumber = {
   kind: "number";
@@ -71,7 +72,7 @@ function exprToAsm(expr: ast.Expr): Operand {
       return ImmediateNumber(expr.value);
     }
     case "string-const": {
-      throw new Error("string-const not handled yet");
+      throw new NotccError("string-const not handled yet");
     }
     default: {
       const _check: never = expr;

@@ -1,3 +1,5 @@
+import { NotccError } from "./errors";
+
 /**
  * Discriminator for the tokens
  */
@@ -174,7 +176,7 @@ function stripComments(code: string[]) {
           ++i;
         }
         if (i === code.length - 1) {
-          throw new Error("Unterminated block comment");
+          throw new NotccError("Unterminated block comment");
         } else {
           code.splice(i, 2, " ", " ");
         }
