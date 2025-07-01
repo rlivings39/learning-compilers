@@ -11,22 +11,28 @@ type ValAndInstructions = {
   val: tacky.Value;
   instrs: tacky.Instruction[];
 };
-function convertUnary(unaryExpr: ast.UnaryExpr): tacky.UnaryOp {
-  // TODO assignments
+
+function convertUnary(unaryExpr: ast.UnaryExpr): ValAndInstructions {
   const tmpVar = makeTemp();
-  const expr = convertExpr(unaryExpr.expr);
+  const { val: expr, instrs } = convertExpr(unaryExpr.expr);
   const { kind } = unaryExpr;
+  let maker;
   switch (kind) {
     case "complement": {
-      return tacky.Complement(expr, tmpVar);
+      maker = tacky.Complement;
+      break;
     }
     case "unary-minus": {
-      return tacky.UnaryMinus(expr, tmpVar);
+      maker = tacky.UnaryMinus;
+      break;
     }
     default:
       const _check: never = kind;
       return _check;
   }
+  const tackyUnary = maker(expr, tmpVar);
+  instrs.push(tackyUnary);
+  return { val: tmpVar, instrs };
 }
 
 function convertExpr(expr: ast.Expr): ValAndInstructions {
@@ -41,8 +47,7 @@ function convertExpr(expr: ast.Expr): ValAndInstructions {
     }
     case "complement":
     case "unary-minus": {
-      const unaryInstruction = convertUnary(expr);
-      return { val: unaryInstruction.dst, instrs: [unaryInstruction] };
+      return convertUnary(expr);
     }
     default: {
       const _check: never = kind;
@@ -56,7 +61,7 @@ function convertStatement(stmt: ast.Stmt): tacky.Instruction[] {
   switch (stmt.kind) {
     case "return-stmt": {
       const { val, instrs } = convertExpr(stmt.expr);
-      instructions.concat(instrs);
+      instructions.push(...instrs);
       instructions.push(tacky.Return(val));
       return instructions;
     }

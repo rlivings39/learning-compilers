@@ -21,10 +21,10 @@ export function Function(name: Identifier, body: Instruction[]): Function {
 
 export type Return = {
   kind: "return";
-  val: Value;
+  src: Value;
 };
 export function Return(val: Value): Return {
-  return { kind: "return", val };
+  return { kind: "return", src: val };
 }
 
 export type UnaryMinus = {

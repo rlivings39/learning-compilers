@@ -14,7 +14,7 @@ test("Tacky construction", () => {
   expect(func.name).toBe("main");
   expect(func.body).toHaveLength(3);
   expect(func.body).toEqual([comp, uminus, ret]);
-  expect(ret.val).toBe(var1);
+  expect(ret.src).toBe(var1);
   expect(uminus.dst).toBe(var1);
   expect(uminus.src).toBe(c0);
   expect(comp.src).toBe(c0);
