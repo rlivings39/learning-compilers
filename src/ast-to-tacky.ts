@@ -4,7 +4,7 @@ import { NotccError } from "./errors";
 
 let VAR_ID = 0;
 function makeTemp(): tacky.Var {
-  return tacky.Var(`tmp${VAR_ID++}`);
+  return tacky.Var(`tmp.${VAR_ID++}`);
 }
 
 type ValAndInstructions = {

@@ -13,6 +13,9 @@ import { emitAsm } from "./emit";
 import path from "path";
 import * as cp from "child_process";
 import { NotccError } from "./errors";
+import { astToTacky } from "./ast-to-tacky";
+import assert from "assert";
+import { prettyPrintTacky } from "./pretty-print-tacky";
 
 class CliError extends NotccError {}
 interface NotccFlag extends ParseArgsOptionDescriptor {
@@ -71,6 +74,16 @@ const NOTCC_CLI_FLAGS: NotccFlags = {
     default: false,
     help: "Pretty print the output of the parser",
   },
+  tacky: {
+    type: "boolean",
+    default: false,
+    help: "Run the lexer, parser, and TACKY IR generation stopping before assembly generation",
+  },
+  "pretty-print-tacky": {
+    type: "boolean",
+    default: false,
+    help: "Pretty print TACKY IR after generation",
+  },
   codegen: {
     type: "boolean",
     default: false,
@@ -104,7 +117,10 @@ export function parseArguments(argv: string[]) {
     }
 
     if (
-      Number(values.lex) + Number(values.codegen) + Number(values.parse) >
+      Number(values.lex) +
+        Number(values.codegen) +
+        Number(values.parse) +
+        Number(values.tacky) >
       1
     ) {
       throw new CliError("At most 1 flag may be passed");
@@ -158,6 +174,15 @@ export function driverMain(argv: string[]) {
     console.log(prettyPrint(ast));
   }
   if (values.parse) {
+    return;
+  }
+
+  const tacky = astToTacky(ast);
+
+  if (values["pretty-print-tacky"]) {
+    console.log(prettyPrintTacky(tacky));
+  }
+  if (values.tacky) {
     return;
   }
 
