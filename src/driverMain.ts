@@ -14,7 +14,6 @@ import path from "path";
 import * as cp from "child_process";
 import { NotccError } from "./errors";
 import { astToTacky } from "./ast-to-tacky";
-import assert from "assert";
 import { prettyPrintTacky } from "./pretty-print-tacky";
 
 class CliError extends NotccError {}
