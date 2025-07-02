@@ -163,6 +163,12 @@ The next phase we cover is assembly generation. Here we produce another data str
 
 This new data structure is another AST.
 
+When representing assembly in the compiler, one can choose at what level and fidelity to do so.
+
+The book introduces the idea of **pseudo registers**, things that can be used like registers in our assembly IR but that can't map directly to real registers as we use an unlimited supply of pseudo registers.
+
+
+
 ## Code emission
 
 This stage generates assembly code to a file on disk. The format will change a bit depending on the target platform. For linux always include
@@ -228,9 +234,18 @@ The `push` and `pop` instructions work on this stack. An instruction like `push 
 
 When a function is called it allocates space on the stack for local variables and temporaries called a **stack frame**. The base of this frame is stored in `%rbp`, called the **base pointer**. All stack entries for the function can be referred to relative to RBP rather than with an explicit address. So a local variable might look like `-4(%rbp)` (remember, the stack grows toward decreasing addresses).
 
+## Registers
 
+Registers have multiple aliases in assembly that specify how many bytes to read. `EAX` is the lower 32 bits of `RAX`, `AX` is 16 bits and `AL, AH` are 8 bits.
 
 ## Notes on the book
+
+Likes:
+
+* The author gives high-level guidance and sometimes pseudo code while leaving much for the reader to learn and decide.
+* Book allows for flexibility and acknowledges variations like using different implementation languages and leaving other choices up to the reader.
+
+Suggestions:
 
 * Chapter 1 pp. 10 - Testing the lexer involves dealing with comments though the book doesn't mention them. It would have been useful for me to see a few sentences on how those are usually handled in a compiler. E.g. Does the lexer handle them, maybe they're stripped out in a pre-pass, or maybe they're left in place but ignored by the lexer?
 * Chapter 1 - It wasn't clear to me at all that my compiler should be invoking the system compiler to build an executable from my assembly output. After failing the tests and reading the test harness, I finally got the idea. Stating this in the book would have saved me time and confusion.
