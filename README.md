@@ -27,13 +27,15 @@ Compiles input-file.c creating an executable /path/to/input-file using the syste
 
 Options:
 
---lex           Run the lexer but stop before parsing
---print-tokens  Print out the tokens found by the lexer
---parse         Run the lexer and parser but stop before codegen
---pretty-print  Pretty print the output of the parser
---codegen       Run the lexer, parser, codegen but stop before assembly generation
---asm-only (-S) Emit assembly in input-file.s rather than linking an executable
---help (-h)     Show the help
+--lex                Run the lexer but stop before parsing
+--print-tokens       Print out the tokens found by the lexer
+--parse              Run the lexer and parser but stop before codegen
+--pretty-print       Pretty print the output of the parser
+--tacky              Run the lexer, parser, and TACKY IR generation stopping before assembly generation
+--pretty-print-tacky Pretty print TACKY IR after generation
+--codegen            Run the lexer, parser, codegen but stop before assembly generation
+-S, --asm-only       Emit assembly in input-file.s rather than linking an executable
+-h, --help           Show the help
 ```
 
 Running `npm link` will let you refer to this with its name `notcc`.
