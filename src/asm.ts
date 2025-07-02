@@ -12,15 +12,33 @@ export function ImmediateNumber(value: number): ImmediateNumber {
 
 export type Immediate = ImmediateNumber;
 
+export type RegIds = "AX" | "R10";
 export type Register = {
   kind: "register";
+  reg: RegIds;
 };
 
-export function Register(): Register {
-  return { kind: "register" };
+export function Register(reg: RegIds): Register {
+  return { kind: "register", reg };
 }
 
-export type Operand = Immediate | Register;
+export type Pseudo = {
+  kind: "pseudo";
+  id: ast.Identifier;
+};
+export function Pseudo(id: ast.Identifier): Pseudo {
+  return { kind: "pseudo", id };
+}
+
+export type Stack = {
+  kind: "stack";
+  offset: number;
+};
+export function Stack(offset: number): Stack {
+  return { kind: "stack", offset };
+}
+
+export type Operand = Immediate | Register | Pseudo | Stack;
 
 export type Move = {
   kind: "move";
@@ -44,7 +62,30 @@ export type Load = {
   kind: "load";
 };
 
-export type Instruction = Move | Return;
+export type Neg = {
+  kind: "neg";
+  inout: Operand;
+};
+export function Neg(inout: Operand): Neg {
+  return { kind: "neg", inout };
+}
+export type Not = {
+  kind: "not";
+  inout: Operand;
+};
+export function Not(inout: Operand): Not {
+  return { kind: "not", inout };
+}
+
+export type AllocateStack = {
+  kind: "allocate-stack";
+  bytes: number;
+};
+export function AllocateStack(bytes: number): AllocateStack {
+  return { kind: "allocate-stack", bytes };
+}
+
+export type Instruction = Move | Return | Neg | Not | AllocateStack;
 
 export type Function = {
   name: ast.Identifier;
