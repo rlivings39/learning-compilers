@@ -155,6 +155,12 @@ function programToAsm(prog: tacky.Program): Program {
   return Program(func);
 }
 
+/**
+ * Fix Move instructions where both operands are on
+ * the stack. Prepends stack allocation instruction.
+ * @param prog
+ * @param stackOffset
+ */
 function fixupStackOperands(prog: Program, stackOffset: number) {
   const instructions = prog.function_definition.instructions;
   instructions.unshift(AllocateStack(stackOffset));
@@ -215,6 +221,11 @@ function toStack(
   return { newOperand, stackOffset };
 }
 
+/**
+ * Moves pseudo register operands to the stack
+ * @param prog
+ * @returns The amount of stack space needed by the program
+ */
 function moveToStack(prog: Program): number {
   let stackOffset = 0;
   const symbolMap = new Map<string, number>();
@@ -252,6 +263,12 @@ function moveToStack(prog: Program): number {
   return stackOffset;
 }
 
+/**
+ * Convert a tacky program into an ASM program in preparation
+ * for the emitter.
+ * @param prog
+ * @returns ASM program ready for the emitter
+ */
 export function tackyToAsm(prog: tacky.Program): Program {
   const asmProg = programToAsm(prog);
   const stackOffset = moveToStack(asmProg);
