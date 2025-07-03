@@ -1,5 +1,5 @@
 import * as ast from "./ast";
-import { NotccError } from "./errors";
+import * as tacky from "./tacky";
 
 export type ImmediateNumber = {
   kind: "number";
@@ -107,45 +107,123 @@ export function Program(function_definition: Function): Program {
   return { function_definition };
 }
 
-function exprToAsm(expr: ast.Expr): Operand {
-  switch (expr.kind) {
-    case "numeric-const": {
-      return ImmediateNumber(expr.value);
+function valueToAsm(val: tacky.Value): Operand {
+  switch (val.kind) {
+    case "numeric-constant": {
+      return ImmediateNumber(val.val);
     }
-    case "string-const": {
-      throw new NotccError("string-const not handled yet");
-    }
-    default: {
-      const _check: never = expr;
-      return _check;
+    case "var": {
+      return Pseudo(val.name);
     }
   }
 }
 
-function stmtToAsm(stmt: ast.Stmt): Instruction[] {
+function instrToAsm(instr: tacky.Instruction): Instruction[] {
   const instructions: Instruction[] = [];
-  // TODO pattern matching?
-  if (stmt.kind === "return-stmt") {
-    const num: Operand = exprToAsm(stmt.expr);
-    const mv = Move(num, Register("AX"));
-    const ret = Return();
-    instructions.push(mv, ret);
+  const kind = instr.kind;
+  switch (kind) {
+    case "return": {
+      const src = valueToAsm(instr.src);
+      instructions.push(Move(src, Register("AX")));
+      instructions.push(Return());
+      break;
+    }
+    case "unary-minus":
+    case "complement": {
+      const src = valueToAsm(instr.src);
+      const dst = valueToAsm(instr.dst);
+      instructions.push(Move(src, dst));
+      const unary = instr.kind === "complement" ? Not : Neg;
+      instructions.push(unary(dst));
+      break;
+    }
   }
   return instructions;
 }
 
-function functionToAsm(func: ast.Function): Function {
+function functionToAsm(func: tacky.Function): Function {
   const name: ast.Identifier = func.name;
   const instructions: Instruction[] = [];
-  instructions.push(...stmtToAsm(func.body));
+  func.body.forEach((instr) => {
+    instructions.push(...instrToAsm(instr));
+  });
   return Function(name, instructions);
 }
 
-function programToAsm(prog: ast.Program): Program {
-  const func: Function = functionToAsm(prog.function_definition);
+function programToAsm(prog: tacky.Program): Program {
+  const func: Function = functionToAsm(prog.func);
   return Program(func);
 }
 
-export function astToAsm(prog: ast.Program): Program {
-  return programToAsm(prog);
+function fixupRegisterOperands(prog: Program) {}
+
+function toStack(
+  val: Operand,
+  stackOffset: number,
+  symbolMap: Map<string, number>
+) {
+  let newOperand;
+  if (val.kind === "pseudo") {
+    const id = val.id;
+    let offset = symbolMap.get(id);
+    if (!offset) {
+      stackOffset += 4;
+      offset = stackOffset;
+      symbolMap.set(id, offset);
+    }
+    newOperand = Stack(-offset);
+  } else {
+    newOperand = val;
+  }
+  return { newOperand, stackOffset };
 }
+
+function moveToStack(prog: Program): number {
+  let stackOffset = 0;
+  const symbolMap = new Map<string, number>();
+  prog.function_definition.instructions.forEach((instr) => {
+    switch (instr.kind) {
+      case "move": {
+        ({ newOperand: instr.src, stackOffset } = toStack(
+          instr.src,
+          stackOffset,
+          symbolMap
+        ));
+        ({ newOperand: instr.dst, stackOffset } = toStack(
+          instr.dst,
+          stackOffset,
+          symbolMap
+        ));
+        break;
+      }
+      case "allocate-stack":
+      case "return": {
+        // Nothing to do as there are no operands
+        break;
+      }
+      case "neg":
+      case "not": {
+        ({ newOperand: instr.inout, stackOffset } = toStack(
+          instr.inout,
+          stackOffset,
+          symbolMap
+        ));
+        break;
+      }
+    }
+  });
+  return stackOffset;
+}
+
+export function tackyToAsm(prog: tacky.Program): Program {
+  const asmProg = programToAsm(prog);
+  moveToStack(asmProg);
+  fixupRegisterOperands(asmProg);
+  return asmProg;
+}
+
+export const forTestingOnly = {
+  programToAsm,
+  moveToStack,
+  fixupRegisterOperands,
+};

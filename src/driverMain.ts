@@ -8,7 +8,7 @@ import * as fs from "fs";
 import { lex, TokenKind } from "./lex";
 import { parse } from "./parse";
 import { prettyPrint } from "./pretty-print";
-import { astToAsm } from "./asm";
+import { tackyToAsm } from "./asm";
 import { emitAsm } from "./emit";
 import path from "path";
 import * as cp from "child_process";
@@ -185,7 +185,7 @@ export function driverMain(argv: string[]) {
     return;
   }
 
-  const asm = astToAsm(ast);
+  const asm = tackyToAsm(tacky);
   if (values.codegen) {
     return;
   }
