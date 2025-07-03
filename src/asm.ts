@@ -85,6 +85,7 @@ export function AllocateStack(bytes: number): AllocateStack {
   return { kind: "allocate-stack", bytes };
 }
 
+export type UnaryOp = Neg | Not;
 export type Instruction = Move | Return | Neg | Not | AllocateStack;
 
 export type Function = {
