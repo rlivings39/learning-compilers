@@ -29,7 +29,7 @@ function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
   expect(token.kind, tokens);
   const expr = parseExpr(tokens);
   switch (token.kind) {
-    case TokenKind.UNARY_MINUS: {
+    case TokenKind.MINUS: {
       return ast.UnaryMinus(expr);
     }
     case TokenKind.UNARY_BITWISE_COMPLEMENT: {
@@ -58,7 +58,7 @@ function parseExpr(tokens: Token[]): ast.Expr {
     case TokenKind.INT_CONSTANT: {
       return parseNumericConst(tokens);
     }
-    case TokenKind.UNARY_MINUS:
+    case TokenKind.MINUS:
     case TokenKind.UNARY_BITWISE_COMPLEMENT:
     case TokenKind.DECREMENT: {
       return parseUnary(token, tokens);

@@ -80,11 +80,23 @@ test("Lex token tests", () => {
 });
 
 test("Lex unary ops", () => {
-  expect(lex("-")).toMatchObject([{ kind: TokenKind.UNARY_MINUS }]);
+  expect(lex("-")).toMatchObject([{ kind: TokenKind.MINUS }]);
   expect(lex("--")).toMatchObject([{ kind: TokenKind.DECREMENT }]);
   expect(lex("~~x")).toMatchObject([
     { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
     { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
     { kind: TokenKind.IDENTIFIER },
+  ]);
+});
+
+test("Lex binary ops", () => {
+  expect(lex("+   ")).toMatchObject([{ kind: TokenKind.PLUS }]);
+  expect(lex("  * ")).toMatchObject([{ kind: TokenKind.TIMES }]);
+  expect(lex("/  ")).toMatchObject([{ kind: TokenKind.DIVIDE }]);
+  expect(lex("%")).toMatchObject([{ kind: TokenKind.REMAINDER }]);
+  expect(lex("a+ 2  ")).toMatchObject([
+    { kind: TokenKind.IDENTIFIER, id: "a" },
+    { kind: TokenKind.PLUS },
+    { kind: TokenKind.INT_CONSTANT },
   ]);
 });

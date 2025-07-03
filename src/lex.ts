@@ -16,9 +16,13 @@ export enum TokenKind {
   SEMICOLON,
   IDENTIFIER,
   INT_CONSTANT,
-  UNARY_MINUS,
   UNARY_BITWISE_COMPLEMENT,
   DECREMENT,
+  MINUS,
+  PLUS,
+  TIMES,
+  DIVIDE,
+  REMAINDER,
 }
 
 type SimpleTokenKind =
@@ -31,12 +35,27 @@ type SimpleTokenKind =
   | TokenKind.KW_INT
   | TokenKind.KW_VOID
   | TokenKind.KW_RETURN
-  | TokenKind.SEMICOLON;
+  | TokenKind.SEMICOLON
+  | TokenKind.MINUS
+  | TokenKind.UNARY_BITWISE_COMPLEMENT
+  | TokenKind.DECREMENT
+  | TokenKind.PLUS
+  | TokenKind.DIVIDE
+  | TokenKind.REMAINDER
+  | TokenKind.TIMES
+  | TokenKind.MINUS;
 
-export type UnaryTokenKind =
-  | TokenKind.UNARY_MINUS
+type UnaryTokenKind =
+  | TokenKind.MINUS
   | TokenKind.UNARY_BITWISE_COMPLEMENT
   | TokenKind.DECREMENT;
+
+type BinaryTokenKind =
+  | TokenKind.PLUS
+  | TokenKind.DIVIDE
+  | TokenKind.REMAINDER
+  | TokenKind.MINUS
+  | TokenKind.TIMES;
 
 // Various token interfaces
 interface SimpleToken {
@@ -56,10 +75,20 @@ interface IntConstToken {
 export interface UnaryToken {
   kind: UnaryTokenKind;
 }
+
+interface BinaryToken {
+  kind: BinaryTokenKind;
+}
+
 /**
  * Type for tokens returned by the lexer.
  */
-export type Token = SimpleToken | IdentifierToken | IntConstToken | UnaryToken;
+export type Token =
+  | SimpleToken
+  | IdentifierToken
+  | IntConstToken
+  | UnaryToken
+  | BinaryToken;
 
 interface TokenData {
   pattern: RegExp;
@@ -83,9 +112,13 @@ function makeToken(match: string, kind: TokenKind): Token {
     case TokenKind.KW_VOID:
     case TokenKind.KW_RETURN:
     case TokenKind.SEMICOLON:
-    case TokenKind.UNARY_MINUS:
+    case TokenKind.MINUS:
     case TokenKind.UNARY_BITWISE_COMPLEMENT:
-    case TokenKind.DECREMENT: {
+    case TokenKind.DECREMENT:
+    case TokenKind.PLUS:
+    case TokenKind.TIMES:
+    case TokenKind.DIVIDE:
+    case TokenKind.REMAINDER: {
       return makeSimpleToken(match, kind);
     }
   }
@@ -93,8 +126,8 @@ function makeToken(match: string, kind: TokenKind): Token {
 
 function makeSimpleToken(
   match: string,
-  kind: SimpleTokenKind | UnaryTokenKind
-): SimpleToken | UnaryToken {
+  kind: SimpleTokenKind
+): SimpleToken | UnaryToken | BinaryToken {
   return { kind: kind };
 }
 
@@ -120,9 +153,13 @@ const PATTERN_MAP: TokenPatternMap = {
   [TokenKind.SEMICOLON]: { pattern: /^;/ },
   [TokenKind.IDENTIFIER]: { pattern: /^[a-zA-z_]\w*\b/ },
   [TokenKind.INT_CONSTANT]: { pattern: /^[0-9]+\b/ },
-  [TokenKind.UNARY_MINUS]: { pattern: /^-/ },
+  [TokenKind.MINUS]: { pattern: /^-/ },
   [TokenKind.DECREMENT]: { pattern: /^--/ },
   [TokenKind.UNARY_BITWISE_COMPLEMENT]: { pattern: /^~/ },
+  [TokenKind.PLUS]: { pattern: /^\+/ },
+  [TokenKind.DIVIDE]: { pattern: /^\// },
+  [TokenKind.REMAINDER]: { pattern: /^%/ },
+  [TokenKind.TIMES]: { pattern: /^\*/ },
 };
 
 export class Location {
