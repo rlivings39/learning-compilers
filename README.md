@@ -241,6 +241,7 @@ Registers have multiple aliases in assembly that specify how many bytes to read.
 ## Actions
 
 - [ ] Read about twos complement https://www.cs.cornell.edu/~tomf/notes/cps104/ and https://www.nand2tetris.org/course (book icon under Project 2: Boolean arithmetic)
+
 ## Notes on the book
 
 Likes:

@@ -40,12 +40,17 @@ test("AST to assembly", () => {
   const asmProg = asm.tackyToAsm(tacky);
   const func = asmProg.function_definition;
   expect(func.name).toBe("main");
-  expect(func.instructions).toHaveLength(2);
+  // Expect 3 instructions: subq to allocate stack, movel to move output
+  // into eax, ret to return
+  expect(func.instructions, JSON.stringify(func, null, 2)).toHaveLength(3);
 
   const instructions = func.instructions;
-  expect(instructions[0].kind).toBe("move");
-  expect(instructions[1].kind).toBe("return");
-  const mv: asm.Move = instructions[0] as asm.Move;
+  expect(instructions.map((i) => i.kind)).toEqual([
+    "allocate-stack",
+    "move",
+    "return",
+  ]);
+  const mv: asm.Move = instructions[1] as asm.Move;
   expect(mv.src.kind).toBe("number");
   expect(mv.dst.kind).toBe("register");
   const num = mv.src as asm.ImmediateNumber;
