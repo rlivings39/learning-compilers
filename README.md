@@ -238,6 +238,9 @@ When a function is called it allocates space on the stack for local variables an
 
 Registers have multiple aliases in assembly that specify how many bytes to read. `EAX` is the lower 32 bits of `RAX`, `AX` is 16 bits and `AL, AH` are 8 bits.
 
+## Actions
+
+- [ ] Read about twos complement https://www.cs.cornell.edu/~tomf/notes/cps104/ and https://www.nand2tetris.org/course (book icon under Project 2: Boolean arithmetic)
 ## Notes on the book
 
 Likes:
