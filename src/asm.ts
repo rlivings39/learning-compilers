@@ -127,7 +127,7 @@ function stmtToAsm(stmt: ast.Stmt): Instruction[] {
   // TODO pattern matching?
   if (stmt.kind === "return-stmt") {
     const num: Operand = exprToAsm(stmt.expr);
-    const mv = Move(num, Register());
+    const mv = Move(num, Register("AX"));
     const ret = Return();
     instructions.push(mv, ret);
   }

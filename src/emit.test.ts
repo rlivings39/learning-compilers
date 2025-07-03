@@ -4,7 +4,7 @@ import { emitAsm } from "./emit";
 
 test("Emitter", () => {
   const num = asm.ImmediateNumber(12);
-  const reg = asm.Register();
+  const reg = asm.Register("AX");
   const mv = asm.Move(num, reg);
   const ret = asm.Return();
   const func = asm.Function("main", [mv, ret]);
