@@ -6,6 +6,16 @@ This is my attempt at working through [*Writing a C Compiler*](https://norasandl
 
 The [tests](https://github.com/nlsandler/writing-a-c-compiler-tests/) provided with the book can be used along with in-project tests.
 
+## Current status
+
+This compiler is complete through Chapter 2 of the book meaning it compiles programs of the form
+
+```c
+int main(void) { return ~(-4);}
+```
+
+for any combination of `~, -` and any integer constant.
+
 ## Installing and using this repo
 
 Download the repo and
@@ -240,7 +250,7 @@ Registers have multiple aliases in assembly that specify how many bytes to read.
 
 ## Actions
 
-- [ ] Read about twos complement https://www.cs.cornell.edu/~tomf/notes/cps104/ and https://www.nand2tetris.org/course (book icon under Project 2: Boolean arithmetic)
+-[ ] Read about twos complement https://www.cs.cornell.edu/~tomf/notes/cps104/ and https://www.nand2tetris.org/course (book icon under Project 2: Boolean arithmetic)
 
 ## Notes on the book
 
