@@ -155,7 +155,44 @@ function programToAsm(prog: tacky.Program): Program {
   return Program(func);
 }
 
-function fixupRegisterOperands(prog: Program) {}
+function fixupStackOperands(prog: Program, stackOffset: number) {
+  const instructions = prog.function_definition.instructions;
+  instructions.unshift(AllocateStack(stackOffset));
+  const newInstructions: Instruction[] = [];
+  instructions.forEach((instr) => {
+    switch (instr.kind) {
+      case "move": {
+        // If both operands are on the stack, use an
+        // intermediate register:
+        //
+        // Move(Stack(-4), Stack(-8))
+        //
+        // becomes:
+        //
+        // Move(Stack(-4), Register)
+        // Move(Register, Stack(-4))
+        if (instr.dst.kind === "stack" && instr.src.kind === "stack") {
+          const reg = Register("R10");
+          const newMove = Move(instr.src, reg);
+          instr.src = reg;
+          newInstructions.push(newMove, instr);
+        } else {
+          newInstructions.push(instr);
+        }
+        break;
+      }
+      case "return":
+      case "neg":
+      case "not":
+      case "allocate-stack": {
+        // Nothing to do as these have 0 or 1 operands
+        newInstructions.push(instr);
+        break;
+      }
+    }
+  });
+  prog.function_definition.instructions = newInstructions;
+}
 
 function toStack(
   val: Operand,
@@ -217,13 +254,13 @@ function moveToStack(prog: Program): number {
 
 export function tackyToAsm(prog: tacky.Program): Program {
   const asmProg = programToAsm(prog);
-  moveToStack(asmProg);
-  fixupRegisterOperands(asmProg);
+  const stackOffset = moveToStack(asmProg);
+  fixupStackOperands(asmProg, stackOffset);
   return asmProg;
 }
 
 export const forTestingOnly = {
   programToAsm,
   moveToStack,
-  fixupRegisterOperands,
+  fixupStackOperands,
 };

@@ -76,7 +76,8 @@ test("MoveToStackTransform", () => {
 
   // Run move to stack transform and ensure that pseudo register was
   // mapped to a single stack variable
-  asm.forTestingOnly.moveToStack(asmProg);
+  const stackOffset = asm.forTestingOnly.moveToStack(asmProg);
+  expect(stackOffset).toEqual(4);
   const instructionsOnStack = asmProg.function_definition.instructions;
   expect(instructionsOnStack).toHaveLength(4);
   expect(instructions.map((instr) => instr.kind)).toEqual([
@@ -92,4 +93,52 @@ test("MoveToStackTransform", () => {
   expect((instructions[1] as asm.Neg).inout).toEqual(stackEntry);
   expect((instructions[2] as asm.Move).src).toEqual(stackEntry);
   expect((instructions[2] as asm.Move).dst).toEqual(asm.Register("AX"));
+});
+
+test("MoveFixupStackOperands", () => {
+  const mainProg = `
+  int main (void) {
+    return -(~2);
+  }`;
+  const tokens = lex(mainProg);
+  const ast = parse(tokens);
+  const tacky = astToTacky(ast);
+
+  // Convert to asm and sanity check initial state
+  const asmProg = asm.forTestingOnly.programToAsm(tacky);
+  const stackOffset = asm.forTestingOnly.moveToStack(asmProg);
+  let instructions = asmProg.function_definition.instructions;
+  expect(instructions.map((i) => i.kind)).toEqual([
+    "move",
+    "not",
+    "move",
+    "neg",
+    "move",
+    "return",
+  ]);
+  const badMove = instructions[2] as asm.Move;
+  expect(badMove.dst.kind).toBe("stack");
+  expect(badMove.src.kind).toBe("stack");
+
+  // Now run stack fixup transform and verify results
+  asm.forTestingOnly.fixupStackOperands(asmProg, stackOffset);
+  instructions = asmProg.function_definition.instructions;
+  expect(instructions.map((i) => i.kind)).toEqual([
+    "allocate-stack",
+    "move",
+    "not",
+    "move",
+    "move",
+    "neg",
+    "move",
+    "return",
+  ]);
+
+  const newMove1 = instructions[3] as asm.Move;
+  const newMove2 = instructions[4] as asm.Move;
+  expect(newMove1.src.kind).toBe("stack");
+  expect(newMove1.dst.kind).toBe("register");
+  expect(newMove2.src.kind).toBe("register");
+  expect(newMove2.dst.kind).toBe("stack");
+  expect(newMove1.dst).toEqual(newMove2.src);
 });
