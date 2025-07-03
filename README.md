@@ -230,6 +230,38 @@ main:
   ret
 ```
 
+## Implementing binary operators
+
+Binary operators provide other issues such as **precedence** and **associativity** that need to be handled. Operators have varying precedence, meaning which is evaluated first. `1 + 2 * 3` is evaluated as `1 + (2 * 3)`.
+
+They can also be **left-associative** or **right-associative**. For left-associative you apply the operator on the left first and similarly for right-associative. `+,-,*,/,%` are left associative so that `1 + 2 - 3` is equivalent to `(1 + 2) - 3`.
+
+A simple grammar rule for binary expressions could be
+
+```bnf
+<expr> ::= <int> | <unop> <expr> | "(" <expr> ")" | <expr> <binop> <expr>
+```
+
+This is **ambiguous** because it doesn't specify the precedence of operators.
+
+It is also **left-recursive** because the leftmost symbol in the production for `<expr>` is `<expr>`. Blind recursive descent would fail to terminate as the recursive call would consume no tokens.
+
+To address these issues we can refactor the grammar to split out rules for each precedence level
+
+```bnf
+<expr> ::= <term> { ("+" | "-") <term> }
+<term> ::= <factor> { ("*" | "/" | "%" ) }
+<factor> ::= <int> | <unop> <factor> | "(" <expr> ")"
+```
+
+The `{}` indicates repetition and would match `1 + 2 - 3`. Parsing would then associate the operations in the AST using left-associativity.
+
+Such an approach would work but gets unwieldy as you have to have a different rule for each precedence level (and associated parser functions) generating a lot of boilerplate.
+
+### Better solution: precedence climbing
+
+TODO
+
 ## The program stack
 
 The **stack** is a special part of program memory. The register `%rsp` points to the top of the stack, i.e. it's the **stack pointer**. Namely, the last used entry on the stack rather than the first free entry.
