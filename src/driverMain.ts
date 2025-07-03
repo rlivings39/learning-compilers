@@ -202,5 +202,14 @@ export function driverMain(argv: string[]) {
     return;
   }
   const outExeFileName = path.format({ ...outAsmFilePath, ext: "" });
-  cp.exec(`gcc ${outAsmFileName} -o ${outExeFileName}`);
+  try {
+    cp.execSync(`gcc ${outAsmFileName} -o ${outExeFileName}`, {
+      stdio: "pipe",
+    });
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      throw new NotccError(`Gcc error: ${e.message}`);
+    }
+    throw e;
+  }
 }

@@ -1,5 +1,6 @@
 # Assembly files
 *.s
+a.out
 
 # Logs
 logs
