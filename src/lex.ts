@@ -50,7 +50,7 @@ type UnaryTokenKind =
   | TokenKind.UNARY_BITWISE_COMPLEMENT
   | TokenKind.DECREMENT;
 
-type BinaryTokenKind =
+export type BinaryTokenKind =
   | TokenKind.PLUS
   | TokenKind.DIVIDE
   | TokenKind.REMAINDER
@@ -76,7 +76,7 @@ export interface UnaryToken {
   kind: UnaryTokenKind;
 }
 
-interface BinaryToken {
+export interface BinaryToken {
   kind: BinaryTokenKind;
 }
 

@@ -50,3 +50,30 @@ test("Parsing", () => {
   }
 )`);
 });
+
+test("Binary operator parsing", () => {
+  const plusProg = `int main(void) { return 1 - 4;}`;
+  const plusAst = parse(lex(plusProg));
+  expect(plusAst.function_definition.name).toBe("main");
+  expect(prettyPrint(plusAst).trim()).toEqual(`Program (
+  Function main() {
+    return subtract(1, 4);
+  }
+)`);
+
+  const plusMinusProg = `int main(void) { return 1 - 4 + 3;}`;
+  const plusMinusAst = parse(lex(plusMinusProg));
+  expect(prettyPrint(plusMinusAst).trim()).toEqual(`Program (
+  Function main() {
+    return plus(subtract(1, 4), 3);
+  }
+)`);
+
+  const manyOpsProg = `int main(void) { return 1 - 3 * 4;}`;
+  const manyOpsAst = parse(lex(manyOpsProg));
+  expect(prettyPrint(manyOpsAst).trim()).toEqual(`Program (
+  Function main() {
+    return subtract(1, multiply(3, 4));
+  }
+)`);
+});

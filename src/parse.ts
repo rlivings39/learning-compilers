@@ -1,19 +1,36 @@
 import * as ast from "./ast";
 import { NotccError } from "./errors";
 
-import { Token, TokenKind, UnaryToken } from "./lex";
+import {
+  BinaryToken,
+  BinaryTokenKind,
+  Token,
+  TokenKind,
+  UnaryToken,
+} from "./lex";
 
 function fail(msg: string): never {
   throw new NotccError(msg);
 }
 
-function expect(expected: TokenKind, tokens: Token[]): Token {
+function renderExpectedTokens(expected: TokenKind[]): string {
+  return expected.map((t) => TokenKind[t]).join(", ");
+}
+
+function expect(expected: TokenKind | TokenKind[], tokens: Token[]): Token {
   const token = tokens.shift();
-  if (!token) {
-    fail(`Unexpected end of file. Expected ${TokenKind[expected]}`);
+  if (!Array.isArray(expected)) {
+    expected = [expected];
   }
-  if (token.kind !== expected) {
-    fail(`Expected ${TokenKind[expected]}. Found ${TokenKind[token.kind]}`);
+  if (!token) {
+    fail(`Unexpected end of file. Expected ${renderExpectedTokens(expected)}`);
+  }
+  if (!expected.includes(token.kind)) {
+    fail(
+      `Expected ${renderExpectedTokens(expected)}. Found ${
+        TokenKind[token.kind]
+      }`
+    );
   }
   return token;
 }
@@ -27,7 +44,7 @@ function parseNumericConst(tokens: Token[]): ast.NumericConstant {
 
 function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
   expect(token.kind, tokens);
-  const expr = parseExpr(tokens);
+  const expr = parseFactor(tokens);
   switch (token.kind) {
     case TokenKind.MINUS: {
       return ast.UnaryMinus(expr);
@@ -46,7 +63,75 @@ function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
   }
 }
 
-function parseExpr(tokens: Token[]): ast.Expr {
+const OP_PRECEDENCE: Record<BinaryTokenKind, number> = {
+  [TokenKind.PLUS]: 45,
+  [TokenKind.MINUS]: 45,
+  [TokenKind.DIVIDE]: 50,
+  [TokenKind.TIMES]: 50,
+  [TokenKind.REMAINDER]: 50,
+};
+
+function binopPrecedence(token: BinaryToken) {
+  return OP_PRECEDENCE[token.kind];
+}
+
+function isBinOp(token: Token): token is BinaryToken {
+  return token.kind in OP_PRECEDENCE;
+}
+
+function binopTokenToName(token: BinaryToken): ast.BinaryOpName {
+  switch (token.kind) {
+    case TokenKind.PLUS: {
+      return "plus";
+    }
+    case TokenKind.MINUS: {
+      return "subtract";
+    }
+    case TokenKind.DIVIDE: {
+      return "divide";
+    }
+    case TokenKind.TIMES: {
+      return "multiply";
+    }
+    case TokenKind.REMAINDER: {
+      return "remainder";
+    }
+  }
+}
+
+function parseBinop(tokens: Token[]): ast.BinaryOpName {
+  const t = expect(
+    [
+      TokenKind.PLUS,
+      TokenKind.MINUS,
+      TokenKind.DIVIDE,
+      TokenKind.TIMES,
+      TokenKind.REMAINDER,
+    ],
+    tokens
+  );
+  // TODO can we get rid of the cast?
+  return binopTokenToName(t as BinaryToken);
+}
+
+function parseExpr(tokens: Token[], minPrecedence: number = 0): ast.Expr {
+  let left = parseFactor(tokens);
+  let nextToken = tokens[0];
+  while (isBinOp(nextToken) && binopPrecedence(nextToken) >= minPrecedence) {
+    const operator = parseBinop(tokens);
+    const right = parseExpr(tokens, binopPrecedence(nextToken) + 1);
+    // TODO generalize
+    // Operators are left-associative so that
+    //   1 + 2 - 3
+    // becomes
+    //   (1+2) - 3
+    left = ast.BinaryExpr(operator, left, right);
+    nextToken = tokens[0];
+  }
+  return left;
+}
+
+function parseFactor(tokens: Token[]): ast.Expr {
   const token = tokens[0];
   switch (token.kind) {
     case TokenKind.LEFT_PAREN: {
@@ -61,7 +146,8 @@ function parseExpr(tokens: Token[]): ast.Expr {
     case TokenKind.MINUS:
     case TokenKind.UNARY_BITWISE_COMPLEMENT:
     case TokenKind.DECREMENT: {
-      return parseUnary(token, tokens);
+      // TODO remove this cast
+      return parseUnary(token as UnaryToken, tokens);
     }
     // TODO is it good to list these out? Probably
     case TokenKind.RIGHT_PAREN:
@@ -74,6 +160,10 @@ function parseExpr(tokens: Token[]): ast.Expr {
     case TokenKind.KW_RETURN:
     case TokenKind.SEMICOLON:
     case TokenKind.IDENTIFIER:
+    case TokenKind.PLUS:
+    case TokenKind.TIMES:
+    case TokenKind.DIVIDE:
+    case TokenKind.REMAINDER:
     default: {
       fail(`Failed to parse ${TokenKind[token.kind]}. Expected an expression.`);
     }

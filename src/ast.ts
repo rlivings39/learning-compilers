@@ -81,7 +81,27 @@ export function Remainder(lhs: Expr, rhs: Expr): Remainder {
   return { kind: "remainder", lhs, rhs };
 }
 
-export type BinaryExpr = Subtract | Add | Multiply | Divide | Remainder;
+export type BinaryOpName =
+  | "plus"
+  | "divide"
+  | "multiply"
+  | "subtract"
+  | "remainder";
+export type BinaryExpr = {
+  kind: "binary-expr";
+  operator: BinaryOpName;
+  lhs: Expr;
+  rhs: Expr;
+};
+export function BinaryExpr(
+  operator: BinaryOpName,
+  lhs: Expr,
+  rhs: Expr
+): BinaryExpr {
+  return { kind: "binary-expr", operator, lhs, rhs };
+}
+
+//export type BinaryExpr = Subtract | Add | Multiply | Divide | Remainder;
 
 export type Expr = Constant | UnaryExpr | BinaryExpr;
 

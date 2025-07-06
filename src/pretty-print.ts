@@ -1,4 +1,12 @@
-import { Program, Function, Stmt, Expr, Constant, UnaryExpr } from "./ast";
+import {
+  Program,
+  Function,
+  Stmt,
+  Expr,
+  Constant,
+  UnaryExpr,
+  BinaryExpr,
+} from "./ast";
 const INDENT_INCREMENT = 2;
 
 function printLine(line: string, indentLevel: number): string {
@@ -20,6 +28,10 @@ function printConstant(c: Constant): string {
   }
 }
 
+function printBinary(binOp: BinaryExpr): string {
+  return `${binOp.operator}(${printExpr(binOp.lhs)}, ${printExpr(binOp.rhs)})`;
+}
+
 function printUnary(u: UnaryExpr): string {
   // TODO only emit parens when needed
   return `${u.op}(${printExpr(u.expr)})`;
@@ -34,6 +46,9 @@ function printExpr(exp: Expr): string {
     case "complement":
     case "unary-minus": {
       return printUnary(exp);
+    }
+    case "binary-expr": {
+      return printBinary(exp);
     }
     default: {
       const _checker: never = exp;

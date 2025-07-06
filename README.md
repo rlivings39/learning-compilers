@@ -260,7 +260,21 @@ Such an approach would work but gets unwieldy as you have to have a different ru
 
 ### Better solution: precedence climbing
 
-TODO
+Precedence climbing can be used to parse expressions like `<expr> <binop> <expr>` effectively. Conceptually, each operator is assigned a numeric precedence and the `parse_expr` function also takes a numeric precedence as argument. When figuring out what the operands are to a given operator only operators with higher precedence will be parsed.
+
+The chapter 2 grammar with binary operators is then
+
+```bnf
+<program> ::= <function>
+<function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
+<statement> ::= "return" <expr> ";"
+<expr> ::= <factor> | <expr> <binop> <expr>
+<factor> ::= <int> | <unop> <expr> | "(" <expr> ")"
+<identifier> ::= ? An identifier token ?
+<int> ::= ? A constant token ?
+<unop> ::= "-" | "~"
+<binop> ::= "-" | "+" | "*" | "/" | "%"
+```
 
 ## The program stack
 
