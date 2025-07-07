@@ -262,6 +262,7 @@ Such an approach would work but gets unwieldy as you have to have a different ru
 
 Precedence climbing can be used to parse expressions like `<expr> <binop> <expr>` effectively. Conceptually, each operator is assigned a numeric precedence and the `parse_expr` function also takes a numeric precedence as argument. When figuring out what the operands are to a given operator only operators with higher precedence will be parsed.
 
+
 The chapter 2 grammar with binary operators is then
 
 ```bnf
@@ -275,6 +276,24 @@ The chapter 2 grammar with binary operators is then
 <unop> ::= "-" | "~"
 <binop> ::= "-" | "+" | "*" | "/" | "%"
 ```
+
+The pseudocode for expression parsing with precedence climbing is
+
+```python
+parse_expr(tokens, min_prec):
+  left = parse_factor(tokens)
+  next_token = peek(tokens)
+  while isBinaryOp(next_token) and precedence(next_token) >= min_prec:
+    op = parse_binop(tokens)
+    right = parse_expr(tokens, precedence(next_token) + 1)
+    left = Binary(op, left, right)
+    next_token = peek(tokens)
+  return left
+```
+
+0 is used as the starting precedence, then precedence is increased as we encounter binary ops. This guarantees that when parsing a binary operator, we only parse a RHS as a binary op if the next operator has higher precedence than the current one.
+
+Otherwise, left associativity kicks in and we parse left-to-right.
 
 ## The program stack
 
