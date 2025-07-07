@@ -114,13 +114,12 @@ function parseBinop(tokens: Token[]): ast.BinaryOpName {
   return binopTokenToName(t as BinaryToken);
 }
 
-function parseExpr(tokens: Token[], minPrecedence: number = 0): ast.Expr {
+function parseExpr(tokens: Token[], minPrecedence: number): ast.Expr {
   let left = parseFactor(tokens);
   let nextToken = tokens[0];
   while (isBinOp(nextToken) && binopPrecedence(nextToken) >= minPrecedence) {
     const operator = parseBinop(tokens);
     const right = parseExpr(tokens, binopPrecedence(nextToken) + 1);
-    // TODO generalize
     // Operators are left-associative so that
     //   1 + 2 - 3
     // becomes
@@ -136,7 +135,7 @@ function parseFactor(tokens: Token[]): ast.Expr {
   switch (token.kind) {
     case TokenKind.LEFT_PAREN: {
       expect(TokenKind.LEFT_PAREN, tokens);
-      const expr = parseExpr(tokens);
+      const expr = parseExpr(tokens, 0);
       expect(TokenKind.RIGHT_PAREN, tokens);
       return expr;
     }
@@ -168,32 +167,11 @@ function parseFactor(tokens: Token[]): ast.Expr {
       fail(`Failed to parse ${TokenKind[token.kind]}. Expected an expression.`);
     }
   }
-  // return match(tokens[0])
-  //   .with(
-  //     { kind: TokenKind.UNARY_MINUS },
-  //     { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
-  //     { kind: TokenKind.DECREMENT },
-  //     (token) => {
-  //       return parseUnary(token, tokens);
-  //     }
-  //   )
-  //   .with({ kind: TokenKind.INT_CONSTANT }, () => {
-  //     return parseNumericConst(tokens);
-  //   })
-  //   .with({ kind: TokenKind.LEFT_PAREN }, () => {
-  //     expect(TokenKind.LEFT_PAREN, tokens);
-  //     const expr = parseExpr(tokens);
-  //     expect(TokenKind.RIGHT_PAREN, tokens);
-  //     return expr;
-  //   })
-  //   .otherwise((token) =>
-  //     fail(`Failed to parse ${TokenKind[token.kind]}. Expected an expression.`)
-  //   );
 }
 
 function parseStatement(tokens: Token[]): ast.Stmt {
   expect(TokenKind.KW_RETURN, tokens);
-  const expr = parseExpr(tokens);
+  const expr = parseExpr(tokens, 0);
   expect(TokenKind.SEMICOLON, tokens);
   return ast.ReturnStmt(expr);
 }

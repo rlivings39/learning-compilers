@@ -76,4 +76,20 @@ test("Binary operator parsing", () => {
     return subtract(1, multiply(3, 4));
   }
 )`);
+
+  const allOpsProg = `int main(void) { return 1 - 3 * 4 + 5 % 6;}`;
+  const allOpsAst = parse(lex(allOpsProg));
+  expect(prettyPrint(allOpsAst).trim()).toEqual(`Program (
+  Function main() {
+    return plus(subtract(1, multiply(3, 4)), remainder(5, 6));
+  }
+)`);
+
+  const parenOpsProg = `int main(void) { return (1 - 3) * 4 + 5 % 6;}`;
+  const parenOpsAst = parse(lex(parenOpsProg));
+  expect(prettyPrint(parenOpsAst).trim()).toEqual(`Program (
+  Function main() {
+    return plus(multiply(subtract(1, 3), 4), remainder(5, 6));
+  }
+)`);
 });
