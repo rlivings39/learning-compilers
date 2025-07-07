@@ -87,6 +87,7 @@ export type BinaryOpName =
   | "multiply"
   | "subtract"
   | "remainder";
+
 export type BinaryExpr = {
   kind: "binary-expr";
   operator: BinaryOpName;

@@ -2,7 +2,7 @@
  * TACKY IR definition
  */
 
-import { Identifier } from "./ast";
+import { BinaryOpName, Identifier } from "./ast";
 
 export type Program = {
   func: Function;
@@ -45,9 +45,25 @@ export function Complement(src: Value, dst: Assignable): Complement {
   return { kind: "complement", src, dst };
 }
 
+export type BinaryOp = {
+  kind: "binary-expr";
+  operator: BinaryOpName;
+  lhs: Value;
+  rhs: Value;
+  dst: Assignable;
+};
+export function BinaryOp(
+  operator: BinaryOpName,
+  lhs: Value,
+  rhs: Value,
+  dst: Assignable
+): BinaryOp {
+  return { kind: "binary-expr", operator, lhs, rhs, dst };
+}
+
 export type UnaryOp = UnaryMinus | Complement;
 
-export type Instruction = Return | UnaryOp;
+export type Instruction = Return | UnaryOp | BinaryOp;
 
 export type Constant = {
   kind: "numeric-constant";

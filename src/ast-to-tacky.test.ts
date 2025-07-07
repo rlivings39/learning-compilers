@@ -12,8 +12,9 @@ test("AST to TACKY", () => {
   const tacky1 = astToTacky(ast1);
   expect(tacky1.func.name).toBe("main");
   expect(tacky1.func.body).toHaveLength(1);
-  const ret1 = tacky1.func.body[0];
-  expect(ret1.kind).toBe("return");
+  expect(tacky1.func.body[0].kind).toBe("return");
+  // TODO how to remove cast?
+  const ret1 = tacky1.func.body[0] as tacky.Return;
   expect(ret1.src.kind).toBe("numeric-constant");
   const returnVal = ret1.src as tacky.Constant;
   expect(returnVal.val).toEqual(4);

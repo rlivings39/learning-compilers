@@ -51,6 +51,17 @@ function prettyPrintUnary(unary: tacky.UnaryOp, indent: number): string {
   return res;
 }
 
+function prettyPrintBinary(binOp: tacky.BinaryOp, indent: number): string {
+  const res = printLine(
+    `${binOp.operator}(${prettyPrintValue(binOp.lhs, 0)},${prettyPrintValue(
+      binOp.rhs,
+      0
+    )},${prettyPrintValue(binOp.dst, 0)})`,
+    indent
+  );
+  return res;
+}
+
 function prettyPrintInstruction(
   instr: tacky.Instruction,
   indent: number
@@ -60,6 +71,7 @@ function prettyPrintInstruction(
       prettyPrintUnary(unary, indent)
     )
     .with({ kind: "return" }, (ret) => prettyPrintReturn(ret, indent))
+    .with({ kind: "binary-expr" }, (binOp) => prettyPrintBinary(binOp, indent))
     .exhaustive();
 
   return res;

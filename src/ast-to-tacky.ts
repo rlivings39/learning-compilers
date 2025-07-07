@@ -36,6 +36,17 @@ function convertUnary(unaryExpr: ast.UnaryExpr): ValAndInstructions {
   return { val: tmpVar, instrs };
 }
 
+function convertBinary(binaryExpr: ast.BinaryExpr): ValAndInstructions {
+  const { val: lhsVal, instrs: lhsInstrs } = convertExpr(binaryExpr.lhs);
+  const { val: rhsVal, instrs: rhsInstrs } = convertExpr(binaryExpr.rhs);
+  const instrs = lhsInstrs;
+  instrs.push(...rhsInstrs);
+  const output = makeTemp();
+  const binOp = tacky.BinaryOp(binaryExpr.operator, lhsVal, rhsVal, output);
+  instrs.push(binOp);
+  return { val: output, instrs };
+}
+
 function convertExpr(expr: ast.Expr): ValAndInstructions {
   const kind = expr.kind;
   switch (kind) {
@@ -48,6 +59,9 @@ function convertExpr(expr: ast.Expr): ValAndInstructions {
     case "complement":
     case "unary-minus": {
       return convertUnary(expr);
+    }
+    case "binary-expr": {
+      return convertBinary(expr);
     }
     default: {
       const _check: never = kind;
