@@ -72,6 +72,19 @@ test("AST to assembly", () => {
   expect(num.value).toBe(2);
 });
 
+test("AST to assembly w/ binops", () => {
+  const main = `
+  int main (void) {
+    return 1 + 2 * 3 - 4;
+  }`;
+  const asmProg = asm.tackyToAsm(astToTacky(parse(lex(main))));
+  expect(
+    asmProg.function_definition.instructions,
+    JSON.stringify(asmProg, null, 2)
+  ).toHaveLength(13);
+  // TODO more testing
+});
+
 test("MoveToStackTransform", () => {
   const mainProg = `
   int main (void) {
