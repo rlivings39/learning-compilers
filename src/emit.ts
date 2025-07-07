@@ -66,6 +66,26 @@ function emitUnary(unary: asm.UnaryOp): string {
   return res;
 }
 
+function emitBinary(binary: asm.Binary): string {
+  let instr = "";
+  switch (binary.operator) {
+    case "add": {
+      instr = "addl";
+      break;
+    }
+    case "sub": {
+      instr = "subl";
+      break;
+    }
+    case "mul": {
+      instr = "imul";
+      break;
+    }
+  }
+  const res = `${instr} ${emitOperand(binary.src)}, ${emitOperand(binary.dst)}`;
+  return res;
+}
+
 function emitInstructions(instructions: asm.Instruction[]): string {
   let res = "";
   instructions.forEach((instr) => {
@@ -86,6 +106,16 @@ function emitInstructions(instructions: asm.Instruction[]): string {
       }
       case "allocate-stack": {
         res += emitAllocStack(instr);
+        break;
+      }
+      case "binary-op": {
+        res += emitBinary(instr);
+        break;
+      }
+      case "idiv": {
+        break;
+      }
+      case "cdq": {
         break;
       }
       default: {

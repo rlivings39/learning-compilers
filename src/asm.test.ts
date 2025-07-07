@@ -16,6 +16,9 @@ test("Assembly constructions", () => {
   const allocStack = asm.AllocateStack(12);
   const pseudo = asm.Pseudo("Pseudo1");
   const stack = asm.Stack(4);
+  const add = asm.Binary("add", num, reg);
+  const sub = asm.Binary("sub", num, reg);
+  const mul = asm.Binary("mul", num, reg);
   expect(prog.function_definition).toBe(func);
   expect(func.instructions).toHaveLength(2);
   expect(func.instructions).toEqual([mv, ret]);
@@ -27,6 +30,18 @@ test("Assembly constructions", () => {
   expect(allocStack.bytes).toEqual(12);
   expect(pseudo.id).toBe("Pseudo1");
   expect(stack.offset).toEqual(4);
+  expect(add.operator).toBe("add");
+  expect(add.dst).toBe(reg);
+  expect(add.src).toBe(num);
+  expect(add.kind).toBe("binary-op");
+  expect(sub.operator).toBe("sub");
+  expect(sub.dst).toBe(reg);
+  expect(sub.src).toBe(num);
+  expect(sub.kind).toBe("binary-op");
+  expect(mul.operator).toBe("mul");
+  expect(mul.dst).toBe(reg);
+  expect(mul.src).toBe(num);
+  expect(mul.kind).toBe("binary-op");
 });
 
 test("AST to assembly", () => {

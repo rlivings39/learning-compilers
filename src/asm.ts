@@ -12,7 +12,7 @@ export function ImmediateNumber(value: number): ImmediateNumber {
 
 export type Immediate = ImmediateNumber;
 
-export type RegIds = "AX" | "R10";
+export type RegIds = "AX" | "R10" | "DX" | "R11";
 export type Register = {
   kind: "register";
   reg: RegIds;
@@ -85,8 +85,48 @@ export function AllocateStack(bytes: number): AllocateStack {
   return { kind: "allocate-stack", bytes };
 }
 
+type BinaryOpName = "add" | "sub" | "mul";
+
+export type Binary = {
+  kind: "binary-op";
+  operator: BinaryOpName;
+  src: Operand;
+  dst: Operand;
+};
+export function Binary(
+  operator: BinaryOpName,
+  src: Operand,
+  dst: Operand
+): Binary {
+  return { kind: "binary-op", operator, src, dst };
+}
+
+export type Idiv = {
+  kind: "idiv";
+  divisor: Operand;
+};
+export function Idiv(divisor: Operand): Idiv {
+  return { kind: "idiv", divisor };
+}
+
+// Sign extend EAX into EDX
+export type Cdq = {
+  kind: "cdq";
+};
+export function Cdq(): Cdq {
+  return { kind: "cdq" };
+}
+
 export type UnaryOp = Neg | Not;
-export type Instruction = Move | Return | Neg | Not | AllocateStack;
+export type Instruction =
+  | Move
+  | Return
+  | Neg
+  | Not
+  | AllocateStack
+  | Binary
+  | Idiv
+  | Cdq;
 
 export type Function = {
   name: ast.Identifier;
@@ -119,27 +159,53 @@ function valueToAsm(val: tacky.Value): Operand {
   }
 }
 
-function instrToAsm(instr: tacky.Instruction): Instruction[] {
+function simpleBinaryToAsm(
+  opname: BinaryOpName,
+  lhs: Operand,
+  rhs: Operand,
+  dst: Operand
+): Instruction[] {
   const instructions: Instruction[] = [];
+  instructions.push(Move(lhs, dst));
+  instructions.push(Binary(opname, rhs, dst));
+  return instructions;
+}
+
+function instrToAsm(instr: tacky.Instruction): Instruction[] {
   const kind = instr.kind;
   switch (kind) {
     case "return": {
       const src = valueToAsm(instr.src);
-      instructions.push(Move(src, Register("AX")));
-      instructions.push(Return());
-      break;
+      return [Move(src, Register("AX")), Return()];
     }
     case "unary-minus":
     case "complement": {
       const src = valueToAsm(instr.src);
       const dst = valueToAsm(instr.dst);
-      instructions.push(Move(src, dst));
       const unary = instr.kind === "complement" ? Not : Neg;
-      instructions.push(unary(dst));
+      return [Move(src, dst), unary(dst)];
+    }
+    case "binary-expr": {
+      const lhs = valueToAsm(instr.lhs);
+      const rhs = valueToAsm(instr.rhs);
+      const dst = valueToAsm(instr.dst);
+      switch (instr.operator) {
+        case "plus":
+          return simpleBinaryToAsm("add", lhs, rhs, dst);
+        case "multiply":
+          return simpleBinaryToAsm("mul", lhs, rhs, dst);
+        case "subtract": {
+          return simpleBinaryToAsm("sub", lhs, rhs, dst);
+        }
+        case "divide":
+        case "remainder": {
+          // TODO
+          return [];
+        }
+      }
       break;
     }
   }
-  return instructions;
 }
 
 function functionToAsm(func: tacky.Function): Function {
@@ -168,7 +234,21 @@ function fixupStackOperands(prog: Program, stackOffset: number) {
   const newInstructions: Instruction[] = [];
   instructions.forEach((instr) => {
     switch (instr.kind) {
-      case "move": {
+      case "move":
+      case "binary-op": {
+        // TODO cleanup and test
+        if (
+          instr.kind === "binary-op" &&
+          instr.operator === "mul" &&
+          instr.dst.kind === "stack"
+        ) {
+          const reg11 = Register("R11");
+          const stackDst = instr.dst;
+          const mvStackToRegister = Move(instr.dst, reg11);
+          instr.dst = reg11;
+          const mvRegisterToStack = Move(reg11, stackDst);
+          newInstructions.push(mvStackToRegister, instr, mvRegisterToStack);
+        }
         // If both operands are on the stack, use an
         // intermediate register:
         //
@@ -178,7 +258,7 @@ function fixupStackOperands(prog: Program, stackOffset: number) {
         //
         // Move(Stack(-4), Register)
         // Move(Register, Stack(-4))
-        if (instr.dst.kind === "stack" && instr.src.kind === "stack") {
+        else if (instr.dst.kind === "stack" && instr.src.kind === "stack") {
           const reg = Register("R10");
           const newMove = Move(instr.src, reg);
           instr.src = reg;
@@ -194,6 +274,11 @@ function fixupStackOperands(prog: Program, stackOffset: number) {
       case "allocate-stack": {
         // Nothing to do as these have 0 or 1 operands
         newInstructions.push(instr);
+        break;
+      }
+      case "idiv":
+      case "cdq": {
+        // TODO
         break;
       }
     }
@@ -257,6 +342,25 @@ function moveToStack(prog: Program): number {
           stackOffset,
           symbolMap
         ));
+        break;
+      }
+      case "binary-op": {
+        ({ newOperand: instr.dst, stackOffset } = toStack(
+          instr.dst,
+          stackOffset,
+          symbolMap
+        ));
+        ({ newOperand: instr.src, stackOffset } = toStack(
+          instr.src,
+          stackOffset,
+          symbolMap
+        ));
+        break;
+      }
+      case "idiv": {
+        break;
+      }
+      case "cdq": {
         break;
       }
     }

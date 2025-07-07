@@ -177,7 +177,19 @@ When representing assembly in the compiler, one can choose at what level and fid
 
 The book introduces the idea of **pseudo registers**, things that can be used like registers in our assembly IR but that can't map directly to real registers as we use an unlimited supply of pseudo registers.
 
+### Arithmetic in assembly
 
+The arithmetic operators map to instructions
+
+| Instruction | Meaning |
+| --- | --- |
+| `addl $2, %eax` | eax = eax + 2 |
+| `subl $2, %eax` | eax = eax - 2 |
+| `imull $2, %eax` | eax = eax * 2 |
+
+so that the destination operand is the lhs operand.
+
+Division is more complicated but done with `idiv`. TODO write out how tf this works.
 
 ## Code emission
 
