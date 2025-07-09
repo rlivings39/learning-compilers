@@ -165,9 +165,27 @@ function simpleBinaryToAsm(
   rhs: Operand,
   dst: Operand
 ): Instruction[] {
-  const instructions: Instruction[] = [];
-  instructions.push(Move(lhs, dst));
-  instructions.push(Binary(opname, rhs, dst));
+  const instructions: Instruction[] = [
+    Move(lhs, dst),
+    Binary(opname, rhs, dst),
+  ];
+  return instructions;
+}
+
+function divRemToAsm(
+  opname: "divide" | "remainder",
+  lhs: Operand,
+  rhs: Operand,
+  dst: Operand
+): Instruction[] {
+  const resultRegister: RegIds = opname === "divide" ? "AX" : "DX";
+
+  const instructions: Instruction[] = [
+    Move(lhs, Register("AX")),
+    Cdq(),
+    Idiv(rhs),
+    Move(Register(resultRegister), dst),
+  ];
   return instructions;
 }
 
@@ -199,8 +217,7 @@ function instrToAsm(instr: tacky.Instruction): Instruction[] {
         }
         case "divide":
         case "remainder": {
-          // TODO
-          return [];
+          return divRemToAsm(instr.operator, lhs, rhs, dst);
         }
       }
       break;
@@ -271,14 +288,20 @@ function fixupStackOperands(prog: Program, stackOffset: number) {
       case "return":
       case "neg":
       case "not":
-      case "allocate-stack": {
+      case "allocate-stack":
+      case "cdq": {
         // Nothing to do as these have 0 or 1 operands
         newInstructions.push(instr);
         break;
       }
-      case "idiv":
-      case "cdq": {
-        // TODO
+      case "idiv": {
+        // Idiv can't take an immediate operand
+        if (instr.divisor.kind === "number") {
+          const reg = Register("R10");
+          newInstructions.push(Move(instr.divisor, reg));
+          instr.divisor = reg;
+        }
+        newInstructions.push(instr);
         break;
       }
     }
@@ -331,7 +354,8 @@ function moveToStack(prog: Program): number {
         break;
       }
       case "allocate-stack":
-      case "return": {
+      case "return":
+      case "cdq": {
         // Nothing to do as there are no operands
         break;
       }
@@ -358,9 +382,11 @@ function moveToStack(prog: Program): number {
         break;
       }
       case "idiv": {
-        break;
-      }
-      case "cdq": {
+        ({ newOperand: instr.divisor, stackOffset } = toStack(
+          instr.divisor,
+          stackOffset,
+          symbolMap
+        ));
         break;
       }
     }

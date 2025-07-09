@@ -82,7 +82,49 @@ test("AST to assembly w/ binops", () => {
     asmProg.function_definition.instructions,
     JSON.stringify(asmProg, null, 2)
   ).toHaveLength(13);
-  // TODO more testing
+  const instructions = asmProg.function_definition.instructions;
+  // Ensure operations are in the right order
+  const binOps = instructions.filter((i) => i.kind === "binary-op");
+  expect(binOps.map((b) => b.operator)).toEqual(["mul", "add", "sub"]);
+  expect(binOps[0].src.kind).toEqual("number");
+  expect((binOps[0].src as asm.ImmediateNumber).value).toEqual(3);
+});
+
+test("AST to assembly div/rem", () => {
+  const main = `
+  int main (void) {
+    return 1 / 2 % 3;
+  }`;
+  const asmProg = asm.tackyToAsm(astToTacky(parse(lex(main))));
+  expect(
+    asmProg.function_definition.instructions,
+    JSON.stringify(asmProg, null, 2)
+  ).toHaveLength(12);
+  const instructions = asmProg.function_definition.instructions;
+  // Ensure operations are in the right order
+  const divIndices: number[] = [];
+  const divOps = instructions.filter((i, idx) => {
+    const isDiv = i.kind === "idiv";
+    if (isDiv) {
+      divIndices.push(idx);
+    }
+    return isDiv;
+  });
+
+  expect(divOps).toHaveLength(2);
+  // Ensure that idiv operands are sane
+  expect(divOps[0].divisor.kind).toEqual("register");
+  expect(divOps[1].divisor.kind).toEqual("register");
+
+  // Ensure that we read the result from the right registers for div/rem
+  expect(instructions[divIndices[0] + 1].kind).toBe("move");
+  expect((instructions[divIndices[0] + 1] as asm.Move).src).toEqual(
+    asm.Register("AX")
+  );
+  expect(instructions[divIndices[1] + 1].kind).toBe("move");
+  expect((instructions[divIndices[1] + 1] as asm.Move).src).toEqual(
+    asm.Register("DX")
+  );
 });
 
 test("MoveToStackTransform", () => {

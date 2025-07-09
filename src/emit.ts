@@ -10,7 +10,26 @@ function emitOperand(op: asm.Operand): string {
       break;
     }
     case "register": {
-      res += op.reg === "AX" ? "%eax" : "%r10d";
+      let regName;
+      switch (op.reg) {
+        case "AX": {
+          regName = "%eax";
+          break;
+        }
+        case "R10": {
+          regName = "%r10d";
+          break;
+        }
+        case "DX": {
+          regName = "%edx";
+          break;
+        }
+        case "R11": {
+          regName = "%r11d";
+          break;
+        }
+      }
+      res += regName;
       break;
     }
     case "pseudo": {
@@ -66,6 +85,15 @@ function emitUnary(unary: asm.UnaryOp): string {
   return res;
 }
 
+function emitIdiv(idiv: asm.Idiv): string {
+  const res = `idiv ${emitOperand(idiv.divisor)}`;
+  return res;
+}
+
+function emitCdq(_: asm.Cdq): string {
+  return "cdq";
+}
+
 function emitBinary(binary: asm.Binary): string {
   let instr = "";
   switch (binary.operator) {
@@ -113,9 +141,11 @@ function emitInstructions(instructions: asm.Instruction[]): string {
         break;
       }
       case "idiv": {
+        res += emitIdiv(instr);
         break;
       }
       case "cdq": {
+        res += emitCdq(instr);
         break;
       }
       default: {

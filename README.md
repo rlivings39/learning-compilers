@@ -189,7 +189,11 @@ The arithmetic operators map to instructions
 
 so that the destination operand is the lhs operand.
 
-Division is more complicated but done with `idiv`. TODO write out how tf this works.
+Division is more complicated but done with `idiv`. `idiv` divides a signed value in the `AX, DX:AX, or EDX:EAX` (dividend) by the source operand (divisor) and stores the result in the `AX (AH:AL), DX:AX, or EDX:EAX` registers.
+
+For a 32-bit division, the dividend must be sign extended to fill `EDX:EAX`. This can be done with `cdq`.
+
+The operand to `idiv` also cannot be an immediate.
 
 ## Code emission
 
