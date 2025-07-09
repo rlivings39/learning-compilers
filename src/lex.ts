@@ -17,12 +17,21 @@ export enum TokenKind {
   IDENTIFIER,
   INT_CONSTANT,
   UNARY_BITWISE_COMPLEMENT,
+  LOGICAL_NOT,
   DECREMENT,
   MINUS,
   PLUS,
   TIMES,
   DIVIDE,
   REMAINDER,
+  AND,
+  OR,
+  LESS,
+  LESS_EQ,
+  GREATER,
+  GREATER_EQ,
+  EQUAL,
+  NOT_EQUAL,
 }
 
 type SimpleTokenKind =
@@ -43,19 +52,37 @@ type SimpleTokenKind =
   | TokenKind.DIVIDE
   | TokenKind.REMAINDER
   | TokenKind.TIMES
-  | TokenKind.MINUS;
+  | TokenKind.MINUS
+  | TokenKind.AND
+  | TokenKind.OR
+  | TokenKind.LESS
+  | TokenKind.LESS_EQ
+  | TokenKind.GREATER
+  | TokenKind.GREATER_EQ
+  | TokenKind.EQUAL
+  | TokenKind.NOT_EQUAL
+  | TokenKind.LOGICAL_NOT;
 
 type UnaryTokenKind =
   | TokenKind.MINUS
   | TokenKind.UNARY_BITWISE_COMPLEMENT
-  | TokenKind.DECREMENT;
+  | TokenKind.DECREMENT
+  | TokenKind.LOGICAL_NOT;
 
 export type BinaryTokenKind =
   | TokenKind.PLUS
   | TokenKind.DIVIDE
   | TokenKind.REMAINDER
   | TokenKind.MINUS
-  | TokenKind.TIMES;
+  | TokenKind.TIMES
+  | TokenKind.AND
+  | TokenKind.OR
+  | TokenKind.LESS
+  | TokenKind.LESS_EQ
+  | TokenKind.GREATER
+  | TokenKind.GREATER_EQ
+  | TokenKind.EQUAL
+  | TokenKind.NOT_EQUAL;
 
 // Various token interfaces
 interface SimpleToken {
@@ -94,6 +121,38 @@ interface TokenData {
   pattern: RegExp;
 }
 
+type TokenPatternMap = Record<TokenKind, TokenData>;
+const PATTERN_MAP: TokenPatternMap = {
+  [TokenKind.LEFT_PAREN]: { pattern: /^\(/ },
+  [TokenKind.RIGHT_PAREN]: { pattern: /^\)/ },
+  [TokenKind.LEFT_CURLY]: { pattern: /^\{/ },
+  [TokenKind.RIGHT_CURLY]: { pattern: /^\}/ },
+  [TokenKind.LEFT_SQUARE]: { pattern: /^\[/ },
+  [TokenKind.RIGHT_SQUARE]: { pattern: /^\]/ },
+  [TokenKind.KW_INT]: { pattern: /^int\b/ },
+  [TokenKind.KW_VOID]: { pattern: /^void\b/ },
+  [TokenKind.KW_RETURN]: { pattern: /^return\b/ },
+  [TokenKind.SEMICOLON]: { pattern: /^;/ },
+  [TokenKind.IDENTIFIER]: { pattern: /^[a-zA-z_]\w*\b/ },
+  [TokenKind.INT_CONSTANT]: { pattern: /^[0-9]+\b/ },
+  [TokenKind.MINUS]: { pattern: /^-/ },
+  [TokenKind.DECREMENT]: { pattern: /^--/ },
+  [TokenKind.UNARY_BITWISE_COMPLEMENT]: { pattern: /^~/ },
+  [TokenKind.PLUS]: { pattern: /^\+/ },
+  [TokenKind.DIVIDE]: { pattern: /^\// },
+  [TokenKind.REMAINDER]: { pattern: /^%/ },
+  [TokenKind.TIMES]: { pattern: /^\*/ },
+  [TokenKind.LOGICAL_NOT]: { pattern: /^!/ },
+  [TokenKind.AND]: { pattern: /^&&/ },
+  [TokenKind.OR]: { pattern: /^\|\|/ },
+  [TokenKind.LESS]: { pattern: /^</ },
+  [TokenKind.LESS_EQ]: { pattern: /^<=/ },
+  [TokenKind.GREATER]: { pattern: /^>/ },
+  [TokenKind.GREATER_EQ]: { pattern: /^>=/ },
+  [TokenKind.EQUAL]: { pattern: /^==/ },
+  [TokenKind.NOT_EQUAL]: { pattern: /^!=/ },
+};
+
 function makeToken(match: string, kind: TokenKind): Token {
   switch (kind) {
     case TokenKind.IDENTIFIER: {
@@ -118,7 +177,16 @@ function makeToken(match: string, kind: TokenKind): Token {
     case TokenKind.PLUS:
     case TokenKind.TIMES:
     case TokenKind.DIVIDE:
-    case TokenKind.REMAINDER: {
+    case TokenKind.REMAINDER:
+    case TokenKind.LOGICAL_NOT:
+    case TokenKind.AND:
+    case TokenKind.OR:
+    case TokenKind.LESS:
+    case TokenKind.LESS_EQ:
+    case TokenKind.GREATER:
+    case TokenKind.GREATER_EQ:
+    case TokenKind.EQUAL:
+    case TokenKind.NOT_EQUAL: {
       return makeSimpleToken(match, kind);
     }
   }
@@ -138,29 +206,6 @@ function makeIdToken(match: string, _kind: TokenKind): IdentifierToken {
 function makeIntConstToken(match: string, _kind: TokenKind): IntConstToken {
   return { kind: TokenKind.INT_CONSTANT, value: Number(match) };
 }
-
-type TokenPatternMap = Record<TokenKind, TokenData>;
-const PATTERN_MAP: TokenPatternMap = {
-  [TokenKind.LEFT_PAREN]: { pattern: /^\(/ },
-  [TokenKind.RIGHT_PAREN]: { pattern: /^\)/ },
-  [TokenKind.LEFT_CURLY]: { pattern: /^\{/ },
-  [TokenKind.RIGHT_CURLY]: { pattern: /^\}/ },
-  [TokenKind.LEFT_SQUARE]: { pattern: /^\[/ },
-  [TokenKind.RIGHT_SQUARE]: { pattern: /^\]/ },
-  [TokenKind.KW_INT]: { pattern: /^int\b/ },
-  [TokenKind.KW_VOID]: { pattern: /^void\b/ },
-  [TokenKind.KW_RETURN]: { pattern: /^return\b/ },
-  [TokenKind.SEMICOLON]: { pattern: /^;/ },
-  [TokenKind.IDENTIFIER]: { pattern: /^[a-zA-z_]\w*\b/ },
-  [TokenKind.INT_CONSTANT]: { pattern: /^[0-9]+\b/ },
-  [TokenKind.MINUS]: { pattern: /^-/ },
-  [TokenKind.DECREMENT]: { pattern: /^--/ },
-  [TokenKind.UNARY_BITWISE_COMPLEMENT]: { pattern: /^~/ },
-  [TokenKind.PLUS]: { pattern: /^\+/ },
-  [TokenKind.DIVIDE]: { pattern: /^\// },
-  [TokenKind.REMAINDER]: { pattern: /^%/ },
-  [TokenKind.TIMES]: { pattern: /^\*/ },
-};
 
 export class Location {
   line: number;

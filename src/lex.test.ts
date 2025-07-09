@@ -87,6 +87,7 @@ test("Lex unary ops", () => {
     { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
     { kind: TokenKind.IDENTIFIER },
   ]);
+  expect(lex("!")).toMatchObject([{ kind: TokenKind.LOGICAL_NOT }]);
 });
 
 test("Lex binary ops", () => {
@@ -99,4 +100,12 @@ test("Lex binary ops", () => {
     { kind: TokenKind.PLUS },
     { kind: TokenKind.INT_CONSTANT },
   ]);
+  expect(lex("&&")).toMatchObject([{ kind: TokenKind.AND }]);
+  expect(lex("||")).toMatchObject([{ kind: TokenKind.OR }]);
+  expect(lex("<")).toMatchObject([{ kind: TokenKind.LESS }]);
+  expect(lex("<=")).toMatchObject([{ kind: TokenKind.LESS_EQ }]);
+  expect(lex(">")).toMatchObject([{ kind: TokenKind.GREATER }]);
+  expect(lex(">=")).toMatchObject([{ kind: TokenKind.GREATER_EQ }]);
+  expect(lex("==")).toMatchObject([{ kind: TokenKind.EQUAL }]);
+  expect(lex("!=")).toMatchObject([{ kind: TokenKind.NOT_EQUAL }]);
 });
