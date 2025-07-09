@@ -2,20 +2,19 @@ import * as tacky from "./tacky";
 import * as ast from "./ast";
 import { NotccError } from "./errors";
 
-function wrapper() {
-  let VAR_ID = 0;
-  function makeTemp(): tacky.Var {
-    return tacky.Var(`tmp.${VAR_ID++}`);
+type ValAndInstructions = {
+  val: tacky.Value;
+  instrs: tacky.Instruction[];
+};
+class AstToTacky {
+  private VAR_ID = 0;
+  makeTemp(): tacky.Var {
+    return tacky.Var(`tmp.${this.VAR_ID++}`);
   }
 
-  type ValAndInstructions = {
-    val: tacky.Value;
-    instrs: tacky.Instruction[];
-  };
-
-  function convertUnary(unaryExpr: ast.UnaryExpr): ValAndInstructions {
-    const tmpVar = makeTemp();
-    const { val: expr, instrs } = convertExpr(unaryExpr.expr);
+  convertUnary(unaryExpr: ast.UnaryExpr): ValAndInstructions {
+    const tmpVar = this.makeTemp();
+    const { val: expr, instrs } = this.convertExpr(unaryExpr.expr);
     const { kind } = unaryExpr;
     let maker;
     switch (kind) {
@@ -37,18 +36,18 @@ function wrapper() {
     return { val: tmpVar, instrs };
   }
 
-  function convertBinary(binaryExpr: ast.BinaryExpr): ValAndInstructions {
-    const { val: lhsVal, instrs: lhsInstrs } = convertExpr(binaryExpr.lhs);
-    const { val: rhsVal, instrs: rhsInstrs } = convertExpr(binaryExpr.rhs);
+  convertBinary(binaryExpr: ast.BinaryExpr): ValAndInstructions {
+    const { val: lhsVal, instrs: lhsInstrs } = this.convertExpr(binaryExpr.lhs);
+    const { val: rhsVal, instrs: rhsInstrs } = this.convertExpr(binaryExpr.rhs);
     const instrs = lhsInstrs;
     instrs.push(...rhsInstrs);
-    const output = makeTemp();
+    const output = this.makeTemp();
     const binOp = tacky.BinaryOp(binaryExpr.operator, lhsVal, rhsVal, output);
     instrs.push(binOp);
     return { val: output, instrs };
   }
 
-  function convertExpr(expr: ast.Expr): ValAndInstructions {
+  convertExpr(expr: ast.Expr): ValAndInstructions {
     const kind = expr.kind;
     switch (kind) {
       case "string-const": {
@@ -59,10 +58,10 @@ function wrapper() {
       }
       case "complement":
       case "unary-minus": {
-        return convertUnary(expr);
+        return this.convertUnary(expr);
       }
       case "binary-expr": {
-        return convertBinary(expr);
+        return this.convertBinary(expr);
       }
       default: {
         const _check: never = kind;
@@ -71,11 +70,11 @@ function wrapper() {
     }
   }
 
-  function convertStatement(stmt: ast.Stmt): tacky.Instruction[] {
+  convertStatement(stmt: ast.Stmt): tacky.Instruction[] {
     const instructions: tacky.Instruction[] = [];
     switch (stmt.kind) {
       case "return-stmt": {
-        const { val, instrs } = convertExpr(stmt.expr);
+        const { val, instrs } = this.convertExpr(stmt.expr);
         instructions.push(...instrs);
         instructions.push(tacky.Return(val));
         break;
@@ -88,16 +87,15 @@ function wrapper() {
     return instructions;
   }
 
-  function convertFunction(func: ast.Function): tacky.Function {
-    const instructions: tacky.Instruction[] = convertStatement(func.body);
+  convertFunction(func: ast.Function): tacky.Function {
+    const instructions: tacky.Instruction[] = this.convertStatement(func.body);
     return tacky.Function(func.name, instructions);
   }
 
-  function convertProgram(prog: ast.Program): tacky.Program {
-    const func = convertFunction(prog.function_definition);
+  convertProgram(prog: ast.Program): tacky.Program {
+    const func = this.convertFunction(prog.function_definition);
     return tacky.Program(func);
   }
-  return convertProgram;
 }
 
 /**
@@ -105,7 +103,6 @@ function wrapper() {
  * @param ast
  */
 export function astToTacky(ast: ast.Program): tacky.Program {
-  // TODO encapsulate this better
-  const convertProgram = wrapper();
-  return convertProgram(ast);
+  const astToTacky = new AstToTacky();
+  return astToTacky.convertProgram(ast);
 }

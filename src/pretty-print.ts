@@ -33,7 +33,6 @@ function printBinary(binOp: BinaryExpr): string {
 }
 
 function printUnary(u: UnaryExpr): string {
-  // TODO only emit parens when needed
   return `${u.op}(${printExpr(u.expr)})`;
 }
 

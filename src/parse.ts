@@ -37,7 +37,6 @@ function expect(expected: TokenKind | TokenKind[], tokens: Token[]): Token {
 
 function parseNumericConst(tokens: Token[]): ast.NumericConstant {
   const tok = expect(TokenKind.INT_CONSTANT, tokens);
-  // TODO shouldn't need this assertion
   assert(tok.kind === TokenKind.INT_CONSTANT);
   return ast.NumericConstant(tok.value);
 }

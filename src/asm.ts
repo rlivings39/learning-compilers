@@ -253,7 +253,6 @@ function fixupStackOperands(prog: Program, stackOffset: number) {
     switch (instr.kind) {
       case "move":
       case "binary-op": {
-        // TODO cleanup and test
         if (
           instr.kind === "binary-op" &&
           instr.operator === "mul" &&
