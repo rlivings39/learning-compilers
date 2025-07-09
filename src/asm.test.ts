@@ -99,7 +99,7 @@ test("AST to assembly div/rem", () => {
   expect(
     asmProg.function_definition.instructions,
     JSON.stringify(asmProg, null, 2)
-  ).toHaveLength(12);
+  ).toHaveLength(13);
   const instructions = asmProg.function_definition.instructions;
   // Ensure operations are in the right order
   const divIndices: number[] = [];

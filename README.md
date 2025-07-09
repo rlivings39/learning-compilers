@@ -24,7 +24,10 @@ Download the repo and
 cd learning-compilers
 npm install
 npm run build
+npm run test
 ```
+
+to configure, build, and run the tests.
 
 Then you can run the compiler by executing `./dist/main.js`. See the help for up to date info:
 
