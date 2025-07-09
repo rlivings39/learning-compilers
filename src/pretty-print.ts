@@ -43,7 +43,8 @@ function printExpr(exp: Expr): string {
       return printConstant(exp);
     }
     case "complement":
-    case "unary-minus": {
+    case "unary-minus":
+    case "logical-not": {
       return printUnary(exp);
     }
     case "binary-expr": {

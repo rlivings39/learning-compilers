@@ -51,6 +51,9 @@ function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
     case TokenKind.UNARY_BITWISE_COMPLEMENT: {
       return ast.Complement(expr);
     }
+    case TokenKind.LOGICAL_NOT: {
+      return ast.LogicalNot(expr);
+    }
     case TokenKind.DECREMENT: {
       fail(`-- is not supported`);
       return ast.Complement(expr);
@@ -63,6 +66,14 @@ function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
 }
 
 const OP_PRECEDENCE: Record<BinaryTokenKind, number> = {
+  [TokenKind.OR]: 5,
+  [TokenKind.AND]: 10,
+  [TokenKind.EQUAL]: 30,
+  [TokenKind.NOT_EQUAL]: 30,
+  [TokenKind.LESS]: 35,
+  [TokenKind.LESS_EQ]: 35,
+  [TokenKind.GREATER]: 35,
+  [TokenKind.GREATER_EQ]: 35,
   [TokenKind.PLUS]: 45,
   [TokenKind.MINUS]: 45,
   [TokenKind.DIVIDE]: 50,
@@ -78,24 +89,23 @@ function isBinOp(token: Token): token is BinaryToken {
   return token.kind in OP_PRECEDENCE;
 }
 
+const BINARY_TOKEN_TO_OP_NAME: Record<BinaryTokenKind, ast.BinaryOpName> = {
+  [TokenKind.OR]: "or",
+  [TokenKind.AND]: "and",
+  [TokenKind.EQUAL]: "equal",
+  [TokenKind.NOT_EQUAL]: "not-equal",
+  [TokenKind.LESS]: "less",
+  [TokenKind.LESS_EQ]: "less-eq",
+  [TokenKind.GREATER]: "greater",
+  [TokenKind.GREATER_EQ]: "greater-eq",
+  [TokenKind.PLUS]: "plus",
+  [TokenKind.MINUS]: "subtract",
+  [TokenKind.DIVIDE]: "divide",
+  [TokenKind.TIMES]: "multiply",
+  [TokenKind.REMAINDER]: "remainder",
+};
 function binopTokenToName(token: BinaryToken): ast.BinaryOpName {
-  switch (token.kind) {
-    case TokenKind.PLUS: {
-      return "plus";
-    }
-    case TokenKind.MINUS: {
-      return "subtract";
-    }
-    case TokenKind.DIVIDE: {
-      return "divide";
-    }
-    case TokenKind.TIMES: {
-      return "multiply";
-    }
-    case TokenKind.REMAINDER: {
-      return "remainder";
-    }
-  }
+  return BINARY_TOKEN_TO_OP_NAME[token.kind];
 }
 
 function parseBinop(tokens: Token[]): ast.BinaryOpName {
@@ -106,6 +116,14 @@ function parseBinop(tokens: Token[]): ast.BinaryOpName {
       TokenKind.DIVIDE,
       TokenKind.TIMES,
       TokenKind.REMAINDER,
+      TokenKind.AND,
+      TokenKind.OR,
+      TokenKind.GREATER,
+      TokenKind.GREATER_EQ,
+      TokenKind.LESS,
+      TokenKind.LESS_EQ,
+      TokenKind.EQUAL,
+      TokenKind.NOT_EQUAL,
     ],
     tokens
   );
@@ -143,7 +161,8 @@ function parseFactor(tokens: Token[]): ast.Expr {
     }
     case TokenKind.MINUS:
     case TokenKind.UNARY_BITWISE_COMPLEMENT:
-    case TokenKind.DECREMENT: {
+    case TokenKind.DECREMENT:
+    case TokenKind.LOGICAL_NOT: {
       // TODO remove this cast
       return parseUnary(token as UnaryToken, tokens);
     }
@@ -162,6 +181,14 @@ function parseFactor(tokens: Token[]): ast.Expr {
     case TokenKind.TIMES:
     case TokenKind.DIVIDE:
     case TokenKind.REMAINDER:
+    case TokenKind.AND:
+    case TokenKind.OR:
+    case TokenKind.LESS:
+    case TokenKind.LESS_EQ:
+    case TokenKind.GREATER:
+    case TokenKind.GREATER_EQ:
+    case TokenKind.EQUAL:
+    case TokenKind.NOT_EQUAL:
     default: {
       fail(`Failed to parse ${TokenKind[token.kind]}. Expected an expression.`);
     }

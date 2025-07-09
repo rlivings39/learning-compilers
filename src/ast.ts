@@ -28,59 +28,27 @@ export function UnaryMinus(expr: Expr): UnaryMinus {
   return { kind: "unary-minus", expr, op: "-" };
 }
 
-export type UnaryExpr = Complement | UnaryMinus;
-
-export type Add = {
-  kind: "add";
-  lhs: Expr;
-  rhs: Expr;
-};
-export function Add(lhs: Expr, rhs: Expr): Add {
-  return { kind: "add", lhs, rhs };
+export type LogicalNot = { kind: "logical-not"; expr: Expr; op: "!" };
+export function LogicalNot(expr: Expr): LogicalNot {
+  return { kind: "logical-not", op: "!", expr };
 }
 
-export type Subtract = {
-  kind: "subtract";
-  lhs: Expr;
-  rhs: Expr;
-};
-export function Subtract(lhs: Expr, rhs: Expr): Subtract {
-  return { kind: "subtract", lhs, rhs };
-}
-
-export type Multiply = {
-  kind: "multiply";
-  lhs: Expr;
-  rhs: Expr;
-};
-export function Multiply(lhs: Expr, rhs: Expr): Multiply {
-  return { kind: "multiply", lhs, rhs };
-}
-
-export type Divide = {
-  kind: "divide";
-  lhs: Expr;
-  rhs: Expr;
-};
-export function Divide(lhs: Expr, rhs: Expr): Divide {
-  return { kind: "divide", lhs, rhs };
-}
-
-export type Remainder = {
-  kind: "remainder";
-  lhs: Expr;
-  rhs: Expr;
-};
-export function Remainder(lhs: Expr, rhs: Expr): Remainder {
-  return { kind: "remainder", lhs, rhs };
-}
+export type UnaryExpr = Complement | UnaryMinus | LogicalNot;
 
 export type BinaryOpName =
   | "plus"
   | "divide"
   | "multiply"
   | "subtract"
-  | "remainder";
+  | "remainder"
+  | "less"
+  | "less-eq"
+  | "greater"
+  | "greater-eq"
+  | "equal"
+  | "not-equal"
+  | "and"
+  | "or";
 
 export type BinaryExpr = {
   kind: "binary-expr";

@@ -117,6 +117,15 @@ export type Token =
   | UnaryToken
   | BinaryToken;
 
+// Check that we've covered all TokenKinds in our Token union.
+// If we miss one, the indexing in __exhaustive_check will error
+type AllKinds = {
+  [T in Token["kind"]]: number;
+};
+
+export function __exhaustive_check(ak: AllKinds, tk: TokenKind): number {
+  return ak[tk];
+}
 interface TokenData {
   pattern: RegExp;
 }

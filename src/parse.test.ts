@@ -93,3 +93,13 @@ test("Binary operator parsing", () => {
   }
 )`);
 });
+
+test("Logical ops", () => {
+  const logicalOpsProg = `int main(void) { return 1 && 2 || 3 < 4 <= 5 > 6 >= 7 == 8 != 9;}`;
+  const logicalOpsAst = parse(lex(logicalOpsProg));
+  expect(prettyPrint(logicalOpsAst).trim()).toEqual(`Program (
+  Function main() {
+    return or(and(1, 2), not-equal(equal(greater-eq(greater(less-eq(less(3, 4), 5), 6), 7), 8), 9));
+  }
+)`);
+});

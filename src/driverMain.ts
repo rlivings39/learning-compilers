@@ -153,7 +153,9 @@ export function driverMain(argv: string[]) {
   }
 
   const fileName = positionals[0];
-  const code = readCode(fileName);
+  const preprocessedFileName = replaceExtension(fileName, ".i");
+  runGcc(`gcc -E -P ${fileName} -o ${preprocessedFileName}`);
+  const code = readCode(preprocessedFileName);
   const tokens = lex(code);
   if (values["print-tokens"]) {
     console.log(
@@ -191,19 +193,23 @@ export function driverMain(argv: string[]) {
   }
 
   const asmCode = emitAsm(asm);
-  const outAsmFilePath = {
-    ...path.parse(fileName),
-    ext: ".s",
-    base: "",
-  };
-  const outAsmFileName = path.format(outAsmFilePath);
+  const outAsmFileName = replaceExtension(fileName, ".s");
   fs.writeFileSync(outAsmFileName, asmCode, { encoding: "utf-8", flush: true });
   if (values["asm-only"]) {
     return;
   }
-  const outExeFileName = path.format({ ...outAsmFilePath, ext: "" });
+  const outExeFileName = replaceExtension(fileName, "");
+
+  runGcc(`gcc ${outAsmFileName} -o ${outExeFileName}`);
+}
+
+function replaceExtension(fileName: string, newExtension: string): string {
+  return path.format({ ...path.parse(fileName), ext: newExtension, base: "" });
+}
+
+function runGcc(cmd: string) {
   try {
-    cp.execSync(`gcc ${outAsmFileName} -o ${outExeFileName}`, {
+    cp.execSync(cmd, {
       stdio: "pipe",
     });
   } catch (e: unknown) {
