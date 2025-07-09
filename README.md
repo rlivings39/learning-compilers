@@ -8,13 +8,13 @@ The [tests](https://github.com/nlsandler/writing-a-c-compiler-tests/) provided w
 
 ## Current status
 
-This compiler is complete through Chapter 2 of the book meaning it compiles programs of the form
+This compiler is complete through Chapter 3 of the book meaning it compiles programs of the form
 
 ```c
-int main(void) { return ~(-4);}
+int main(void) { return ~(-4) * (7 + 12);}
 ```
 
-for any combination of `~, -` and any integer constant.
+for any combination of `~, -`, binary ops `+, -, *, /, %`, parentheses, and any integer constants.
 
 ## Installing and using this repo
 
