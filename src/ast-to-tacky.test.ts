@@ -35,3 +35,21 @@ test("AST to TACKY", () => {
   Return(%tmp.0)
 }`);
 });
+
+test("Logical operators to TACKY", () => {
+  const main = `int main(void) {
+    return !(3 < 4 <= 5 > 6 >= 7 == 8 != 9);
+  }`;
+  const tacky = astToTacky(parse(lex(main)));
+  expect(tacky).not.toBeNull();
+  expect(prettyPrintTacky(tacky)).toEqual(`Function main () {
+  less($3,$4,%tmp.1)
+  less-eq(%tmp.1,$5,%tmp.2)
+  greater(%tmp.2,$6,%tmp.3)
+  greater-eq(%tmp.3,$7,%tmp.4)
+  equal(%tmp.4,$8,%tmp.5)
+  not-equal(%tmp.5,$9,%tmp.6)
+  Not(%tmp.6, %tmp.0)
+  Return(%tmp.0)
+}`);
+});

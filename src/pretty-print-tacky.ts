@@ -39,6 +39,7 @@ function prettyPrintUnary(unary: tacky.UnaryOp, indent: number): string {
   const opstr: string = match(unary)
     .with({ kind: "complement" }, () => "BitComp")
     .with({ kind: "unary-minus" }, () => "Uminus")
+    .with({ kind: "logical-not" }, () => "Not")
     .exhaustive();
 
   const res = printLine(
@@ -67,8 +68,11 @@ function prettyPrintInstruction(
   indent: number
 ): string {
   const res = match(instr)
-    .with({ kind: "complement" }, { kind: "unary-minus" }, (unary) =>
-      prettyPrintUnary(unary, indent)
+    .with(
+      { kind: "complement" },
+      { kind: "unary-minus" },
+      { kind: "logical-not" },
+      (unary) => prettyPrintUnary(unary, indent)
     )
     .with({ kind: "return" }, (ret) => prettyPrintReturn(ret, indent))
     .with({ kind: "binary-expr" }, (binOp) => prettyPrintBinary(binOp, indent))

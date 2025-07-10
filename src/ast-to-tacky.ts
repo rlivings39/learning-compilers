@@ -26,6 +26,10 @@ class AstToTacky {
         maker = tacky.UnaryMinus;
         break;
       }
+      case "logical-not": {
+        maker = tacky.LogicalNot;
+        break;
+      }
       default: {
         const _check: never = kind;
         return _check;
@@ -36,7 +40,20 @@ class AstToTacky {
     return { val: tmpVar, instrs };
   }
 
+  convertShortCircuitBinary(
+    binOp: ast.BinaryExpr,
+    _op: "and" | "or"
+  ): ValAndInstructions {
+    // TODO
+    const { val: lhsVal, instrs: lhsInstrs } = this.convertExpr(binOp.lhs);
+    return { val: lhsVal, instrs: lhsInstrs };
+  }
+
   convertBinary(binaryExpr: ast.BinaryExpr): ValAndInstructions {
+    if (binaryExpr.operator === "and" || binaryExpr.operator === "or") {
+      // Handle short-circuiting operators separately
+      return this.convertShortCircuitBinary(binaryExpr, binaryExpr.operator);
+    }
     const { val: lhsVal, instrs: lhsInstrs } = this.convertExpr(binaryExpr.lhs);
     const { val: rhsVal, instrs: rhsInstrs } = this.convertExpr(binaryExpr.rhs);
     const instrs = lhsInstrs;
@@ -57,7 +74,8 @@ class AstToTacky {
         return { val: tacky.Constant(expr.value), instrs: [] };
       }
       case "complement":
-      case "unary-minus": {
+      case "unary-minus":
+      case "logical-not": {
         return this.convertUnary(expr);
       }
       case "binary-expr": {

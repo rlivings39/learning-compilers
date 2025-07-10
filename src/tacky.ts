@@ -45,6 +45,15 @@ export function Complement(src: Value, dst: Assignable): Complement {
   return { kind: "complement", src, dst };
 }
 
+export type LogicalNot = {
+  kind: "logical-not";
+  src: Value;
+  dst: Assignable;
+};
+export function LogicalNot(src: Value, dst: Assignable): LogicalNot {
+  return { kind: "logical-not", src, dst };
+}
+
 export type BinaryOp = {
   kind: "binary-expr";
   operator: BinaryOpName;
@@ -61,7 +70,7 @@ export function BinaryOp(
   return { kind: "binary-expr", operator, lhs, rhs, dst };
 }
 
-export type UnaryOp = UnaryMinus | Complement;
+export type UnaryOp = UnaryMinus | Complement | LogicalNot;
 
 export type Instruction = Return | UnaryOp | BinaryOp;
 

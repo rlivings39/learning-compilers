@@ -14,6 +14,7 @@ test("Tacky construction", () => {
   const minusOp = tacky.BinaryOp("subtract", c0, var0, var1);
   const timesOp = tacky.BinaryOp("multiply", c0, var0, var1);
   const remainderOp = tacky.BinaryOp("remainder", c0, var0, var1);
+  const not = tacky.LogicalNot(c0, var0);
   expect(prog.func).toBe(func);
   expect(func.name).toBe("main");
   expect(func.body).toHaveLength(3);
@@ -51,4 +52,7 @@ test("Tacky construction", () => {
   expect(remainderOp.lhs).toBe(c0);
   expect(remainderOp.rhs).toBe(var0);
   expect(remainderOp.dst).toBe(var1);
+  expect(not.kind).toBe("logical-not");
+  expect(not.src).toBe(c0);
+  expect(not.dst).toBe(var0);
 });
