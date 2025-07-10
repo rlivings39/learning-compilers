@@ -19,6 +19,11 @@ test("Assembly constructions", () => {
   const add = asm.Binary("add", num, reg);
   const sub = asm.Binary("sub", num, reg);
   const mul = asm.Binary("mul", num, reg);
+  const cmp = asm.Cmp(num, reg);
+  const label = asm.Label("a_label");
+  const jmp = asm.Jmp(label.name);
+  const jmpcc = asm.JmpCC("E", label.name);
+  const setcc = asm.SetCC("NE", reg);
   expect(prog.function_definition).toBe(func);
   expect(func.instructions).toHaveLength(2);
   expect(func.instructions).toEqual([mv, ret]);
@@ -42,6 +47,17 @@ test("Assembly constructions", () => {
   expect(mul.dst).toBe(reg);
   expect(mul.src).toBe(num);
   expect(mul.kind).toBe("binary-op");
+  expect(cmp.kind).toBe("cmp");
+  expect(cmp.val1).toBe(num);
+  expect(cmp.val2).toBe(reg);
+  expect(jmp.kind).toBe("jmp");
+  expect(jmp.target).toBe(label.name);
+  expect(jmpcc.kind).toBe("jmpcc");
+  expect(jmpcc.cond).toBe("E");
+  expect(jmpcc.target).toBe(label.name);
+  expect(setcc.kind).toBe("setcc");
+  expect(setcc.cond).toBe("NE");
+  expect(setcc.dst).toBe(reg);
 });
 
 test("AST to assembly", () => {

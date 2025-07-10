@@ -118,6 +118,51 @@ export function Cdq(): Cdq {
   return { kind: "cdq" };
 }
 
+export type Cmp = {
+  kind: "cmp";
+  val1: Operand;
+  val2: Operand;
+};
+export function Cmp(val1: Operand, val2: Operand): Cmp {
+  return { kind: "cmp", val1, val2 };
+}
+
+export type Jmp = {
+  kind: "jmp";
+  target: Identifier;
+};
+export function Jmp(target: Identifier): Jmp {
+  return { kind: "jmp", target };
+}
+
+export type ConditionCode = "E" | "NE" | "G" | "GE" | "L" | "LE";
+
+export type JmpCC = {
+  kind: "jmpcc";
+  cond: ConditionCode;
+  target: Identifier;
+};
+export function JmpCC(cond: ConditionCode, target: Identifier): JmpCC {
+  return { kind: "jmpcc", cond, target };
+}
+
+export type SetCC = {
+  kind: "setcc";
+  cond: ConditionCode;
+  dst: Operand;
+};
+export function SetCC(cond: ConditionCode, dst: Operand): SetCC {
+  return { kind: "setcc", cond, dst };
+}
+
+export type Label = {
+  kind: "label";
+  name: Identifier;
+};
+export function Label(name: Identifier): Label {
+  return { kind: "label", name };
+}
+
 export type UnaryOp = Neg | Not;
 export type Instruction =
   | Move
@@ -127,7 +172,12 @@ export type Instruction =
   | AllocateStack
   | Binary
   | Idiv
-  | Cdq;
+  | Cdq
+  | Cmp
+  | Jmp
+  | JmpCC
+  | SetCC
+  | Label;
 
 export type Function = {
   name: Identifier;

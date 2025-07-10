@@ -341,7 +341,34 @@ The **sign flag (SF)** is set to 1 if the most significant bit of the last resul
 
 The **overflow flag (OF)** is set to 1 if the last instruction resulted in signed integer overflow and 0 otherwise.
 
-Unsigned integer overflow does not set OF.
+OF and SF are irrelevant for unsigned operations.
+
+The instruction `cmp b, a` computes `a - b` just like `sub b, a` but doesn't store the result. It does set `ZF, SF, OF` so `cmp` can be used to compute comparison operators via the following table:
+
+|                      | ZF | SF | OF |
+| -------------------- | -- | -- | -- |
+| `a == b`             | 1  | 0  | 0  |
+| `a > b`, no overflow | 0  | 0  | 0  |
+| `a > b`, overflow    | 0  | 1  | 1  |
+| `a < b`, no overflow | 0  | 1  | 0  |
+| `a < b`, overflow    | 0  | 0  | 1  |
+
+We can then access these conditions using the conditional set family of functions which each set a byte based on a comparison
+
+| Instruction | Meaning              | Flags after `cmp`       |
+| ----------- | -------------------- | ----------------------- |
+| `sete`      | Set byte if `a == b` | ZF is set               |
+| `setne`     | Set byte if `a != b` | ZF not set              |
+| `setg`      | Set byte if `a > b`  | ZF not set and SF == OF |
+| `setge`     | Set byte if `a >= b` | SF == OF                |
+| `setl`      | Set byte if `a < b`  | SF != OF                |
+| `setle`     | Set byte if `a == b` | ZF set of SF != OF      |
+
+**Note** these instructions ony set a single byte in the destination so if you'd like the entire value to be set, zero it out first.
+
+The `jmp` instruction takes a label and does an unconditional jump to that destination. Jump instructions interact with the RIP register (aka instruction pointer) which points to the next instruction to be executed.
+
+Conditional jumps work similarly but only jump if a condition matches after checking RFLAGS. We have `je, jne, jg, jge, jl, jle` just like the set instructions. There are many many more conditional jump instructions.
 
 ## Currently supported/in progress grammar
 
