@@ -53,3 +53,41 @@ test("Logical operators to TACKY", () => {
   Return(%tmp.0)
 }`);
 });
+
+test("Short-circuiting operators to TACKY", () => {
+  const main = `int main(void) {
+    return (1*2) && (2-3);
+  }`;
+  const tacky = astToTacky(parse(lex(main)));
+  expect(tacky).not.toBeNull();
+  expect(prettyPrintTacky(tacky)).toEqual(`Function main () {
+  multiply($1,$2,%tmp.0)
+  JumpIfZero(%tmp.0, false_label0)
+  subtract($2,$3,%tmp.1)
+  JumpIfZero(%tmp.1, false_label0)
+  Copy($1, %tmp.2)
+  Jump(end1)
+  Label(false_label0)
+  Copy($0, %tmp.2)
+  Label(end1)
+  Return(%tmp.2)
+}`);
+
+  const main2 = `int main(void) {
+    return 1 < 2 || 2 >= 3;
+  }`;
+  const tacky2 = astToTacky(parse(lex(main2)));
+  expect(tacky2).not.toBeNull();
+  expect(prettyPrintTacky(tacky2)).toEqual(`Function main () {
+  less($1,$2,%tmp.0)
+  JumpIfNotZero(%tmp.0, true_label0)
+  greater-eq($2,$3,%tmp.1)
+  JumpIfNotZero(%tmp.1, true_label0)
+  Copy($0, %tmp.2)
+  Jump(end1)
+  Label(true_label0)
+  Copy($1, %tmp.2)
+  Label(end1)
+  Return(%tmp.2)
+}`);
+});

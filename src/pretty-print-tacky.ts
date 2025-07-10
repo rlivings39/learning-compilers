@@ -63,6 +63,38 @@ function prettyPrintBinary(binOp: tacky.BinaryOp, indent: number): string {
   return res;
 }
 
+function prettyPrintLabel(label: tacky.Label, indent: number): string {
+  return printLine(`Label(${label.name})`, indent);
+}
+
+function printCopy(copy: tacky.Copy, indent: number): string {
+  return printLine(
+    `Copy(${prettyPrintValue(copy.src, 0)}, ${prettyPrintValue(copy.dst, 0)})`,
+    indent
+  );
+}
+
+function printJump(jump: tacky.Jump, indent: number): string {
+  return printLine(`Jump(${jump.target})`, indent);
+}
+
+function prettyPrintJumpNotZero(
+  jnz: tacky.JumpIfNotZero,
+  indent: number
+): string {
+  return printLine(
+    `JumpIfNotZero(${prettyPrintValue(jnz.condition, 0)}, ${jnz.target})`,
+    indent
+  );
+}
+
+function prettyPrintJumpIfZero(jnz: tacky.JumpIfZero, indent: number): string {
+  return printLine(
+    `JumpIfZero(${prettyPrintValue(jnz.condition, 0)}, ${jnz.target})`,
+    indent
+  );
+}
+
 function prettyPrintInstruction(
   instr: tacky.Instruction,
   indent: number
@@ -76,6 +108,13 @@ function prettyPrintInstruction(
     )
     .with({ kind: "return" }, (ret) => prettyPrintReturn(ret, indent))
     .with({ kind: "binary-expr" }, (binOp) => prettyPrintBinary(binOp, indent))
+    .with({ kind: "label" }, (label) => prettyPrintLabel(label, indent))
+    .with({ kind: "copy" }, (copy) => printCopy(copy, indent))
+    .with({ kind: "jump" }, (jump) => printJump(jump, indent))
+    .with({ kind: "jump-if-not-zero" }, (jnz) =>
+      prettyPrintJumpNotZero(jnz, indent)
+    )
+    .with({ kind: "jump-if-zero" }, (j) => prettyPrintJumpIfZero(j, indent))
     .exhaustive();
 
   return res;

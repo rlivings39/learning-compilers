@@ -52,7 +52,7 @@ class AstToTacky {
   ): ValAndInstructions {
     // TODO
     const { val: lhsVal, instrs: lhsInstrs } = this.convertExpr(binOp.lhs);
-    const { val: rhsVal, instrs: rhsInstrs } = this.convertExpr(binOp.lhs);
+    const { val: rhsVal, instrs: rhsInstrs } = this.convertExpr(binOp.rhs);
     const isAnd = _op === "and";
     const targetName = isAnd ? "false_label" : "true_label";
     const shortCircuitLabel = this.makeLabel(targetName);
