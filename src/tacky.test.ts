@@ -15,6 +15,11 @@ test("Tacky construction", () => {
   const timesOp = tacky.BinaryOp("multiply", c0, var0, var1);
   const remainderOp = tacky.BinaryOp("remainder", c0, var0, var1);
   const not = tacky.LogicalNot(c0, var0);
+  const label = tacky.Label("label1");
+  const jmp = tacky.Jump(label.name);
+  const j0 = tacky.JumpIfZero(var1, label.name);
+  const jn0 = tacky.JumpIfNotZero(c0, label.name);
+
   expect(prog.func).toBe(func);
   expect(func.name).toBe("main");
   expect(func.body).toHaveLength(3);
@@ -55,4 +60,12 @@ test("Tacky construction", () => {
   expect(not.kind).toBe("logical-not");
   expect(not.src).toBe(c0);
   expect(not.dst).toBe(var0);
+  expect(label.kind).toBe("label");
+  expect(label.name).toBe("label1");
+  expect(jmp.kind).toBe("jump");
+  expect(jmp.target).toBe(label.name);
+  expect(j0.kind).toBe("jump-if-zero");
+  expect(j0.target).toBe(label.name);
+  expect(jn0.kind).toBe("jump-if-not-zero");
+  expect(jn0.target).toBe(label.name);
 });

@@ -2,7 +2,8 @@
  * TACKY IR definition
  */
 
-import { BinaryOpName, Identifier } from "./ast";
+import { BinaryOpName } from "./ast";
+import { Identifier } from "./shared";
 
 export type Program = {
   func: Function;
@@ -70,9 +71,63 @@ export function BinaryOp(
   return { kind: "binary-expr", operator, lhs, rhs, dst };
 }
 
+export type Jump = {
+  kind: "jump";
+  target: Identifier;
+};
+export function Jump(target: Identifier): Jump {
+  return { kind: "jump", target };
+}
+
+export type JumpIfZero = {
+  kind: "jump-if-zero";
+  condition: Value;
+  target: Identifier;
+};
+export function JumpIfZero(condition: Value, target: Identifier): JumpIfZero {
+  return { kind: "jump-if-zero", condition, target };
+}
+
+export type JumpIfNotZero = {
+  kind: "jump-if-not-zero";
+  condition: Value;
+  target: Identifier;
+};
+export function JumpIfNotZero(
+  condition: Value,
+  target: Identifier
+): JumpIfNotZero {
+  return { kind: "jump-if-not-zero", condition, target };
+}
+
+export type Label = {
+  kind: "label";
+  name: Identifier;
+};
+export function Label(name: Identifier): Label {
+  return { kind: "label", name };
+}
+
+export type Copy = {
+  kind: "copy";
+  src: Value;
+  dst: Assignable;
+};
+export function Copy(src: Value, dst: Assignable): Copy {
+  return { kind: "copy", src, dst };
+}
+
 export type UnaryOp = UnaryMinus | Complement | LogicalNot;
 
-export type Instruction = Return | UnaryOp | BinaryOp;
+export type Instruction =
+  | Return
+  | UnaryOp
+  | BinaryOp
+  | Jump
+  | JumpIfNotZero
+  | JumpIfZero
+  | Label
+  | Copy;
 
 export type Constant = {
   kind: "numeric-constant";

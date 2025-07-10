@@ -8,6 +8,7 @@ import {
   TokenKind,
   UnaryToken,
 } from "./lex";
+import { Identifier } from "./shared";
 
 function fail(msg: string): never {
   throw new NotccError(msg);
@@ -207,7 +208,7 @@ function assert(cond: boolean): asserts cond {
     throw new NotccError("Assertion failed");
   }
 }
-function parseIdentifier(tokens: Token[]): ast.Identifier {
+function parseIdentifier(tokens: Token[]): Identifier {
   const tok = expect(TokenKind.IDENTIFIER, tokens);
   // TODO shouldn't need this
   assert(tok.kind === TokenKind.IDENTIFIER);

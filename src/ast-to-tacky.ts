@@ -1,6 +1,7 @@
 import * as tacky from "./tacky";
 import * as ast from "./ast";
 import { NotccError } from "./errors";
+import { Identifier } from "./shared";
 
 type ValAndInstructions = {
   val: tacky.Value;
@@ -8,8 +9,13 @@ type ValAndInstructions = {
 };
 class AstToTacky {
   private VAR_ID = 0;
+  private LABEL_ID = 0;
   makeTemp(): tacky.Var {
     return tacky.Var(`tmp.${this.VAR_ID++}`);
+  }
+
+  makeLabel(name: Identifier): tacky.Label {
+    return tacky.Label(`${name}${this.LABEL_ID++}`);
   }
 
   convertUnary(unaryExpr: ast.UnaryExpr): ValAndInstructions {
@@ -46,7 +52,29 @@ class AstToTacky {
   ): ValAndInstructions {
     // TODO
     const { val: lhsVal, instrs: lhsInstrs } = this.convertExpr(binOp.lhs);
-    return { val: lhsVal, instrs: lhsInstrs };
+    const { val: rhsVal, instrs: rhsInstrs } = this.convertExpr(binOp.lhs);
+    const isAnd = _op === "and";
+    const targetName = isAnd ? "false_label" : "true_label";
+    const shortCircuitLabel = this.makeLabel(targetName);
+    const endLabel = this.makeLabel("end");
+    const jumpFactory = isAnd ? tacky.JumpIfZero : tacky.JumpIfNotZero;
+    const firstJump = jumpFactory(lhsVal, shortCircuitLabel.name);
+    const secondJump = jumpFactory(rhsVal, shortCircuitLabel.name);
+    const res = this.makeTemp();
+    const copy1 = tacky.Copy(tacky.Constant(isAnd ? 1 : 0), res);
+    const copy2 = tacky.Copy(tacky.Constant(isAnd ? 0 : 1), res);
+    const instructions: tacky.Instruction[] = [
+      ...lhsInstrs,
+      firstJump,
+      ...rhsInstrs,
+      secondJump,
+      copy1,
+      tacky.Jump(endLabel.name),
+      shortCircuitLabel,
+      copy2,
+      endLabel,
+    ];
+    return { val: res, instrs: instructions };
   }
 
   convertBinary(binaryExpr: ast.BinaryExpr): ValAndInstructions {

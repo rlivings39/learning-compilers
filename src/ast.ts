@@ -1,3 +1,5 @@
+import { Identifier } from "./shared";
+
 export type NumericConstant = {
   kind: "numeric-const";
   value: number;
@@ -78,8 +80,6 @@ export function ReturnStmt(expr: Expr): ReturnStmt {
 }
 
 export type Stmt = ReturnStmt;
-
-export type Identifier = string;
 
 export type Function = {
   name: Identifier;

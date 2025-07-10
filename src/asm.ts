@@ -1,5 +1,6 @@
 import * as ast from "./ast";
 import * as tacky from "./tacky";
+import { Identifier } from "./shared";
 
 export type ImmediateNumber = {
   kind: "number";
@@ -24,9 +25,9 @@ export function Register(reg: RegIds): Register {
 
 export type Pseudo = {
   kind: "pseudo";
-  id: ast.Identifier;
+  id: Identifier;
 };
-export function Pseudo(id: ast.Identifier): Pseudo {
+export function Pseudo(id: Identifier): Pseudo {
   return { kind: "pseudo", id };
 }
 
@@ -129,12 +130,12 @@ export type Instruction =
   | Cdq;
 
 export type Function = {
-  name: ast.Identifier;
+  name: Identifier;
   instructions: Instruction[];
 };
 
 export function Function(
-  name: ast.Identifier,
+  name: Identifier,
   instructions: Instruction[]
 ): Function {
   return { name, instructions };
@@ -226,7 +227,7 @@ function instrToAsm(instr: tacky.Instruction): Instruction[] {
 }
 
 function functionToAsm(func: tacky.Function): Function {
-  const name: ast.Identifier = func.name;
+  const name: Identifier = func.name;
   const instructions: Instruction[] = [];
   func.body.forEach((instr) => {
     instructions.push(...instrToAsm(instr));
