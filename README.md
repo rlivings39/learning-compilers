@@ -331,6 +331,16 @@ When a function is called it allocates space on the stack for local variables an
 
 Registers have multiple aliases in assembly that specify how many bytes to read. `EAX` is the lower 32 bits of `RAX`, `AX` is 16 bits and `AL, AH` are 8 bits.
 
+## Comparisons and jumps in assembly
+
+x64 assembly contains many conditional instructions like conditionally setting a value or conditionally jumping. These instructions all read their conditions from the RFLAGS register rather than a direct operand. RFLAGS generally isn't set directly but is set as a side effect of other instructions like `add, sub, cmp`.
+
+The **zero flag (ZF)** is set to 1 if the result of the last instruction was 0 and set to 0 if the value was nonzero.
+
+The **sign flag (SF)** is set to 1 if the most significant bit of the last result was 1 and 0 if the most significant bit was 0.
+
+The **overflow flag (OF)** is set to 1 if the last instruction resulted in signed integer overflow and 0 otherwise.
+
 ## Currently supported/in progress grammar
 
 The grammar currently supported or in progress is chapter 4
