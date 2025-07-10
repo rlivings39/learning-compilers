@@ -62,14 +62,14 @@ test("Short-circuiting operators to TACKY", () => {
   expect(tacky).not.toBeNull();
   expect(prettyPrintTacky(tacky)).toEqual(`Function main () {
   multiply($1,$2,%tmp.0)
-  JumpIfZero(%tmp.0, false_label0)
+  JumpIfZero(%tmp.0, false_label)
   subtract($2,$3,%tmp.1)
-  JumpIfZero(%tmp.1, false_label0)
+  JumpIfZero(%tmp.1, false_label)
   Copy($1, %tmp.2)
-  Jump(end1)
-  Label(false_label0)
+  Jump(end)
+  Label(false_label)
   Copy($0, %tmp.2)
-  Label(end1)
+  Label(end)
   Return(%tmp.2)
 }`);
 
@@ -80,14 +80,40 @@ test("Short-circuiting operators to TACKY", () => {
   expect(tacky2).not.toBeNull();
   expect(prettyPrintTacky(tacky2)).toEqual(`Function main () {
   less($1,$2,%tmp.0)
-  JumpIfNotZero(%tmp.0, true_label0)
+  JumpIfNotZero(%tmp.0, true_label)
   greater-eq($2,$3,%tmp.1)
-  JumpIfNotZero(%tmp.1, true_label0)
+  JumpIfNotZero(%tmp.1, true_label)
   Copy($0, %tmp.2)
-  Jump(end1)
-  Label(true_label0)
+  Jump(end)
+  Label(true_label)
   Copy($1, %tmp.2)
-  Label(end1)
+  Label(end)
   Return(%tmp.2)
+}`);
+});
+
+test("Label mangling", () => {
+  // Ensure we mangle label names to make them unique
+  const main = `int main(void) {
+    return 1 && 2 && 3;
+  }`;
+  const tacky = astToTacky(parse(lex(main)));
+  expect(tacky).not.toBeNull();
+  expect(prettyPrintTacky(tacky)).toEqual(`Function main () {
+  JumpIfZero($1, false_label)
+  JumpIfZero($2, false_label)
+  Copy($1, %tmp.0)
+  Jump(end)
+  Label(false_label)
+  Copy($0, %tmp.0)
+  Label(end)
+  JumpIfZero(%tmp.0, false_label1)
+  JumpIfZero($3, false_label1)
+  Copy($1, %tmp.1)
+  Jump(end1)
+  Label(false_label1)
+  Copy($0, %tmp.1)
+  Label(end1)
+  Return(%tmp.1)
 }`);
 });

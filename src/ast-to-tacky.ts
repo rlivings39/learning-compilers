@@ -9,13 +9,20 @@ type ValAndInstructions = {
 };
 class AstToTacky {
   private VAR_ID = 0;
-  private LABEL_ID = 0;
+  private LABEL_SET = new Set<Identifier>();
   makeTemp(): tacky.Var {
     return tacky.Var(`tmp.${this.VAR_ID++}`);
   }
 
   makeLabel(name: Identifier): tacky.Label {
-    return tacky.Label(`${name}${this.LABEL_ID++}`);
+    let counter = 0;
+    let labelName = name;
+    while (this.LABEL_SET.has(labelName)) {
+      ++counter;
+      labelName = name + counter;
+    }
+    this.LABEL_SET.add(labelName);
+    return tacky.Label(labelName);
   }
 
   convertUnary(unaryExpr: ast.UnaryExpr): ValAndInstructions {
