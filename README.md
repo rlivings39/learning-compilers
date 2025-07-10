@@ -341,6 +341,8 @@ The **sign flag (SF)** is set to 1 if the most significant bit of the last resul
 
 The **overflow flag (OF)** is set to 1 if the last instruction resulted in signed integer overflow and 0 otherwise.
 
+Unsigned integer overflow does not set OF.
+
 ## Currently supported/in progress grammar
 
 The grammar currently supported or in progress is chapter 4
