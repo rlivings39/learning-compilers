@@ -211,25 +211,25 @@ function valueToAsm(val: tacky.Value): Operand {
 }
 
 function simpleBinaryToAsm(
-  opname: BinaryOpName,
+  opName: BinaryOpName,
   lhs: Operand,
   rhs: Operand,
   dst: Operand
 ): Instruction[] {
   const instructions: Instruction[] = [
     Move(lhs, dst),
-    Binary(opname, rhs, dst),
+    Binary(opName, rhs, dst),
   ];
   return instructions;
 }
 
 function divRemToAsm(
-  opname: "divide" | "remainder",
+  opName: "divide" | "remainder",
   lhs: Operand,
   rhs: Operand,
   dst: Operand
 ): Instruction[] {
-  const resultRegister: RegIds = opname === "divide" ? "AX" : "DX";
+  const resultRegister: RegIds = opName === "divide" ? "AX" : "DX";
 
   const instructions: Instruction[] = [
     Move(lhs, Register("AX")),
@@ -237,6 +237,52 @@ function divRemToAsm(
     Idiv(rhs),
     Move(Register(resultRegister), dst),
   ];
+  return instructions;
+}
+
+const RELOP_TO_CC: Record<ast.RelopName, ConditionCode> = {
+  less: "L",
+  "less-eq": "LE",
+  greater: "G",
+  "greater-eq": "GE",
+  equal: "E",
+  "not-equal": "NE",
+};
+
+type JmpName = tacky.JumpIfNotZero["kind"] | tacky.JumpIfZero["kind"];
+const JUMP_TO_CC: Record<JmpName, ConditionCode> = {
+  "jump-if-not-zero": "NE",
+  "jump-if-zero": "E",
+};
+
+function jumpToAsm(
+  jump: tacky.JumpIfNotZero | tacky.JumpIfZero
+): Instruction[] {
+  const instructions = [
+    Cmp(ImmediateNumber(0), valueToAsm(jump.condition)),
+    JmpCC(JUMP_TO_CC[jump.kind], jump.target),
+  ];
+  return instructions;
+}
+
+function relopToAsm(
+  opName: ast.RelopName,
+  lhs: Operand,
+  rhs: Operand,
+  dst: Operand
+): Instruction[] {
+  const instructions = [
+    Cmp(lhs, rhs),
+    Move(ImmediateNumber(0), dst),
+    SetCC(RELOP_TO_CC[opName], dst),
+  ];
+  return instructions;
+}
+
+function unaryNotToAsm(not: tacky.LogicalNot): Instruction[] {
+  const src = valueToAsm(not.src);
+  const dst = valueToAsm(not.dst);
+  const instructions = [Cmp(ImmediateNumber(0), src), SetCC("E", dst)];
   return instructions;
 }
 
@@ -254,6 +300,24 @@ function instrToAsm(instr: tacky.Instruction): Instruction[] {
       const unary = instr.kind === "complement" ? Not : Neg;
       return [Move(src, dst), unary(dst)];
     }
+    case "logical-not": {
+      return unaryNotToAsm(instr);
+    }
+    case "jump": {
+      return [Jmp(instr.target)];
+    }
+    case "jump-if-not-zero":
+    case "jump-if-zero": {
+      return jumpToAsm(instr);
+    }
+    case "label": {
+      return [Label(instr.name)];
+    }
+    case "copy": {
+      const src = valueToAsm(instr.src);
+      const dst = valueToAsm(instr.dst);
+      return [Move(src, dst)];
+    }
     case "binary-expr": {
       const lhs = valueToAsm(instr.lhs);
       const rhs = valueToAsm(instr.rhs);
@@ -265,6 +329,14 @@ function instrToAsm(instr: tacky.Instruction): Instruction[] {
           return simpleBinaryToAsm("mul", lhs, rhs, dst);
         case "subtract": {
           return simpleBinaryToAsm("sub", lhs, rhs, dst);
+        }
+        case "less":
+        case "less-eq":
+        case "greater":
+        case "greater-eq":
+        case "equal":
+        case "not-equal": {
+          return relopToAsm(instr.operator, lhs, rhs, dst);
         }
         case "divide":
         case "remainder": {

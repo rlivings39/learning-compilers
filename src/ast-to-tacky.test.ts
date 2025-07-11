@@ -1,4 +1,4 @@
-import { test, expect, assert } from "vitest";
+import { test, expect } from "vitest";
 import { astToTacky } from "./ast-to-tacky";
 import { parse } from "./parse";
 import { lex } from "./lex";

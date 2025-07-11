@@ -2,7 +2,7 @@
  * TACKY IR definition
  */
 
-import { BinaryOpName } from "./ast";
+import { BinaryOpName as AstBinaryOpName } from "./ast";
 import { Identifier } from "./shared";
 
 export type Program = {
@@ -54,6 +54,8 @@ export type LogicalNot = {
 export function LogicalNot(src: Value, dst: Assignable): LogicalNot {
   return { kind: "logical-not", src, dst };
 }
+
+export type BinaryOpName = Exclude<AstBinaryOpName, "and" | "or">;
 
 export type BinaryOp = {
   kind: "binary-expr";

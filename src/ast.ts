@@ -37,20 +37,23 @@ export function LogicalNot(expr: Expr): LogicalNot {
 
 export type UnaryExpr = Complement | UnaryMinus | LogicalNot;
 
+export type RelopName =
+  | "less"
+  | "less-eq"
+  | "greater"
+  | "greater-eq"
+  | "equal"
+  | "not-equal";
+
 export type BinaryOpName =
   | "plus"
   | "divide"
   | "multiply"
   | "subtract"
   | "remainder"
-  | "less"
-  | "less-eq"
-  | "greater"
-  | "greater-eq"
-  | "equal"
-  | "not-equal"
   | "and"
-  | "or";
+  | "or"
+  | RelopName;
 
 export type BinaryExpr = {
   kind: "binary-expr";
