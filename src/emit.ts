@@ -1,8 +1,17 @@
 import * as asm from "./asm";
 import { NotccError } from "./errors";
+import { Identifier } from "./shared";
 const INDENT = " ".repeat(2);
 
-function emitOperand(op: asm.Operand): string {
+type OperandSize = 1 | 4;
+const REG_TO_ASM: Record<asm.RegIds, Record<OperandSize, string>> = {
+  AX: { "1": "%al", "4": "%eax" },
+  DX: { "1": "%dl", "4": "%edx" },
+  R10: { "1": "%r10b", "4": "%r10d" },
+  R11: { "1": "%r11b", "4": "%r11d" },
+};
+
+function emitOperand(op: asm.Operand, sz: OperandSize = 4): string {
   let res = "";
   switch (op.kind) {
     case "number": {
@@ -10,25 +19,7 @@ function emitOperand(op: asm.Operand): string {
       break;
     }
     case "register": {
-      let regName;
-      switch (op.reg) {
-        case "AX": {
-          regName = "%eax";
-          break;
-        }
-        case "R10": {
-          regName = "%r10d";
-          break;
-        }
-        case "DX": {
-          regName = "%edx";
-          break;
-        }
-        case "R11": {
-          regName = "%r11d";
-          break;
-        }
-      }
+      const regName = REG_TO_ASM[op.reg][sz];
       res += regName;
       break;
     }
@@ -114,38 +105,95 @@ function emitBinary(binary: asm.Binary): string {
   return res;
 }
 
+function emitCmp(cmp: asm.Cmp): string {
+  const res = `cmpl ${emitOperand(cmp.src)}, ${emitOperand(cmp.dst)}`;
+  return res;
+}
+
+function emitJmp(jmp: asm.Jmp): string {
+  const res = `jmp ${mangleLabel(jmp.target)}`;
+  return res;
+}
+
+function condCodeToSuffix(c: asm.ConditionCode) {
+  return c.toLowerCase();
+}
+
+function emitJmpcc(jmp: asm.JmpCC): string {
+  const res = `j${condCodeToSuffix(jmp.cond)} ${mangleLabel(jmp.target)}`;
+  return res;
+}
+
+function emitSetcc(setcc: asm.SetCC): string {
+  const res = `set${condCodeToSuffix(setcc.cond)} ${emitOperand(setcc.dst, 1)}`;
+  return res;
+}
+
+function emitLabel(label: Identifier): string {
+  return mangleLabel(label) + ":";
+}
+
+function mangleLabel(label: Identifier): string {
+  //TODO MAC use L instead
+  const labelPrefix = ".L";
+  return labelPrefix + label;
+}
+
 function emitInstructions(instructions: asm.Instruction[]): string {
   let res = "";
   instructions.forEach((instr) => {
-    res += INDENT;
+    let indentStr = INDENT;
+    let thisInstr = "";
     switch (instr.kind) {
       case "move": {
-        res += emitMove(instr);
+        thisInstr = emitMove(instr);
         break;
       }
       case "return": {
-        res += emitReturn(instr);
+        thisInstr = emitReturn(instr);
         break;
       }
       case "neg":
       case "not": {
-        res += emitUnary(instr);
+        thisInstr = emitUnary(instr);
         break;
       }
       case "allocate-stack": {
-        res += emitAllocStack(instr);
+        thisInstr = emitAllocStack(instr);
         break;
       }
       case "binary-op": {
-        res += emitBinary(instr);
+        thisInstr = emitBinary(instr);
         break;
       }
       case "idiv": {
-        res += emitIdiv(instr);
+        thisInstr = emitIdiv(instr);
         break;
       }
       case "cdq": {
-        res += emitCdq(instr);
+        thisInstr = emitCdq(instr);
+        break;
+      }
+      case "cmp": {
+        thisInstr = emitCmp(instr);
+        break;
+      }
+      case "jmp": {
+        thisInstr = emitJmp(instr);
+        break;
+      }
+      case "jmpcc": {
+        thisInstr = emitJmpcc(instr);
+        break;
+      }
+      case "setcc": {
+        thisInstr = emitSetcc(instr);
+        break;
+      }
+      case "label": {
+        // No indent for labels
+        indentStr = "";
+        thisInstr = emitLabel(instr.name);
         break;
       }
       default: {
@@ -153,6 +201,7 @@ function emitInstructions(instructions: asm.Instruction[]): string {
         return _check;
       }
     }
+    res += indentStr + thisInstr;
     res += "\n";
   });
   return res;

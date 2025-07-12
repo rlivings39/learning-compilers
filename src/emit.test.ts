@@ -21,6 +21,11 @@ test("Emitter", () => {
   const idiv = asm.Idiv(reg10);
   const cdq = asm.Cdq();
   const ret = asm.Return();
+  const setcc = asm.SetCC("E", reg10);
+  const label = asm.Label("point");
+  const jmp = asm.Jmp(label.name);
+  const jmpcc = asm.JmpCC("G", label.name);
+  const cmp = asm.Cmp(stack, axreg);
   const func = asm.Function("main", [
     alloc,
     mv,
@@ -32,6 +37,11 @@ test("Emitter", () => {
     sub,
     mul,
     idiv,
+    setcc,
+    label,
+    jmp,
+    jmpcc,
+    cmp,
     cdq,
     ret,
   ]);
@@ -52,6 +62,11 @@ main:
   subl %eax, -4(%rbp)
   imul %eax, -4(%rbp)
   idiv %r10d
+  sete %r10b
+.Lpoint:
+  jmp .Lpoint
+  jg .Lpoint
+  cmpl -4(%rbp), %eax
   cdq
   movq %rbp, %rsp
   popq %rbp

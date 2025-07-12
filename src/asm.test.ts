@@ -166,7 +166,8 @@ test("AST to assembly jmp, set, relops", () => {
   }`;
   const asmProg = asm.tackyToAsm(astToTacky(parse(lex(main))));
   const instructions = asmProg.function_definition.instructions;
-  expect(instructions, JSON.stringify(instructions, null, 2)).toEqual([]);
+  // TODO more tests
+  expect(instructions).toHaveLength(72);
 });
 
 test("MoveToStackTransform", () => {

@@ -370,6 +370,10 @@ The `jmp` instruction takes a label and does an unconditional jump to that desti
 
 Conditional jumps work similarly but only jump if a condition matches after checking RFLAGS. We have `je, jne, jg, jge, jl, jle` just like the set instructions. There are many many more conditional jump instructions.
 
+## Local labels in assembly
+
+Labels can be prefixed with `.L` on Linux and `L` on MacOS to avoid name clashes with user symbols like functions. This fixes collisions because C identifiers don't start with a `.` and on Mac symbols are prefixed with `_`. Such labels are **local labels** and are also omitted from debug symbols to avoid confusing things.
+
 ## Currently supported/in progress grammar
 
 The grammar currently supported or in progress is chapter 4
