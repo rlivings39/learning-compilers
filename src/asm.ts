@@ -120,11 +120,11 @@ export function Cdq(): Cdq {
 
 export type Cmp = {
   kind: "cmp";
-  val1: Operand;
-  val2: Operand;
+  src: Operand;
+  dst: Operand;
 };
-export function Cmp(val1: Operand, val2: Operand): Cmp {
-  return { kind: "cmp", val1, val2 };
+export function Cmp(src: Operand, dst: Operand): Cmp {
+  return { kind: "cmp", src, dst };
 }
 
 export type Jmp = {
@@ -375,7 +375,8 @@ function fixupStackOperands(prog: Program, stackOffset: number) {
   instructions.forEach((instr) => {
     switch (instr.kind) {
       case "move":
-      case "binary-op": {
+      case "binary-op":
+      case "cmp": {
         if (
           instr.kind === "binary-op" &&
           instr.operator === "mul" &&
@@ -387,6 +388,11 @@ function fixupStackOperands(prog: Program, stackOffset: number) {
           instr.dst = reg11;
           const mvRegisterToStack = Move(reg11, stackDst);
           newInstructions.push(mvStackToRegister, instr, mvRegisterToStack);
+        } else if (instr.kind === "cmp" && instr.dst.kind === "number") {
+          const reg11 = Register("R11");
+          const mvReg11 = Move(instr.dst, reg11);
+          instr.dst = reg11;
+          newInstructions.push(mvReg11, instr);
         }
         // If both operands are on the stack, use an
         // intermediate register:
@@ -411,7 +417,11 @@ function fixupStackOperands(prog: Program, stackOffset: number) {
       case "neg":
       case "not":
       case "allocate-stack":
-      case "cdq": {
+      case "cdq":
+      case "jmp":
+      case "jmpcc":
+      case "setcc":
+      case "label": {
         // Nothing to do as these have 0 or 1 operands
         newInstructions.push(instr);
         break;
@@ -475,6 +485,30 @@ function moveToStack(prog: Program): number {
         ));
         break;
       }
+      case "cmp": {
+        ({ newOperand: instr.src, stackOffset } = toStack(
+          instr.src,
+          stackOffset,
+          symbolMap
+        ));
+        ({ newOperand: instr.dst, stackOffset } = toStack(
+          instr.dst,
+          stackOffset,
+          symbolMap
+        ));
+        break;
+      }
+      case "setcc": {
+        ({ newOperand: instr.dst, stackOffset } = toStack(
+          instr.dst,
+          stackOffset,
+          symbolMap
+        ));
+        break;
+      }
+      case "jmpcc":
+      case "jmp":
+      case "label":
       case "allocate-stack":
       case "return":
       case "cdq": {

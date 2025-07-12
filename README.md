@@ -388,6 +388,7 @@ The grammar currently supported or in progress is chapter 4
 
 ## Actions
 
+- [ ] More tests for logical operators, jumps, short-circuiting in ASM
 - [ ] Read about twos complement https://www.cs.cornell.edu/~tomf/notes/cps104/ and https://www.nand2tetris.org/course (book icon under Project 2: Boolean arithmetic)
 
 ## Notes on the book

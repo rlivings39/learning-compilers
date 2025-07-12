@@ -48,8 +48,8 @@ test("Assembly constructions", () => {
   expect(mul.src).toBe(num);
   expect(mul.kind).toBe("binary-op");
   expect(cmp.kind).toBe("cmp");
-  expect(cmp.val1).toBe(num);
-  expect(cmp.val2).toBe(reg);
+  expect(cmp.src).toBe(num);
+  expect(cmp.dst).toBe(reg);
   expect(jmp.kind).toBe("jmp");
   expect(jmp.target).toBe(label.name);
   expect(jmpcc.kind).toBe("jmpcc");
@@ -141,6 +141,32 @@ test("AST to assembly div/rem", () => {
   expect((instructions[divIndices[1] + 1] as asm.Move).src).toEqual(
     asm.Register("DX")
   );
+});
+
+test("AST to assembly cmp rewrites", () => {
+  // Ensure that cmp doesn't have a constant as the 2nd operand
+  const main = `int main(void) {
+    return 1 < 2;
+  }`;
+  const asmProg = asm.tackyToAsm(astToTacky(parse(lex(main))));
+  const instructions = asmProg.function_definition.instructions;
+  expect(instructions, JSON.stringify(instructions, null, 2)).not.toBeNull();
+  const cmpIdx = instructions.findIndex((i) => i.kind === "cmp");
+  expect(cmpIdx, "No cmp instruction found").not.toEqual(-1);
+  const cmp = instructions[cmpIdx] as asm.Cmp;
+  expect(cmp.dst.kind).toEqual("register");
+  const setInst = instructions.filter((i) => i.kind === "setcc");
+  expect(setInst).toHaveLength(1);
+  expect(setInst[0].cond).toBe("L");
+});
+
+test("AST to assembly jmp, set, relops", () => {
+  const main = `int main(void) {
+    return 1 < 2 && 2 <= 3 && 4 > 5 && 6 >= 7 && 8 != 9 || 10 == 11;
+  }`;
+  const asmProg = asm.tackyToAsm(astToTacky(parse(lex(main))));
+  const instructions = asmProg.function_definition.instructions;
+  expect(instructions, JSON.stringify(instructions, null, 2)).toEqual([]);
 });
 
 test("MoveToStackTransform", () => {
