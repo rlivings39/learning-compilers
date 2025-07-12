@@ -160,6 +160,20 @@ test("AST to assembly cmp rewrites", () => {
   expect(setInst[0].cond).toBe("L");
 });
 
+test("Comparison", () => {
+  const main = `int main(void) {
+    return 1 >= 2;
+  }`;
+  const asmProg = asm.tackyToAsm(astToTacky(parse(lex(main))));
+  const instructions = asmProg.function_definition.instructions;
+  const cmp = instructions.filter((i) => i.kind === "cmp");
+  expect(cmp).toHaveLength(1);
+  const cmpI = cmp[0];
+  // Ensure that operands have been swapped for our AT&T syntax
+  expect(cmpI.src.kind).toBe("number");
+  expect((cmpI.src as asm.ImmediateNumber).value).toEqual(2);
+});
+
 test("AST to assembly jmp, set, relops", () => {
   const main = `int main(void) {
     return 1 < 2 && 2 <= 3 && 4 > 5 && 6 >= 7 && 8 != 9 || 10 == 11;

@@ -272,7 +272,8 @@ function relopToAsm(
   dst: Operand
 ): Instruction[] {
   const instructions = [
-    Cmp(lhs, rhs),
+    // Reverse operands for AT&T syntax
+    Cmp(rhs, lhs),
     Move(ImmediateNumber(0), dst),
     SetCC(RELOP_TO_CC[opName], dst),
   ];
