@@ -8,13 +8,15 @@ The [tests](https://github.com/nlsandler/writing-a-c-compiler-tests/) provided w
 
 ## Current status
 
-This compiler is complete through Chapter 3 of the book meaning it compiles programs of the form
+This compiler is complete through Chapter 4 of the book meaning it compiles programs of the form
 
 ```c
-int main(void) { return ~(-4) * (7 + 12);}
+int main(void) { return ~(-4) * (7 + 12) || 7 > 12;}
 ```
 
-for any combination of `~, -`, binary ops `+, -, *, /, %`, parentheses, and any integer constants.
+for any combination of `~, -`, binary ops `+, -, *, /, %, <, <=, >, >=, ==, !=, !, &&, ||`, parentheses, and any integer constants.
+
+See the [current grammar](#current-grammar) section for full details of what is supported.
 
 ## Installing and using this repo
 
@@ -374,7 +376,8 @@ Conditional jumps work similarly but only jump if a condition matches after chec
 
 Labels can be prefixed with `.L` on Linux and `L` on MacOS to avoid name clashes with user symbols like functions. This fixes collisions because C identifiers don't start with a `.` and on Mac symbols are prefixed with `_`. Such labels are **local labels** and are also omitted from debug symbols to avoid confusing things.
 
-## Currently supported/in progress grammar
+
+## Current grammar
 
 The grammar currently supported or in progress is chapter 4
 
