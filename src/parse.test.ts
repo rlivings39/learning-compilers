@@ -2,6 +2,7 @@ import { test, expect } from "vitest";
 import { lex } from "./lex";
 import { parse } from "./parse";
 import { prettyPrint } from "./pretty-print";
+import * as ast from "./ast";
 
 test("Parsing", () => {
   const mainProg = `
@@ -26,7 +27,9 @@ test("Parsing", () => {
   }`;
   const tokensUminus = lex(mainProgUminus);
   const ast = parse(tokensUminus);
-  expect(ast.function_definition.body.expr.kind).toEqual("unary-minus");
+  expect((ast.function_definition.body[0] as ast.ReturnStmt).expr.kind).toEqual(
+    "unary-minus"
+  );
   expect(prettyPrint(ast).trim()).toEqual(`Program (
   Function main() {
     return -(2);
@@ -102,4 +105,33 @@ test("Logical ops", () => {
     return or(and(1, 2), not-equal(equal(greater-eq(greater(less-eq(less(3, 4), 5), 6), 7), 8), 9));
   }
 )`);
+});
+
+test("Function body and assignment", () => {
+  const main1 = `
+  int main(void) {
+  ;
+    int x = 1;
+    int y;
+    int z;
+    y = 2;
+    z = y + (x=y=3);
+    return y + x + z;
+  }`;
+  const ast1 = parse(lex(main1));
+  expect(ast1.function_definition.body).toHaveLength(7);
+  expect(prettyPrint(ast1).trim()).toEqual(
+    `
+Program (
+  Function main() {
+    ;
+    Declaration (x,1);
+    Declaration (y);
+    Declaration (z);
+    =(y, 2);
+    =(z, plus(y, =(x, =(y, 3))));
+    return plus(plus(y, x), z);
+  }
+)`.trim()
+  );
 });

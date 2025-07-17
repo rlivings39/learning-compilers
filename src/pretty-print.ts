@@ -6,6 +6,10 @@ import {
   Constant,
   UnaryExpr,
   BinaryExpr,
+  BlockItem,
+  Declaration,
+  Assignment,
+  Var,
 } from "./ast";
 const INDENT_INCREMENT = 2;
 
@@ -36,6 +40,15 @@ function printUnary(u: UnaryExpr): string {
   return `${u.op}(${printExpr(u.expr)})`;
 }
 
+function printAssignment(assign: Assignment): string {
+  // TODO parens?
+  return `=(${printExpr(assign.lhs)}, ${printExpr(assign.rhs)})`;
+}
+
+function printVar(v: Var): string {
+  return v.name;
+}
+
 function printExpr(exp: Expr): string {
   switch (exp.kind) {
     case "numeric-const":
@@ -50,21 +63,58 @@ function printExpr(exp: Expr): string {
     case "binary-expr": {
       return printBinary(exp);
     }
+    case "assignment": {
+      return printAssignment(exp);
+    }
+    case "var": {
+      return printVar(exp);
+    }
     default: {
       const _checker: never = exp;
       return _checker;
     }
   }
 }
+
 function printStmt(stmt: Stmt, indentLevel: number): string {
-  const exp = printExpr(stmt.expr);
-  return printLine(`return ${exp};`, indentLevel);
+  switch (stmt.kind) {
+    case "return-stmt": {
+      const exp = printExpr(stmt.expr);
+      return printLine(`return ${exp};`, indentLevel);
+    }
+    case "expr-stmt": {
+      const exp = printExpr(stmt.expr);
+      return printLine(`${exp};`, indentLevel);
+    }
+
+    case "null-stmt": {
+      return printLine(`;`, indentLevel);
+    }
+  }
+}
+
+function printDeclaration(decl: Declaration, indentLevel: number): string {
+  const init = decl?.init ? `,${printExpr(decl.init)}` : "";
+  return printLine(`Declaration (${decl.name}${init});`, indentLevel);
+}
+
+function printBlock(block: BlockItem, indentLevel: number): string {
+  switch (block.kind) {
+    case "declaration":
+      return printDeclaration(block, indentLevel);
+    case "return-stmt":
+    case "expr-stmt":
+    case "null-stmt":
+      return printStmt(block, indentLevel);
+  }
 }
 
 function printFunction(func: Function, indentLevel: number): string {
-  const b = printStmt(func.body, indentLevel + INDENT_INCREMENT);
+  const body = func.body
+    .map((block) => printBlock(block, indentLevel + INDENT_INCREMENT))
+    .join("");
   let ret = printLine(`Function ${func.name}() {`, indentLevel);
-  ret += b;
+  ret += body;
   ret += printLine("}", indentLevel);
   return ret;
 }

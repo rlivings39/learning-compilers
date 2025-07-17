@@ -84,7 +84,8 @@ export type BinaryTokenKind =
   | TokenKind.GREATER
   | TokenKind.GREATER_EQ
   | TokenKind.EQUAL
-  | TokenKind.NOT_EQUAL;
+  | TokenKind.NOT_EQUAL
+  | TokenKind.ASSIGN;
 
 // Various token interfaces
 interface SimpleToken {

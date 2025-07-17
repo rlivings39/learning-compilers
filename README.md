@@ -383,10 +383,12 @@ The grammar currently supported or in progress is chapter 4
 
 ```bnf
 <program> ::= <function>
-<function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
+<function> ::= "int" <identifier> "(" "void" ")" "{" { <block-item> } "}"
+<block-item> ::= <statement> | <declaration>
+<declaration> ::= "int" <identifier> [ "=" <expr> ] ";"
 <statement> ::= "return" <expr> ";"
 <expr> ::= <factor> | <expr> <binop> <expr>
-<factor> ::= <int> | <unop> <expr> | "(" <expr> ")"
+<factor> ::= <int> | <identifier> | <unop> <expr> | "(" <expr> ")"
 <identifier> ::= ? An identifier token ?
 <int> ::= ? A constant token ?
 <unop> ::= "-" | "~" | "!"

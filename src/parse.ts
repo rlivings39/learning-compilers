@@ -18,8 +18,24 @@ function renderExpectedTokens(expected: TokenKind[]): string {
   return expected.map((t) => TokenKind[t]).join(", ");
 }
 
+function checkTokenExists(token: Token) {
+  if (!token) {
+    fail(`Unexpected end of file.`);
+  }
+}
+
+function peek(tokens: Token[]): Token {
+  const res = tokens[0];
+  checkTokenExists(res);
+  return res;
+}
+
+function takeToken(tokens: Token[]) {
+  return tokens.shift();
+}
+
 function expect(expected: TokenKind | TokenKind[], tokens: Token[]): Token {
-  const token = tokens.shift();
+  const token = takeToken(tokens);
   if (!Array.isArray(expected)) {
     expected = [expected];
   }
@@ -67,6 +83,7 @@ function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
 }
 
 const OP_PRECEDENCE: Record<BinaryTokenKind, number> = {
+  [TokenKind.ASSIGN]: 1,
   [TokenKind.OR]: 5,
   [TokenKind.AND]: 10,
   [TokenKind.EQUAL]: 30,
@@ -91,6 +108,7 @@ function isBinOp(token: Token): token is BinaryToken {
 }
 
 const BINARY_TOKEN_TO_OP_NAME: Record<BinaryTokenKind, ast.BinaryOpName> = {
+  [TokenKind.ASSIGN]: "assign",
   [TokenKind.OR]: "or",
   [TokenKind.AND]: "and",
   [TokenKind.EQUAL]: "equal",
@@ -136,20 +154,27 @@ function parseExpr(tokens: Token[], minPrecedence: number): ast.Expr {
   let left = parseFactor(tokens);
   let nextToken = tokens[0];
   while (isBinOp(nextToken) && binopPrecedence(nextToken) >= minPrecedence) {
-    const operator = parseBinop(tokens);
-    const right = parseExpr(tokens, binopPrecedence(nextToken) + 1);
-    // Operators are left-associative so that
-    //   1 + 2 - 3
-    // becomes
-    //   (1+2) - 3
-    left = ast.BinaryExpr(operator, left, right);
+    if (nextToken.kind === TokenKind.ASSIGN) {
+      expect(TokenKind.ASSIGN, tokens);
+      // Don't increment precedence because assignment is right associative
+      const right = parseExpr(tokens, binopPrecedence(nextToken));
+      left = ast.Assignment(left, right);
+    } else {
+      const operator = parseBinop(tokens);
+      const right = parseExpr(tokens, binopPrecedence(nextToken) + 1);
+      // Operators are left-associative so that
+      //   1 + 2 - 3
+      // becomes
+      //   (1+2) - 3
+      left = ast.BinaryExpr(operator, left, right);
+    }
     nextToken = tokens[0];
   }
   return left;
 }
 
 function parseFactor(tokens: Token[]): ast.Expr {
-  const token = tokens[0];
+  const token = peek(tokens);
   switch (token.kind) {
     case TokenKind.LEFT_PAREN: {
       expect(TokenKind.LEFT_PAREN, tokens);
@@ -167,6 +192,10 @@ function parseFactor(tokens: Token[]): ast.Expr {
       // TODO remove this cast
       return parseUnary(token as UnaryToken, tokens);
     }
+    case TokenKind.IDENTIFIER: {
+      const name = parseIdentifier(tokens);
+      return ast.Var(name);
+    }
     // TODO is it good to list these out? Probably
     case TokenKind.RIGHT_PAREN:
     case TokenKind.LEFT_CURLY:
@@ -177,7 +206,6 @@ function parseFactor(tokens: Token[]): ast.Expr {
     case TokenKind.KW_VOID:
     case TokenKind.KW_RETURN:
     case TokenKind.SEMICOLON:
-    case TokenKind.IDENTIFIER:
     case TokenKind.PLUS:
     case TokenKind.TIMES:
     case TokenKind.DIVIDE:
@@ -190,6 +218,7 @@ function parseFactor(tokens: Token[]): ast.Expr {
     case TokenKind.GREATER_EQ:
     case TokenKind.EQUAL:
     case TokenKind.NOT_EQUAL:
+    case TokenKind.ASSIGN:
     default: {
       fail(`Failed to parse ${TokenKind[token.kind]}. Expected an expression.`);
     }
@@ -197,10 +226,20 @@ function parseFactor(tokens: Token[]): ast.Expr {
 }
 
 function parseStatement(tokens: Token[]): ast.Stmt {
-  expect(TokenKind.KW_RETURN, tokens);
-  const expr = parseExpr(tokens, 0);
-  expect(TokenKind.SEMICOLON, tokens);
-  return ast.ReturnStmt(expr);
+  const nextToken = peek(tokens);
+  if (nextToken.kind === TokenKind.KW_RETURN) {
+    expect(TokenKind.KW_RETURN, tokens);
+    const expr = parseExpr(tokens, 0);
+    expect(TokenKind.SEMICOLON, tokens);
+    return ast.ReturnStmt(expr);
+  } else if (nextToken.kind === TokenKind.SEMICOLON) {
+    takeToken(tokens);
+    return ast.NullStmt();
+  } else {
+    const stmt = ast.ExprStmt(parseExpr(tokens, 1));
+    expect(TokenKind.SEMICOLON, tokens);
+    return stmt;
+  }
 }
 
 function assert(cond: boolean): asserts cond {
@@ -215,6 +254,28 @@ function parseIdentifier(tokens: Token[]): Identifier {
   return tok.id;
 }
 
+function parseDeclaration(tokens: Token[]): ast.Declaration {
+  expect(TokenKind.KW_INT, tokens);
+  const name = parseIdentifier(tokens);
+  let init: ast.Declaration["init"] = null;
+  const nextToken = peek(tokens);
+  if (nextToken.kind === TokenKind.ASSIGN) {
+    takeToken(tokens);
+    init = parseExpr(tokens, 1);
+  }
+  expect(TokenKind.SEMICOLON, tokens);
+  return ast.Declaration(name, init);
+}
+
+function parseBlockItem(tokens: Token[]): ast.BlockItem {
+  const nextToken = peek(tokens);
+  if (nextToken.kind === TokenKind.KW_INT) {
+    return parseDeclaration(tokens);
+  } else {
+    return parseStatement(tokens);
+  }
+}
+
 function parseFunction(tokens: Token[]): ast.Function {
   expect(TokenKind.KW_INT, tokens);
   const id = parseIdentifier(tokens);
@@ -222,7 +283,12 @@ function parseFunction(tokens: Token[]): ast.Function {
   expect(TokenKind.KW_VOID, tokens);
   expect(TokenKind.RIGHT_PAREN, tokens);
   expect(TokenKind.LEFT_CURLY, tokens);
-  const body = parseStatement(tokens);
+  let nextToken = peek(tokens);
+  const body: ast.BlockItem[] = [];
+  while (nextToken.kind !== TokenKind.RIGHT_CURLY) {
+    body.push(parseBlockItem(tokens));
+    nextToken = peek(tokens);
+  }
   expect(TokenKind.RIGHT_CURLY, tokens);
   return ast.Function(id, body);
 }

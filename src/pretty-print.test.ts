@@ -5,15 +5,21 @@ import { prettyPrint } from "./pretty-print";
 
 test("Pretty printer", () => {
   const numC = ast.NumericConstant(12);
-  const retS = ast.ReturnStmt(numC);
-  const func = ast.Function("main", retS);
+  const v = ast.Var("var");
+  const decl = ast.Declaration(v.name, ast.NumericConstant(3));
+  const assignStmt = ast.ExprStmt(ast.Assignment(v, numC));
+  const add = ast.BinaryExpr("plus", v, numC);
+  const retS = ast.ReturnStmt(add);
+  const nullS = ast.NullStmt();
+  const func = ast.Function("main", [decl, assignStmt, nullS, retS]);
   const prog = ast.Program(func);
-  const pp = prettyPrint(prog);
-  expect(pp).toEqual(
-    `Program (
+  const pp = prettyPrint(prog).trim();
+  expect(pp).toEqual(`Program (
   Function main() {
-    return 12;
+    Declaration (var,3);
+    =(var, 12);
+    ;
+    return plus(var, 12);
   }
-)\n`
-  );
+)`);
 });

@@ -53,6 +53,7 @@ export type BinaryOpName =
   | "remainder"
   | "and"
   | "or"
+  | "assign"
   | RelopName;
 
 export type BinaryExpr = {
@@ -69,27 +70,72 @@ export function BinaryExpr(
   return { kind: "binary-expr", operator, lhs, rhs };
 }
 
-//export type BinaryExpr = Subtract | Add | Multiply | Divide | Remainder;
+export type Var = {
+  kind: "var";
+  name: Identifier;
+};
+export function Var(name: Identifier): Var {
+  return { kind: "var", name };
+}
 
-export type Expr = Constant | UnaryExpr | BinaryExpr;
+export type Assignment = {
+  kind: "assignment";
+  // Any Expr is allowed for the lhs during parsing. We enforce
+  // that it must be an lvalue during semantic analysis.
+  lhs: Expr;
+  rhs: Expr;
+};
+export function Assignment(lhs: Expr, rhs: Expr): Assignment {
+  return { kind: "assignment", lhs, rhs };
+}
+
+export type Expr = Constant | UnaryExpr | BinaryExpr | Var | Assignment;
 
 export type ReturnStmt = {
   kind: "return-stmt";
   expr: Expr;
 };
-
 export function ReturnStmt(expr: Expr): ReturnStmt {
   return { kind: "return-stmt", expr };
 }
 
-export type Stmt = ReturnStmt;
+export type ExprStmt = {
+  kind: "expr-stmt";
+  expr: Expr;
+};
+export function ExprStmt(expr: Expr): ExprStmt {
+  return { kind: "expr-stmt", expr };
+}
+
+// A null statement i.e. just a semicolon
+export type NullStmt = {
+  kind: "null-stmt";
+};
+export function NullStmt(): NullStmt {
+  return { kind: "null-stmt" };
+}
+
+export type Stmt = ReturnStmt | ExprStmt | NullStmt;
+
+export type Declaration = {
+  kind: "declaration";
+  name: Identifier;
+  init: Expr | null;
+};
+export function Declaration(name: Identifier, init: Expr | null): Declaration {
+  const res: Declaration = { kind: "declaration", name, init };
+  return res;
+}
+
+// Things that can appear at the top-level in a function
+export type BlockItem = Stmt | Declaration;
 
 export type Function = {
   name: Identifier;
-  body: Stmt;
+  body: BlockItem[];
 };
 
-export function Function(name: Identifier, body: Stmt): Function {
+export function Function(name: Identifier, body: BlockItem[]): Function {
   return { name, body };
 }
 

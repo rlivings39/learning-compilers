@@ -141,7 +141,10 @@ class AstToTacky {
   }
 
   convertFunction(func: ast.Function): tacky.Function {
-    const instructions: tacky.Instruction[] = this.convertStatement(func.body);
+    const instructions: tacky.Instruction[] = func.body
+      .filter((blk) => blk.kind !== "declaration")
+      .map((stmt) => this.convertStatement(stmt))
+      .flat(1);
     return tacky.Function(func.name, instructions);
   }
 
