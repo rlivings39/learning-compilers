@@ -109,3 +109,14 @@ test("Lex binary ops", () => {
   expect(lex("==")).toMatchObject([{ kind: TokenKind.EQUAL }]);
   expect(lex("!=")).toMatchObject([{ kind: TokenKind.NOT_EQUAL }]);
 });
+
+test("Lex assign", () => {
+  expect(lex("  = ")).toMatchObject([{ kind: TokenKind.ASSIGN }]);
+  expect(lex("int x  = 2;")).toMatchObject([
+    { kind: TokenKind.KW_INT },
+    { kind: TokenKind.IDENTIFIER },
+    { kind: TokenKind.ASSIGN },
+    { kind: TokenKind.INT_CONSTANT },
+    { kind: TokenKind.SEMICOLON },
+  ]);
+});

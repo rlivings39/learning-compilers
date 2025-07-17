@@ -32,6 +32,7 @@ export enum TokenKind {
   GREATER_EQ,
   EQUAL,
   NOT_EQUAL,
+  ASSIGN,
 }
 
 type SimpleTokenKind =
@@ -61,7 +62,8 @@ type SimpleTokenKind =
   | TokenKind.GREATER_EQ
   | TokenKind.EQUAL
   | TokenKind.NOT_EQUAL
-  | TokenKind.LOGICAL_NOT;
+  | TokenKind.LOGICAL_NOT
+  | TokenKind.ASSIGN;
 
 type UnaryTokenKind =
   | TokenKind.MINUS
@@ -160,6 +162,7 @@ const PATTERN_MAP: TokenPatternMap = {
   [TokenKind.GREATER_EQ]: { pattern: /^>=/ },
   [TokenKind.EQUAL]: { pattern: /^==/ },
   [TokenKind.NOT_EQUAL]: { pattern: /^!=/ },
+  [TokenKind.ASSIGN]: { pattern: /^=/ },
 };
 
 function makeToken(match: string, kind: TokenKind): Token {
@@ -195,7 +198,8 @@ function makeToken(match: string, kind: TokenKind): Token {
     case TokenKind.GREATER:
     case TokenKind.GREATER_EQ:
     case TokenKind.EQUAL:
-    case TokenKind.NOT_EQUAL: {
+    case TokenKind.NOT_EQUAL:
+    case TokenKind.ASSIGN: {
       return makeSimpleToken(match, kind);
     }
   }
