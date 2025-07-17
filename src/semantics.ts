@@ -94,6 +94,9 @@ class VariableResolution {
             };
           }
           case "null-stmt": {
+            // Note: This and other cases reuse the statement rather than copying.
+            // However, this is fine as we make a new body array and therefore
+            // no shared references exist after running this function.
             return block;
           }
           case "declaration": {
