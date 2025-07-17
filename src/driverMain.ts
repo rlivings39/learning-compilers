@@ -15,6 +15,7 @@ import * as cp from "child_process";
 import { NotccError } from "./errors";
 import { astToTacky } from "./ast-to-tacky";
 import { prettyPrintTacky } from "./pretty-print-tacky";
+import { runSemanticAnalysis } from "./semantics";
 
 class CliError extends NotccError {}
 interface NotccFlag extends ParseArgsOptionDescriptor {
@@ -72,6 +73,11 @@ const NOTCC_CLI_FLAGS: NotccFlags = {
     type: "boolean",
     default: false,
     help: "Pretty print the output of the parser",
+  },
+  validate: {
+    type: "boolean",
+    default: false,
+    help: "Run up to the parser and semantic analysis",
   },
   tacky: {
     type: "boolean",
@@ -175,6 +181,11 @@ export function driverMain(argv: string[]) {
     console.log(prettyPrint(ast));
   }
   if (values.parse) {
+    return;
+  }
+
+  runSemanticAnalysis(ast);
+  if (values.validate) {
     return;
   }
 

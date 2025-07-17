@@ -160,6 +160,22 @@ Parsers that look at the next few tokens to determine what to do are called **pr
 
 A pretty-printer can be useful to visualize your AST and debug. You should also generate informative error messages.
 
+## Semantic analysis
+
+Semantic analysis runs on the AST created by the parser. It works to understand the meaning of the syntax in the AST. For example, `2 = 3` is valid syntax in our grammar. However, this is semantically invalid.
+
+This pass also makes variable names globally unique so we can easily refer to them in later passes and assembly.
+
+**Note** This compiler does **not** implement `typedef`. Doing so requires doing semantic analysis during parsing because the meaning of syntax changes based on what an identifier represents. Consider `return (foo) *x;`
+
+If we have `typedef int foo` then this dereferences `x` and casts the result to int. If `foo` is a variable, then this multiplies `foo` by `x`.
+
+This means that C has a **context sensitive** grammar rather than a **context-free** grammar.
+
+To support `typedef` we'd need to move symbol resolution into the parser so we can know what each identifier refers to.
+
+The book recommends checking out [*The context sensitivity of C's grammar
+*](https://eli.thegreenplace.net/2007/11/24/the-context-sensitivity-of-cs-grammar/) by Eli Bendersky for more details on
 ## Three address code (TAC) and the book's TACKY IR
 
 The book introduces the idea of three address code IR which represents the program using nodes with up to 3 addresses, 2 source addresses and 1 destination address. This works well for values, unary, and binary operations and maps more closely to assembly while being easier to optimize later on.
