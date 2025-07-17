@@ -11,7 +11,7 @@ class AstToTacky {
   private VAR_ID = 0;
   private LABEL_SET = new Set<Identifier>();
   makeTemp(): tacky.Var {
-    return tacky.Var(`tmp.${this.VAR_ID++}`);
+    return tacky.Var(`notcc.tmp.${this.VAR_ID++}`);
   }
 
   makeLabel(name: Identifier): tacky.Label {
@@ -99,6 +99,21 @@ class AstToTacky {
     return { val: output, instrs };
   }
 
+  convertVar(v: ast.Var): ValAndInstructions {
+    return { val: tacky.Var(v.name), instrs: [] };
+  }
+
+  convertAssignment(assign: ast.Assignment): ValAndInstructions {
+    const { val: lhs, instrs: lhsInstrs } = this.convertExpr(assign.lhs);
+    const { val: rhs, instrs: rhsInstrs } = this.convertExpr(assign.rhs);
+    const instructions = [
+      ...lhsInstrs,
+      ...rhsInstrs,
+      tacky.Copy(rhs, lhs as tacky.Assignable), // TODO get rid of case
+    ];
+    return { val: lhs, instrs: instructions };
+  }
+
   convertExpr(expr: ast.Expr): ValAndInstructions {
     const kind = expr.kind;
     switch (kind) {
@@ -116,6 +131,12 @@ class AstToTacky {
       case "binary-expr": {
         return this.convertBinary(expr);
       }
+      case "var": {
+        return this.convertVar(expr);
+      }
+      case "assignment": {
+        return this.convertAssignment(expr);
+      }
       default: {
         const _check: never = kind;
         return _check;
@@ -123,17 +144,35 @@ class AstToTacky {
     }
   }
 
-  convertStatement(stmt: ast.Stmt): tacky.Instruction[] {
+  convertStatement(stmt: ast.BlockItem): tacky.Instruction[] {
     const instructions: tacky.Instruction[] = [];
     switch (stmt.kind) {
+      case "expr-stmt": {
+        const { instrs } = this.convertExpr(stmt.expr);
+        instructions.push(...instrs);
+        break;
+      }
       case "return-stmt": {
         const { val, instrs } = this.convertExpr(stmt.expr);
         instructions.push(...instrs);
         instructions.push(tacky.Return(val));
         break;
       }
+      case "null-stmt": {
+        // Nothing to do in tacky
+        break;
+      }
+      case "declaration": {
+        if (stmt.init === null) {
+          break;
+        }
+        const v = tacky.Var(stmt.name);
+        const { val: init, instrs } = this.convertExpr(stmt.init);
+        instructions.push(...instrs, tacky.Copy(init, v));
+        break;
+      }
       default: {
-        const _check: never = stmt.kind;
+        const _check: never = stmt;
         return _check;
       }
     }
@@ -142,9 +181,19 @@ class AstToTacky {
 
   convertFunction(func: ast.Function): tacky.Function {
     const instructions: tacky.Instruction[] = func.body
-      .filter((blk) => blk.kind !== "declaration")
       .map((stmt) => this.convertStatement(stmt))
       .flat(1);
+
+    // Tack (ha) on a return statement to handle cases
+    // when main omits it or for void return. If func already
+    // had a return statement this will be unreachable. We'll
+    // delete it in future optimizations.
+    if (
+      instructions.length == 0 ||
+      instructions[instructions.length - 1].kind !== "return"
+    ) {
+      instructions.push(tacky.Return(tacky.Constant(0)));
+    }
     return tacky.Function(func.name, instructions);
   }
 

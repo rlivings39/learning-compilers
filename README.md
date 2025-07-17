@@ -8,13 +8,17 @@ The [tests](https://github.com/nlsandler/writing-a-c-compiler-tests/) provided w
 
 ## Current status
 
-This compiler is complete through Chapter 4 of the book meaning it compiles programs of the form
+This compiler is complete through Chapter 5 of the book meaning it compiles programs of the form
 
 ```c
-int main(void) { return ~(-4) * (7 + 12) || 7 > 12;}
+int main(void) {
+  int x;
+  int y = 2;
+  return ~(-4) * (x + 12) || y > 12;
+}
 ```
 
-for any combination of `~, -`, binary ops `+, -, *, /, %, <, <=, >, >=, ==, !=, !, &&, ||`, parentheses, and any integer constants.
+for any combination of `~, -`, binary ops `+, -, *, /, %, <, <=, >, >=, ==, !=, !, &&, ||`, parentheses, `int` variables, and any integer constants.
 
 See the [current grammar](#current-grammar) section for full details of what is supported.
 

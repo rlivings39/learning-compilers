@@ -11,8 +11,7 @@ test("Variable resolution", () => {
     y = 2 + x;
     return !x + 3*y;
   }`;
-  const ast = parse(lex(main));
-  runSemanticAnalysis(ast);
+  const ast = runSemanticAnalysis(parse(lex(main)));
   expect(prettyPrint(ast).trim()).toEqual(
     `
 Program (

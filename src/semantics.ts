@@ -83,33 +83,32 @@ class VariableResolution {
   }
 
   variableResolution(prog: ast.Program) {
-    prog.function_definition.body = prog.function_definition.body.map(
-      (block) => {
-        switch (block.kind) {
-          case "expr-stmt":
-          case "return-stmt": {
-            return {
-              ...block,
-              expr: this.variableResolutionInExpr(block.expr),
-            };
+    const newBody = prog.function_definition.body.map((block) => {
+      switch (block.kind) {
+        case "expr-stmt":
+        case "return-stmt": {
+          return {
+            ...block,
+            expr: this.variableResolutionInExpr(block.expr),
+          };
+        }
+        case "null-stmt": {
+          // Note: This and other cases reuse the statement rather than copying.
+          // However, this is fine as we make a new body array and therefore
+          // no shared references exist after running this function.
+          return block;
+        }
+        case "declaration": {
+          const newName = this.recordVarName(block.name);
+          let newInit = null;
+          if (block.init) {
+            newInit = this.variableResolutionInExpr(block.init);
           }
-          case "null-stmt": {
-            // Note: This and other cases reuse the statement rather than copying.
-            // However, this is fine as we make a new body array and therefore
-            // no shared references exist after running this function.
-            return block;
-          }
-          case "declaration": {
-            const newName = this.recordVarName(block.name);
-            let newInit = null;
-            if (block.init) {
-              newInit = this.variableResolutionInExpr(block.init);
-            }
-            return ast.Declaration(newName, newInit);
-          }
+          return ast.Declaration(newName, newInit);
         }
       }
-    );
+    });
+    return ast.Program(ast.Function(prog.function_definition.name, newBody));
   }
 }
 
@@ -120,7 +119,7 @@ class VariableResolution {
  * variable names globally unique.
  * @param prog
  */
-export function runSemanticAnalysis(prog: ast.Program) {
+export function runSemanticAnalysis(prog: ast.Program): ast.Program {
   const varResolve = new VariableResolution();
-  varResolve.variableResolution(prog);
+  return varResolve.variableResolution(prog);
 }

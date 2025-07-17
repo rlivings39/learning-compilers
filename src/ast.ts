@@ -89,6 +89,9 @@ export function Assignment(lhs: Expr, rhs: Expr): Assignment {
   return { kind: "assignment", lhs, rhs };
 }
 
+/**
+ * The Expr type after parsing but before semantic analysis
+ */
 export type Expr = Constant | UnaryExpr | BinaryExpr | Var | Assignment;
 
 export type ReturnStmt = {

@@ -176,7 +176,7 @@ export function driverMain(argv: string[]) {
   if (values.lex) {
     return;
   }
-  const ast = parse(tokens);
+  let ast = parse(tokens);
   if (values["pretty-print"]) {
     console.log(prettyPrint(ast));
   }
@@ -184,7 +184,7 @@ export function driverMain(argv: string[]) {
     return;
   }
 
-  runSemanticAnalysis(ast);
+  ast = runSemanticAnalysis(ast);
   if (values.validate) {
     return;
   }
