@@ -10,6 +10,7 @@ import {
   Declaration,
   Assignment,
   Var,
+  IfStmt,
 } from "./ast";
 const INDENT_INCREMENT = 2;
 
@@ -76,6 +77,20 @@ function printExpr(exp: Expr): string {
   }
 }
 
+function printIfStmt(stmt: IfStmt, indentLevel: number): string {
+  let res = printLine(`If(${printExpr(stmt.cond)}) {`, indentLevel);
+  const childIndent = indentLevel + INDENT_INCREMENT;
+  res += printStmt(stmt.thenStmt, childIndent);
+  if (stmt.elseStmt) {
+    res += printLine("} Else {", indentLevel);
+    res += printStmt(stmt.elseStmt, childIndent);
+    res += printLine("}", indentLevel);
+  } else {
+    res += printLine("}", indentLevel);
+  }
+  return res;
+}
+
 function printStmt(stmt: Stmt, indentLevel: number): string {
   switch (stmt.kind) {
     case "return-stmt": {
@@ -89,6 +104,10 @@ function printStmt(stmt: Stmt, indentLevel: number): string {
 
     case "null-stmt": {
       return printLine(`;`, indentLevel);
+    }
+
+    case "if-stmt": {
+      return printIfStmt(stmt, indentLevel);
     }
   }
 }
@@ -105,6 +124,7 @@ function printBlock(block: BlockItem, indentLevel: number): string {
     case "return-stmt":
     case "expr-stmt":
     case "null-stmt":
+    case "if-stmt":
       return printStmt(block, indentLevel);
   }
 }

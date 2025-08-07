@@ -135,3 +135,99 @@ Program (
 )`.trim()
   );
 });
+
+test("Parse if", () => {
+  const main1 = `
+  int main(void) {
+    if (0)
+      return 0;
+  }
+  `.trim();
+  const ast1 = parse(lex(main1));
+  expect(prettyPrint(ast1).trim()).toEqual(
+    `Program (
+  Function main() {
+    If(0) {
+      return 0;
+    }
+  }
+)`
+  );
+});
+
+test("Parse if/else", () => {
+  const main1 = `
+  int main(void) {
+    if (0)
+      return 0;
+    else
+      return 1;
+  }
+  `.trim();
+  const ast1 = parse(lex(main1));
+  expect(prettyPrint(ast1).trim()).toEqual(
+    `Program (
+  Function main() {
+    If(0) {
+      return 0;
+    } Else {
+      return 1;
+    }
+  }
+)`
+  );
+});
+
+test("Parse if/else if", () => {
+  const main1 = `
+  int main(void) {
+    if (0)
+      return 0;
+    else if(2)
+      return 1;
+  }
+  `.trim();
+  const ast1 = parse(lex(main1));
+  expect(prettyPrint(ast1).trim()).toEqual(
+    `Program (
+  Function main() {
+    If(0) {
+      return 0;
+    } Else {
+      If(2) {
+        return 1;
+      }
+    }
+  }
+)`
+  );
+});
+
+test("Parse if/else if/else", () => {
+  const main1 = `
+  int main(void) {
+    if (0)
+      return 0;
+    else if(2)
+      return 1;
+    else
+      return 2;
+  }
+  `.trim();
+  const ast1 = parse(lex(main1));
+  expect(prettyPrint(ast1).trim()).toEqual(
+    `Program (
+  Function main() {
+    If(0) {
+      return 0;
+    } Else {
+      If(2) {
+        return 1;
+      } Else {
+        return 2;
+      }
+    }
+  }
+)`
+  );
+});

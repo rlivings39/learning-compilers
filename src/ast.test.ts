@@ -16,7 +16,8 @@ test("AST construction", () => {
   const nullS = ast.NullStmt();
   const decl = ast.Declaration("var1", null);
   const declInit = ast.Declaration("var1", numC);
-
+  const ifStmtNoElse = ast.IfStmt(numC, exprS);
+  const ifStmtElse = ast.IfStmt(v, exprS, retS);
   expect(prog.function_definition).toBe(func);
   expect(prog.function_definition).not.toBe(func2);
   expect(func.name).toEqual("main");
@@ -41,4 +42,8 @@ test("AST construction", () => {
   expect(declInit.kind).toBe("declaration");
   expect(declInit.name).toBe("var1");
   expect(declInit.init).toBe(numC);
+  let expIf: ast.IfStmt = { kind: "if-stmt", cond: numC, thenStmt: exprS };
+  expect(ifStmtNoElse).toMatchObject(expIf);
+  expIf = { kind: "if-stmt", cond: v, thenStmt: exprS, elseStmt: retS };
+  expect(ifStmtElse).toMatchObject(expIf);
 });

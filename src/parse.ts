@@ -26,6 +26,10 @@ function checkTokenExists(token: Token) {
   }
 }
 
+function peekIfExists(tokens: Token[]): Token | undefined {
+  return tokens[0];
+}
+
 function peek(tokens: Token[]): Token {
   const res = tokens[0];
   checkTokenExists(res);
@@ -223,8 +227,16 @@ function parseFactor(tokens: Token[]): ast.Expr {
     case TokenKind.EQUAL:
     case TokenKind.NOT_EQUAL:
     case TokenKind.ASSIGN:
-    default: {
+    case TokenKind.KW_IF:
+    case TokenKind.KW_ELSE:
+    case TokenKind.QUESTION:
+    case TokenKind.COLON: {
       fail(`Failed to parse ${TokenKind[token.kind]}. Expected an expression.`);
+      break;
+    }
+    default: {
+      const _check: never = token;
+      return _check;
     }
   }
 }
@@ -232,13 +244,25 @@ function parseFactor(tokens: Token[]): ast.Expr {
 function parseStatement(tokens: Token[]): ast.Stmt {
   const nextToken = peek(tokens);
   if (nextToken.kind === TokenKind.KW_RETURN) {
-    expect(TokenKind.KW_RETURN, tokens);
+    takeToken(tokens);
     const expr = parseExpr(tokens, 0);
     expect(TokenKind.SEMICOLON, tokens);
     return ast.ReturnStmt(expr);
   } else if (nextToken.kind === TokenKind.SEMICOLON) {
     takeToken(tokens);
     return ast.NullStmt();
+  } else if (nextToken.kind === TokenKind.KW_IF) {
+    takeToken(tokens);
+    expect(TokenKind.LEFT_PAREN, tokens);
+    const cond = parseExpr(tokens, 0);
+    expect(TokenKind.RIGHT_PAREN, tokens);
+    const trueStmt = parseStatement(tokens);
+    let falseStmt: ast.Stmt | undefined = undefined;
+    if (peekIfExists(tokens)?.kind === TokenKind.KW_ELSE) {
+      takeToken(tokens);
+      falseStmt = parseStatement(tokens);
+    }
+    return ast.IfStmt(cond, trueStmt, falseStmt);
   } else {
     const stmt = ast.ExprStmt(parseExpr(tokens, 1));
     expect(TokenKind.SEMICOLON, tokens);

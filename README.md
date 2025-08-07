@@ -406,7 +406,7 @@ The grammar currently supported or in progress is chapter 4
 <function> ::= "int" <identifier> "(" "void" ")" "{" { <block-item> } "}"
 <block-item> ::= <statement> | <declaration>
 <declaration> ::= "int" <identifier> [ "=" <expr> ] ";"
-<statement> ::= "return" <expr> ";"
+<statement> ::= "return" <expr> ";" | <expr> ";" | "if" "(" <expr> ")" <statement> ["else" <statement>]
 <expr> ::= <factor> | <expr> <binop> <expr>
 <factor> ::= <int> | <identifier> | <unop> <expr> | "(" <expr> ")"
 <identifier> ::= ? An identifier token ?
@@ -417,6 +417,7 @@ The grammar currently supported or in progress is chapter 4
 
 ## Actions
 
+- [ ] Update grammar for chapters 5/6
 - [ ] More tests for logical operators, jumps, short-circuiting in ASM
 - [ ] Read about twos complement https://www.cs.cornell.edu/~tomf/notes/cps104/ and https://www.nand2tetris.org/course (book icon under Project 2: Boolean arithmetic)
 

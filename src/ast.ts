@@ -117,7 +117,17 @@ export function NullStmt(): NullStmt {
   return { kind: "null-stmt" };
 }
 
-export type Stmt = ReturnStmt | ExprStmt | NullStmt;
+export type IfStmt = {
+  kind: "if-stmt";
+  cond: Expr;
+  thenStmt: Stmt;
+  elseStmt?: Stmt;
+};
+export function IfStmt(cond: Expr, thenStmt: Stmt, elseStmt?: Stmt): IfStmt {
+  return { kind: "if-stmt", cond, thenStmt, elseStmt };
+}
+
+export type Stmt = ReturnStmt | ExprStmt | NullStmt | IfStmt;
 
 export type Declaration = {
   kind: "declaration";
