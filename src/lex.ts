@@ -4,15 +4,20 @@ import { NotccError } from "./errors";
  * Discriminator for the tokens
  */
 export enum TokenKind {
+  // Keywords come first so they get precedence in parsing over things
+  // like IDENTIFIER. This works as integer keys used in PATTERN_MAP
+  // below are iterated in ascending numeric order.
+  KW_INT,
+  KW_VOID,
+  KW_RETURN,
+  KW_IF,
+  KW_ELSE,
   LEFT_PAREN,
   RIGHT_PAREN,
   LEFT_CURLY,
   RIGHT_CURLY,
   LEFT_SQUARE,
   RIGHT_SQUARE,
-  KW_INT,
-  KW_VOID,
-  KW_RETURN,
   SEMICOLON,
   IDENTIFIER,
   INT_CONSTANT,
@@ -33,6 +38,8 @@ export enum TokenKind {
   EQUAL,
   NOT_EQUAL,
   ASSIGN,
+  QUESTION,
+  COLON,
 }
 
 type SimpleTokenKind =
@@ -63,7 +70,11 @@ type SimpleTokenKind =
   | TokenKind.EQUAL
   | TokenKind.NOT_EQUAL
   | TokenKind.LOGICAL_NOT
-  | TokenKind.ASSIGN;
+  | TokenKind.ASSIGN
+  | TokenKind.KW_IF
+  | TokenKind.KW_ELSE
+  | TokenKind.QUESTION
+  | TokenKind.COLON;
 
 type UnaryTokenKind =
   | TokenKind.MINUS
@@ -139,16 +150,22 @@ interface TokenData {
 }
 
 type TokenPatternMap = Record<TokenKind, TokenData>;
+// See comment in TokenKind. This map is iterated in numeric order of the
+// key's value. So TokenKind defines keywords first to ensure they have
+// precedence over other things like IDENTIFIER. The order of declaration
+// in this table has no bearing on pattern iteration order/precedence.
 const PATTERN_MAP: TokenPatternMap = {
+  [TokenKind.KW_INT]: { pattern: /^int\b/ },
+  [TokenKind.KW_VOID]: { pattern: /^void\b/ },
+  [TokenKind.KW_RETURN]: { pattern: /^return\b/ },
+  [TokenKind.KW_IF]: { pattern: /^if\b/ },
+  [TokenKind.KW_ELSE]: { pattern: /^else\b/ },
   [TokenKind.LEFT_PAREN]: { pattern: /^\(/ },
   [TokenKind.RIGHT_PAREN]: { pattern: /^\)/ },
   [TokenKind.LEFT_CURLY]: { pattern: /^\{/ },
   [TokenKind.RIGHT_CURLY]: { pattern: /^\}/ },
   [TokenKind.LEFT_SQUARE]: { pattern: /^\[/ },
   [TokenKind.RIGHT_SQUARE]: { pattern: /^\]/ },
-  [TokenKind.KW_INT]: { pattern: /^int\b/ },
-  [TokenKind.KW_VOID]: { pattern: /^void\b/ },
-  [TokenKind.KW_RETURN]: { pattern: /^return\b/ },
   [TokenKind.SEMICOLON]: { pattern: /^;/ },
   [TokenKind.IDENTIFIER]: { pattern: /^[a-zA-z_]\w*\b/ },
   [TokenKind.INT_CONSTANT]: { pattern: /^[0-9]+\b/ },
@@ -169,6 +186,8 @@ const PATTERN_MAP: TokenPatternMap = {
   [TokenKind.EQUAL]: { pattern: /^==/ },
   [TokenKind.NOT_EQUAL]: { pattern: /^!=/ },
   [TokenKind.ASSIGN]: { pattern: /^=/ },
+  [TokenKind.QUESTION]: { pattern: /^\?/ },
+  [TokenKind.COLON]: { pattern: /^:/ },
 };
 
 function makeToken(match: string, kind: TokenKind): Token {
@@ -205,7 +224,11 @@ function makeToken(match: string, kind: TokenKind): Token {
     case TokenKind.GREATER_EQ:
     case TokenKind.EQUAL:
     case TokenKind.NOT_EQUAL:
-    case TokenKind.ASSIGN: {
+    case TokenKind.ASSIGN:
+    case TokenKind.KW_IF:
+    case TokenKind.KW_ELSE:
+    case TokenKind.QUESTION:
+    case TokenKind.COLON: {
       return makeSimpleToken(match, kind);
     }
   }

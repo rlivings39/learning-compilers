@@ -121,3 +121,12 @@ test("Lex assign", () => {
     { kind: TokenKind.SEMICOLON },
   ]);
 });
+
+test("Lex if and ternary", () => {
+  expect(lex("if")).toMatchObject([{ kind: TokenKind.KW_IF }]);
+  expect(lex("else")).toMatchObject([{ kind: TokenKind.KW_ELSE }]);
+  expect(lex("? : ")).toMatchObject([
+    { kind: TokenKind.QUESTION },
+    { kind: TokenKind.COLON },
+  ]);
+});
