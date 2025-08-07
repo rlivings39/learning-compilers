@@ -88,10 +88,30 @@ export function Assignment(lhs: Expr, rhs: Expr): Assignment {
   return { kind: "assignment", lhs, rhs };
 }
 
+export type Conditional = {
+  kind: "conditional";
+  cond: Expr;
+  trueExpr: Expr;
+  falseExpr: Expr;
+};
+export function Conditional(
+  cond: Expr,
+  trueExpr: Expr,
+  falseExpr: Expr
+): Conditional {
+  return { kind: "conditional", cond, trueExpr, falseExpr };
+}
+
 /**
  * The Expr type after parsing but before semantic analysis
  */
-export type Expr = Constant | UnaryExpr | BinaryExpr | Var | Assignment;
+export type Expr =
+  | Constant
+  | UnaryExpr
+  | BinaryExpr
+  | Var
+  | Assignment
+  | Conditional;
 
 export type ReturnStmt = {
   kind: "return-stmt";

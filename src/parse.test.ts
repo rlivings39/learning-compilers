@@ -3,23 +3,43 @@ import { lex } from "./lex";
 import { parse } from "./parse";
 import { prettyPrint } from "./pretty-print";
 import * as ast from "./ast";
+import { NotccError } from "./errors";
+
+expect.extend({
+  toHavePrettyPrint(codeOrAst: string | ast.Program, expected: string) {
+    const { isNot } = this;
+    if (typeof codeOrAst === "string") {
+      codeOrAst = parse(lex(codeOrAst));
+    }
+    const pp = prettyPrint(codeOrAst).trim();
+    expected = expected.trim();
+    const pass = pp === expected;
+    return {
+      pass,
+      message: () =>
+        `Pretty print ${
+          isNot ? "matched" : "did not match"
+        } from the code ${codeOrAst}`,
+      actual: pp,
+      expected,
+    };
+  },
+});
 
 test("Parsing", () => {
   const mainProg = `
   int main (void) {
     return 2;
   }`;
-
-  const tokens = lex(mainProg);
-  const prog = parse(tokens);
-  expect(prettyPrint(prog).trim()).toEqual(`Program (
+  expect(mainProg).toHavePrettyPrint(`
+Program (
   Function main() {
     return 2;
   }
 )`);
+
   const mainProgJunk = mainProg + "}";
-  const tokens2 = lex(mainProgJunk);
-  expect(() => parse(tokens2)).toThrow();
+  expect(() => parse(lex(mainProgJunk))).toThrow();
 
   const mainProgUminus = `
   int main (void) {
@@ -30,7 +50,8 @@ test("Parsing", () => {
   expect((ast.function_definition.body[0] as ast.ReturnStmt).expr.kind).toEqual(
     "unary-minus"
   );
-  expect(prettyPrint(ast).trim()).toEqual(`Program (
+  expect(ast).toHavePrettyPrint(`
+Program (
   Function main() {
     return -(2);
   }
@@ -46,8 +67,8 @@ test("Parsing", () => {
   int main (void) {
     return -(-2);
   }`;
-  const astDoubleMinus = parse(lex(mainProgDoubleMinus));
-  expect(prettyPrint(astDoubleMinus).trim()).toEqual(`Program (
+  expect(mainProgDoubleMinus).toHavePrettyPrint(`
+Program (
   Function main() {
     return -(-(2));
   }
@@ -58,39 +79,35 @@ test("Binary operator parsing", () => {
   const plusProg = `int main(void) { return 1 - 4;}`;
   const plusAst = parse(lex(plusProg));
   expect(plusAst.function_definition.name).toBe("main");
-  expect(prettyPrint(plusAst).trim()).toEqual(`Program (
+  expect(plusAst).toHavePrettyPrint(`Program (
   Function main() {
     return subtract(1, 4);
   }
 )`);
 
   const plusMinusProg = `int main(void) { return 1 - 4 + 3;}`;
-  const plusMinusAst = parse(lex(plusMinusProg));
-  expect(prettyPrint(plusMinusAst).trim()).toEqual(`Program (
+  expect(plusMinusProg).toHavePrettyPrint(`Program (
   Function main() {
     return plus(subtract(1, 4), 3);
   }
 )`);
 
   const manyOpsProg = `int main(void) { return 1 - 3 * 4;}`;
-  const manyOpsAst = parse(lex(manyOpsProg));
-  expect(prettyPrint(manyOpsAst).trim()).toEqual(`Program (
+  expect(manyOpsProg).toHavePrettyPrint(`Program (
   Function main() {
     return subtract(1, multiply(3, 4));
   }
 )`);
 
   const allOpsProg = `int main(void) { return 1 - 3 * 4 + 5 % 6;}`;
-  const allOpsAst = parse(lex(allOpsProg));
-  expect(prettyPrint(allOpsAst).trim()).toEqual(`Program (
+  expect(allOpsProg).toHavePrettyPrint(`Program (
   Function main() {
     return plus(subtract(1, multiply(3, 4)), remainder(5, 6));
   }
 )`);
 
   const parenOpsProg = `int main(void) { return (1 - 3) * 4 + 5 % 6;}`;
-  const parenOpsAst = parse(lex(parenOpsProg));
-  expect(prettyPrint(parenOpsAst).trim()).toEqual(`Program (
+  expect(parenOpsProg).toHavePrettyPrint(`Program (
   Function main() {
     return plus(multiply(subtract(1, 3), 4), remainder(5, 6));
   }
@@ -99,8 +116,7 @@ test("Binary operator parsing", () => {
 
 test("Logical ops", () => {
   const logicalOpsProg = `int main(void) { return 1 && 2 || 3 < 4 <= 5 > 6 >= 7 == 8 != 9;}`;
-  const logicalOpsAst = parse(lex(logicalOpsProg));
-  expect(prettyPrint(logicalOpsAst).trim()).toEqual(`Program (
+  expect(logicalOpsProg).toHavePrettyPrint(`Program (
   Function main() {
     return or(and(1, 2), not-equal(equal(greater-eq(greater(less-eq(less(3, 4), 5), 6), 7), 8), 9));
   }
@@ -120,7 +136,7 @@ test("Function body and assignment", () => {
   }`;
   const ast1 = parse(lex(main1));
   expect(ast1.function_definition.body).toHaveLength(7);
-  expect(prettyPrint(ast1).trim()).toEqual(
+  expect(ast1).toHavePrettyPrint(
     `
 Program (
   Function main() {
@@ -143,8 +159,7 @@ test("Parse if", () => {
       return 0;
   }
   `.trim();
-  const ast1 = parse(lex(main1));
-  expect(prettyPrint(ast1).trim()).toEqual(
+  expect(main1).toHavePrettyPrint(
     `Program (
   Function main() {
     If(0) {
@@ -164,8 +179,7 @@ test("Parse if/else", () => {
       return 1;
   }
   `.trim();
-  const ast1 = parse(lex(main1));
-  expect(prettyPrint(ast1).trim()).toEqual(
+  expect(main1).toHavePrettyPrint(
     `Program (
   Function main() {
     If(0) {
@@ -187,8 +201,7 @@ test("Parse if/else if", () => {
       return 1;
   }
   `.trim();
-  const ast1 = parse(lex(main1));
-  expect(prettyPrint(ast1).trim()).toEqual(
+  expect(main1).toHavePrettyPrint(
     `Program (
   Function main() {
     If(0) {
@@ -214,8 +227,7 @@ test("Parse if/else if/else", () => {
       return 2;
   }
   `.trim();
-  const ast1 = parse(lex(main1));
-  expect(prettyPrint(ast1).trim()).toEqual(
+  expect(main1).toHavePrettyPrint(
     `Program (
   Function main() {
     If(0) {
@@ -230,4 +242,25 @@ test("Parse if/else if/else", () => {
   }
 )`
   );
+});
+
+test("Parse conditional expr", () => {
+  const main1 = `int main(void) {
+    int a = 7;
+    int x;
+    x = 0 ? 1 + 2 : 3*a;
+    return x;
+  }`;
+  expect(main1).toHavePrettyPrint(`
+Program (
+  Function main() {
+    Declaration (a,7);
+    Declaration (x);
+    =(x, Conditional(0, plus(1, 2), multiply(3, a)));
+    return x;
+  }
+)`);
+
+  expect(() => parse(lex("int main(void) { 0 ? ; "))).toThrow(NotccError);
+  expect(() => parse(lex("int main(void) { 0 ? 1: ; "))).toThrow(NotccError);
 });

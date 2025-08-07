@@ -18,6 +18,7 @@ test("AST construction", () => {
   const declInit = ast.Declaration("var1", numC);
   const ifStmtNoElse = ast.IfStmt(numC, exprS);
   const ifStmtElse = ast.IfStmt(v, exprS, retS);
+  const condE = ast.Conditional(numC, v, uMinus);
   expect(prog.function_definition).toBe(func);
   expect(prog.function_definition).not.toBe(func2);
   expect(func.name).toEqual("main");
@@ -46,4 +47,8 @@ test("AST construction", () => {
   expect(ifStmtNoElse).toMatchObject(expIf);
   expIf = { kind: "if-stmt", cond: v, thenStmt: exprS, elseStmt: retS };
   expect(ifStmtElse).toMatchObject(expIf);
+  expect(condE.kind).toEqual("conditional");
+  expect(condE.cond).toBe(numC);
+  expect(condE.trueExpr).toBe(v);
+  expect(condE.falseExpr).toBe(uMinus);
 });

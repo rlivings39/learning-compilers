@@ -97,7 +97,10 @@ export type BinaryTokenKindNoAssign =
   | TokenKind.EQUAL
   | TokenKind.NOT_EQUAL;
 
-export type BinaryTokenKind = BinaryTokenKindNoAssign | TokenKind.ASSIGN;
+export type BinaryTokenKind =
+  | BinaryTokenKindNoAssign
+  | TokenKind.ASSIGN
+  | TokenKind.QUESTION;
 
 // Various token interfaces
 interface SimpleToken {

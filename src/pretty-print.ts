@@ -11,6 +11,7 @@ import {
   Assignment,
   Var,
   IfStmt,
+  Conditional,
 } from "./ast";
 const INDENT_INCREMENT = 2;
 
@@ -50,6 +51,12 @@ function printVar(v: Var): string {
   return v.name;
 }
 
+function printConditional(exp: Conditional): string {
+  return `Conditional(${printExpr(exp.cond)}, ${printExpr(
+    exp.trueExpr
+  )}, ${printExpr(exp.falseExpr)})`;
+}
+
 function printExpr(exp: Expr): string {
   switch (exp.kind) {
     case "numeric-const":
@@ -69,6 +76,9 @@ function printExpr(exp: Expr): string {
     }
     case "var": {
       return printVar(exp);
+    }
+    case "conditional": {
+      return printConditional(exp);
     }
     default: {
       const _checker: never = exp;

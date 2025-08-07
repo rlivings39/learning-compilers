@@ -90,6 +90,7 @@ function parseUnary(token: UnaryToken, tokens: Token[]): ast.UnaryExpr {
 
 const OP_PRECEDENCE: Record<BinaryTokenKind, number> = {
   [TokenKind.ASSIGN]: 1,
+  [TokenKind.QUESTION]: 2,
   [TokenKind.OR]: 5,
   [TokenKind.AND]: 10,
   [TokenKind.EQUAL]: 30,
@@ -162,14 +163,21 @@ function parseExpr(tokens: Token[], minPrecedence: number): ast.Expr {
   let left = parseFactor(tokens);
   let nextToken = tokens[0];
   while (isBinOp(nextToken) && binopPrecedence(nextToken) >= minPrecedence) {
+    const nextTokenPrecedence = binopPrecedence(nextToken);
     if (nextToken.kind === TokenKind.ASSIGN) {
-      expect(TokenKind.ASSIGN, tokens);
+      takeToken(tokens);
       // Don't increment precedence because assignment is right associative
-      const right = parseExpr(tokens, binopPrecedence(nextToken));
+      const right = parseExpr(tokens, nextTokenPrecedence);
       left = ast.Assignment(left, right);
+    } else if (nextToken.kind === TokenKind.QUESTION) {
+      takeToken(tokens);
+      const trueExpr = parseExpr(tokens, 0);
+      expect(TokenKind.COLON, tokens);
+      const falseExpr = parseExpr(tokens, nextTokenPrecedence);
+      left = ast.Conditional(left, trueExpr, falseExpr);
     } else {
       const operator = parseBinop(tokens);
-      const right = parseExpr(tokens, binopPrecedence(nextToken) + 1);
+      const right = parseExpr(tokens, nextTokenPrecedence + 1);
       // Operators are left-associative so that
       //   1 + 2 - 3
       // becomes
