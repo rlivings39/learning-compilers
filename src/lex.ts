@@ -230,7 +230,7 @@ export class Location {
   }
 }
 
-export class LexError extends Error {
+export class LexError extends NotccError {
   location: Location;
   constructor(location: Location, message: string) {
     super(message);

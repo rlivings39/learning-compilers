@@ -1,5 +1,6 @@
 import { test, expect } from "vitest";
 import { lex, TokenKind, forTestingOnly } from "./lex";
+import { NotccError } from "./errors";
 
 const stripComments = (s: string) => {
   const sbuf = Array.from(s);
@@ -17,7 +18,7 @@ test("Comment handling", () => {
   expect(stripComments("  \n")).toEqual("  \n");
   expect(stripComments("// ")).toEqual("   ");
   expect(stripComments("a / b")).toEqual("a / b");
-  expect(() => stripComments("/* adsf")).toThrow();
+  expect(() => stripComments("/* adsf")).toThrow(NotccError);
   const blockComment = `
   /* here is a
   block comment
@@ -76,7 +77,7 @@ test("Lex token tests", () => {
   ]);
   expect(lex("//comment\n(")).toEqual([{ kind: TokenKind.LEFT_PAREN }]);
   expect(lex("/*comment*/\n(")).toEqual([{ kind: TokenKind.LEFT_PAREN }]);
-  expect(() => lex("12ab")).toThrow();
+  expect(() => lex("12ab")).toThrow(NotccError);
 });
 
 test("Lex unary ops", () => {
