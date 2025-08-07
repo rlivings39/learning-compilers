@@ -407,7 +407,7 @@ The grammar currently supported or in progress is chapter 4
 <block-item> ::= <statement> | <declaration>
 <declaration> ::= "int" <identifier> [ "=" <expr> ] ";"
 <statement> ::= "return" <expr> ";" | <expr> ";" | "if" "(" <expr> ")" <statement> ["else" <statement>]
-<expr> ::= <factor> | <expr> <binop> <expr>
+<expr> ::= <factor> | <expr> <binop> <expr> | "?" <expr> ":" <expr>
 <factor> ::= <int> | <identifier> | <unop> <expr> | "(" <expr> ")"
 <identifier> ::= ? An identifier token ?
 <int> ::= ? A constant token ?
