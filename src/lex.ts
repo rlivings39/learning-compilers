@@ -71,7 +71,7 @@ type UnaryTokenKind =
   | TokenKind.DECREMENT
   | TokenKind.LOGICAL_NOT;
 
-export type BinaryTokenKind =
+export type BinaryTokenKindNoAssign =
   | TokenKind.PLUS
   | TokenKind.DIVIDE
   | TokenKind.REMAINDER
@@ -84,8 +84,9 @@ export type BinaryTokenKind =
   | TokenKind.GREATER
   | TokenKind.GREATER_EQ
   | TokenKind.EQUAL
-  | TokenKind.NOT_EQUAL
-  | TokenKind.ASSIGN;
+  | TokenKind.NOT_EQUAL;
+
+export type BinaryTokenKind = BinaryTokenKindNoAssign | TokenKind.ASSIGN;
 
 // Various token interfaces
 interface SimpleToken {
@@ -104,6 +105,10 @@ interface IntConstToken {
 
 export interface UnaryToken {
   kind: UnaryTokenKind;
+}
+
+export interface BinaryTokenNoAssign {
+  kind: BinaryTokenKindNoAssign;
 }
 
 export interface BinaryToken {

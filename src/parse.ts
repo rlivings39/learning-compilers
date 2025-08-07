@@ -4,6 +4,8 @@ import { NotccError } from "./errors";
 import {
   BinaryToken,
   BinaryTokenKind,
+  BinaryTokenKindNoAssign,
+  BinaryTokenNoAssign,
   Token,
   TokenKind,
   UnaryToken,
@@ -107,8 +109,10 @@ function isBinOp(token: Token): token is BinaryToken {
   return token.kind in OP_PRECEDENCE;
 }
 
-const BINARY_TOKEN_TO_OP_NAME: Record<BinaryTokenKind, ast.BinaryOpName> = {
-  [TokenKind.ASSIGN]: "assign",
+const BINARY_TOKEN_TO_OP_NAME: Record<
+  BinaryTokenKindNoAssign,
+  ast.BinaryOpName
+> = {
   [TokenKind.OR]: "or",
   [TokenKind.AND]: "and",
   [TokenKind.EQUAL]: "equal",
@@ -123,7 +127,7 @@ const BINARY_TOKEN_TO_OP_NAME: Record<BinaryTokenKind, ast.BinaryOpName> = {
   [TokenKind.TIMES]: "multiply",
   [TokenKind.REMAINDER]: "remainder",
 };
-function binopTokenToName(token: BinaryToken): ast.BinaryOpName {
+function binopTokenToName(token: BinaryTokenNoAssign): ast.BinaryOpName {
   return BINARY_TOKEN_TO_OP_NAME[token.kind];
 }
 
@@ -147,7 +151,7 @@ function parseBinop(tokens: Token[]): ast.BinaryOpName {
     tokens
   );
   // TODO can we get rid of the cast?
-  return binopTokenToName(t as BinaryToken);
+  return binopTokenToName(t as BinaryTokenNoAssign);
 }
 
 function parseExpr(tokens: Token[], minPrecedence: number): ast.Expr {

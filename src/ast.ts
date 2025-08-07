@@ -53,7 +53,6 @@ export type BinaryOpName =
   | "remainder"
   | "and"
   | "or"
-  | "assign"
   | RelopName;
 
 export type BinaryExpr = {
