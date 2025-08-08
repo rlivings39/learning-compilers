@@ -181,7 +181,7 @@ Function main () {
   Label(else_label)
   Copy($3, %y.1)
   Label(if_end_label)
-  Return(%y.1)
+  zReturn(%y.1)
 }
 `);
 });
