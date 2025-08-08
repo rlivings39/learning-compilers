@@ -114,6 +114,33 @@ class AstToTacky {
     return { val: lhs, instrs: instructions };
   }
 
+  convertConditional(expr: ast.Conditional): ValAndInstructions {
+    const val = this.makeTemp();
+    const endLabel = this.makeLabel("cond_end_label");
+    const falseLabel = this.makeLabel("cond_false_label");
+    const { val: cond, instrs: condInstrs } = this.convertExpr(expr.cond);
+    const jumpFalse = tacky.JumpIfZero(cond, falseLabel.name);
+    const jumpEnd = tacky.Jump(endLabel.name);
+    const { val: trueVal, instrs: trueInstrs } = this.convertExpr(
+      expr.trueExpr
+    );
+    const { val: falseVal, instrs: falseInstrs } = this.convertExpr(
+      expr.falseExpr
+    );
+    const instructions = [
+      ...condInstrs,
+      jumpFalse,
+      ...trueInstrs,
+      tacky.Copy(trueVal, val),
+      jumpEnd,
+      falseLabel,
+      ...falseInstrs,
+      tacky.Copy(falseVal, val),
+      endLabel,
+    ];
+    return { val, instrs: instructions };
+  }
+
   convertExpr(expr: ast.Expr): ValAndInstructions {
     const kind = expr.kind;
     switch (kind) {
@@ -136,6 +163,9 @@ class AstToTacky {
       }
       case "assignment": {
         return this.convertAssignment(expr);
+      }
+      case "conditional": {
+        return this.convertConditional(expr);
       }
       default: {
         const _check: never = kind;
@@ -169,6 +199,31 @@ class AstToTacky {
         const v = tacky.Var(stmt.name);
         const { val: init, instrs } = this.convertExpr(stmt.init);
         instructions.push(...instrs, tacky.Copy(init, v));
+        break;
+      }
+      case "if-stmt": {
+        const { val: cond, instrs } = this.convertExpr(stmt.cond);
+        const trueStmts = this.convertStatement(stmt.thenStmt);
+        const endLabel = this.makeLabel("if_end_label");
+        if (stmt.elseStmt) {
+          const falseStmts = this.convertStatement(stmt.elseStmt);
+          const elseLabel = this.makeLabel("else_label");
+          const jumpElse = tacky.JumpIfZero(cond, elseLabel.name);
+          const jumpEnd = tacky.Jump(endLabel.name);
+          instructions.push(
+            ...instrs,
+            jumpElse,
+            ...trueStmts,
+            jumpEnd,
+            elseLabel,
+            ...falseStmts,
+            endLabel
+          );
+        } else {
+          const jumpEnd = tacky.JumpIfZero(cond, endLabel.name);
+          instructions.push(...instrs, jumpEnd, ...trueStmts, endLabel);
+        }
+
         break;
       }
       default: {

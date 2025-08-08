@@ -5,6 +5,7 @@ interface CustomMatchers<R = unknown> {
    * Given C code or a parsed ast, ensure that the pretty print matches the expected value
    */
   toHavePrettyPrint: (expected: string) => R;
+  toHaveTackyPrettyPrint: (expected: string) => R;
 }
 
 declare module "vitest" {

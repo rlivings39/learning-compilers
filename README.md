@@ -12,13 +12,16 @@ This compiler is complete through Chapter 5 of the book meaning it compiles prog
 
 ```c
 int main(void) {
-  int x;
+  int x = 3;
   int y = 2;
-  return ~(-4) * (x + 12) || y > 12;
+  if (y)
+    return x > y ? 1 : 0;
+  else
+    return ~(-4) * (x + 12) || y > 12;
 }
 ```
 
-for any combination of `~, -`, binary ops `+, -, *, /, %, <, <=, >, >=, ==, !=, !, &&, ||`, parentheses, `int` variables, and any integer constants.
+for any combination of `~, -`, binary ops `+, -, *, /, %, <, <=, >, >=, ==, !=, !, &&, ||`, parentheses, `int` variables, if/else, conditional expressions (`?:`), and any integer constants.
 
 See the [current grammar](#current-grammar) section for full details of what is supported.
 
@@ -406,18 +409,20 @@ The grammar currently supported or in progress is chapter 4
 <function> ::= "int" <identifier> "(" "void" ")" "{" { <block-item> } "}"
 <block-item> ::= <statement> | <declaration>
 <declaration> ::= "int" <identifier> [ "=" <expr> ] ";"
-<statement> ::= "return" <expr> ";" | <expr> ";" | "if" "(" <expr> ")" <statement> ["else" <statement>]
+<statement> ::= "return" <expr> ";"
+                | <expr> ";"
+                | "if" "(" <expr> ")" <statement> ["else" <statement>]
+                | ";"
 <expr> ::= <factor> | <expr> <binop> <expr> | "?" <expr> ":" <expr>
 <factor> ::= <int> | <identifier> | <unop> <expr> | "(" <expr> ")"
 <identifier> ::= ? An identifier token ?
 <int> ::= ? A constant token ?
 <unop> ::= "-" | "~" | "!"
-<binop> ::= "-" | "+" | "*" | "/" | "%" | "&&" | "||" | "<" | "<=" | ">" | ">=" | "==" | "!="
+<binop> ::= "-" | "+" | "*" | "/" | "%" | "&&" | "||" | "<" | "<=" | ">" | ">=" | "==" | "!=" | "="
 ```
 
 ## Actions
 
-- [ ] Update grammar for chapters 5/6
 - [ ] More tests for logical operators, jumps, short-circuiting in ASM
 - [ ] Read about twos complement https://www.cs.cornell.edu/~tomf/notes/cps104/ and https://www.nand2tetris.org/course (book icon under Project 2: Boolean arithmetic)
 

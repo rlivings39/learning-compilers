@@ -3,8 +3,7 @@ import { astToTacky } from "./ast-to-tacky";
 import { parse } from "./parse";
 import { lex } from "./lex";
 import * as tacky from "./tacky";
-import { prettyPrintTacky } from "./pretty-print-tacky";
-import { runSemanticAnalysis } from "./semantics";
+import "./test-tools";
 
 test("AST to TACKY", () => {
   const main1 = `int main(void) {
@@ -28,7 +27,7 @@ test("AST to TACKY", () => {
   const tacky2 = astToTacky(ast2);
 
   expect(tacky2).not.toBeNull();
-  expect(prettyPrintTacky(tacky2)).toEqual(`Function main () {
+  expect(tacky2).toHaveTackyPrettyPrint(`Function main () {
   Uminus($4, %notcc.tmp.3)
   Uminus(%notcc.tmp.3, %notcc.tmp.2)
   BitComp(%notcc.tmp.2, %notcc.tmp.1)
@@ -43,7 +42,7 @@ test("Logical operators to TACKY", () => {
   }`;
   const tacky = astToTacky(parse(lex(main)));
   expect(tacky).not.toBeNull();
-  expect(prettyPrintTacky(tacky)).toEqual(`Function main () {
+  expect(tacky).toHaveTackyPrettyPrint(`Function main () {
   less($3,$4,%notcc.tmp.1)
   less-eq(%notcc.tmp.1,$5,%notcc.tmp.2)
   greater(%notcc.tmp.2,$6,%notcc.tmp.3)
@@ -61,7 +60,7 @@ test("Short-circuiting operators to TACKY", () => {
   }`;
   const tacky = astToTacky(parse(lex(main)));
   expect(tacky).not.toBeNull();
-  expect(prettyPrintTacky(tacky)).toEqual(`Function main () {
+  expect(tacky).toHaveTackyPrettyPrint(`Function main () {
   multiply($1,$2,%notcc.tmp.0)
   JumpIfZero(%notcc.tmp.0, false_label)
   subtract($2,$3,%notcc.tmp.1)
@@ -79,7 +78,7 @@ test("Short-circuiting operators to TACKY", () => {
   }`;
   const tacky2 = astToTacky(parse(lex(main2)));
   expect(tacky2).not.toBeNull();
-  expect(prettyPrintTacky(tacky2)).toEqual(`Function main () {
+  expect(tacky2).toHaveTackyPrettyPrint(`Function main () {
   less($1,$2,%notcc.tmp.0)
   JumpIfNotZero(%notcc.tmp.0, true_label)
   greater-eq($2,$3,%notcc.tmp.1)
@@ -100,7 +99,7 @@ test("Label mangling", () => {
   }`;
   const tacky = astToTacky(parse(lex(main)));
   expect(tacky).not.toBeNull();
-  expect(prettyPrintTacky(tacky)).toEqual(`Function main () {
+  expect(tacky).toHaveTackyPrettyPrint(`Function main () {
   JumpIfZero($1, false_label)
   JumpIfZero($2, false_label)
   Copy($1, %notcc.tmp.0)
@@ -127,9 +126,7 @@ test("Tacky assign", () => {
     int z = x * y;
     return z + (y = 3) + 2;
   }`;
-  const tacky = astToTacky(runSemanticAnalysis(parse(lex(main))));
-  expect(tacky).not.toBeNull();
-  expect(prettyPrintTacky(tacky)).toEqual(
+  expect(main).toHaveTackyPrettyPrint(
     `
 Function main () {
   Copy($2, %x.0)
@@ -148,13 +145,43 @@ test("Tacky main no return", () => {
   const main = `int main(void) {
     int x = 0;
   }`;
-  const tacky = astToTacky(runSemanticAnalysis(parse(lex(main))));
-  expect(tacky).not.toBeNull();
-  expect(prettyPrintTacky(tacky)).toEqual(
+  expect(main).toHaveTackyPrettyPrint(
     `
 Function main () {
   Copy($0, %x.0)
   Return($0)
 }`.trim()
   );
+});
+
+test("Tacky if/conditional", () => {
+  const main = `
+  int main(void) {
+    int x = 2;
+    int y;
+    if (x)
+      y = x+1 ? 1 : 2;
+    else
+      y = 3;
+    return y;
+  }`;
+  expect(main).toHaveTackyPrettyPrint(`
+Function main () {
+  Copy($2, %x.0)
+  JumpIfZero(%x.0, else_label)
+  plus(%x.0,$1,%notcc.tmp.1)
+  JumpIfZero(%notcc.tmp.1, cond_false_label)
+  Copy($1, %notcc.tmp.0)
+  Jump(cond_end_label)
+  Label(cond_false_label)
+  Copy($2, %notcc.tmp.0)
+  Label(cond_end_label)
+  Copy(%notcc.tmp.0, %y.1)
+  Jump(if_end_label)
+  Label(else_label)
+  Copy($3, %y.1)
+  Label(if_end_label)
+  Return(%y.1)
+}
+`);
 });
