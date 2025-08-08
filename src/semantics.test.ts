@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 import { lex } from "./lex";
 import { parse } from "./parse";
-import { prettyPrint } from "./pretty-print";
 import { runSemanticAnalysis } from "./semantics";
+import "./test-tools";
 
 test("Variable resolution", () => {
   const main = `int main(void) {
@@ -12,7 +12,7 @@ test("Variable resolution", () => {
     return !x + 3*y;
   }`;
   const ast = runSemanticAnalysis(parse(lex(main)));
-  expect(prettyPrint(ast).trim()).toEqual(
+  expect(ast).toHavePrettyPrint(
     `
 Program (
   Function main() {
@@ -47,4 +47,43 @@ Program (
   }`;
   const astNonLvalue = parse(lex(mainNonLvalue));
   expect(() => runSemanticAnalysis(astNonLvalue)).toThrowError(/Non-lvalue/);
+});
+
+test("Variable resolution if/conditional", () => {
+  const main = `
+  int main(void) {
+    int v = -2;
+    int w = -1;
+    int x = 0;
+    int y = 1;
+    int z = 2;
+    if (w + 1)
+      return x ? y : z;
+    else
+      return v;
+
+    if (w)
+      return v;
+
+  }`;
+  const ast = runSemanticAnalysis(parse(lex(main)));
+  expect(ast).toHavePrettyPrint(`
+Program (
+  Function main() {
+    Declaration (v.0,-(2));
+    Declaration (w.1,-(1));
+    Declaration (x.2,0);
+    Declaration (y.3,1);
+    Declaration (z.4,2);
+    If(plus(w.1, 1)) {
+      return Conditional(x.2, y.3, z.4);
+    } Else {
+      return v.0;
+    }
+    If(w.1) {
+      return v.0;
+    }
+  }
+)
+`);
 });

@@ -13,6 +13,7 @@ function isLvalue(expr: ast.Expr) {
     case "logical-not":
     case "binary-expr":
     case "assignment":
+    case "conditional":
       return false;
     case "var":
       return true;
@@ -75,6 +76,14 @@ class VariableResolution {
       case "binary-expr": {
         return this.VariableResolutionInBinaryExpr(expr);
       }
+      case "conditional": {
+        return {
+          kind: expr.kind,
+          cond: this.variableResolutionInExpr(expr.cond),
+          trueExpr: this.variableResolutionInExpr(expr.trueExpr),
+          falseExpr: this.variableResolutionInExpr(expr.falseExpr),
+        };
+      }
       case "var": {
         const newName = this.resolveVarName(expr.name);
         return ast.Var(newName);
@@ -82,32 +91,55 @@ class VariableResolution {
     }
   }
 
-  variableResolution(prog: ast.Program) {
-    const newBody = prog.function_definition.body.map((block) => {
-      switch (block.kind) {
-        case "expr-stmt":
-        case "return-stmt": {
-          return {
-            ...block,
-            expr: this.variableResolutionInExpr(block.expr),
-          };
-        }
-        case "null-stmt": {
-          // Note: This and other cases reuse the statement rather than copying.
-          // However, this is fine as we make a new body array and therefore
-          // no shared references exist after running this function.
-          return block;
-        }
-        case "declaration": {
-          const newName = this.recordVarName(block.name);
-          let newInit = null;
-          if (block.init) {
-            newInit = this.variableResolutionInExpr(block.init);
-          }
-          return ast.Declaration(newName, newInit);
-        }
+  variableResolutionInStmt(stmt: ast.Stmt): ast.Stmt {
+    switch (stmt.kind) {
+      case "expr-stmt":
+      case "return-stmt": {
+        return {
+          ...stmt,
+          expr: this.variableResolutionInExpr(stmt.expr),
+        };
       }
-    });
+      case "null-stmt": {
+        // Note: This and other cases reuse the statement rather than copying.
+        // However, this is fine as we make a new body array and therefore
+        // no shared references exist after running this function.
+        return stmt;
+      }
+      case "if-stmt": {
+        const newCond = this.variableResolutionInExpr(stmt.cond);
+        const newTrue = this.variableResolutionInStmt(stmt.thenStmt);
+        const newFalse = stmt.elseStmt
+          ? this.variableResolutionInStmt(stmt.elseStmt)
+          : undefined;
+        return ast.IfStmt(newCond, newTrue, newFalse);
+      }
+    }
+  }
+
+  variableResolutionInBlock(block: ast.BlockItem): ast.BlockItem {
+    switch (block.kind) {
+      case "expr-stmt":
+      case "return-stmt":
+      case "null-stmt":
+      case "if-stmt": {
+        return this.variableResolutionInStmt(block);
+      }
+      case "declaration": {
+        const newName = this.recordVarName(block.name);
+        let newInit = null;
+        if (block.init) {
+          newInit = this.variableResolutionInExpr(block.init);
+        }
+        return ast.Declaration(newName, newInit);
+      }
+    }
+  }
+
+  variableResolution(prog: ast.Program) {
+    const newBody = prog.function_definition.body.map((block) =>
+      this.variableResolutionInBlock(block)
+    );
     return ast.Program(ast.Function(prog.function_definition.name, newBody));
   }
 }

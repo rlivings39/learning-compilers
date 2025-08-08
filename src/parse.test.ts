@@ -1,30 +1,9 @@
 import { test, expect } from "vitest";
 import { lex } from "./lex";
 import { parse } from "./parse";
-import { prettyPrint } from "./pretty-print";
 import * as ast from "./ast";
 import { NotccError } from "./errors";
-
-expect.extend({
-  toHavePrettyPrint(codeOrAst: string | ast.Program, expected: string) {
-    const { isNot } = this;
-    if (typeof codeOrAst === "string") {
-      codeOrAst = parse(lex(codeOrAst));
-    }
-    const pp = prettyPrint(codeOrAst).trim();
-    expected = expected.trim();
-    const pass = pp === expected;
-    return {
-      pass,
-      message: () =>
-        `Pretty print ${
-          isNot ? "matched" : "did not match"
-        } from the code ${codeOrAst}`,
-      actual: pp,
-      expected,
-    };
-  },
-});
+import "./test-tools";
 
 test("Parsing", () => {
   const mainProg = `
