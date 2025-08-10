@@ -1,3 +1,6 @@
-fn main() {
-    println!("Hello, world!");
+mod error;
+//mod driver;
+
+fn main() -> Result<(), error::Error> {
+  return error::fail("Bad news bro!");
 }
