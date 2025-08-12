@@ -4,3 +4,4 @@ pub mod error;
 pub use driver::{arg_parser::Cli, driver_main, driver_main_cli};
 
 mod driver;
+mod lex;
