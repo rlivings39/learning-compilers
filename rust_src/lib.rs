@@ -1,4 +1,4 @@
 mod driver;
 pub mod error;
 
-pub use driver::{Cli, driver_main};
+pub use driver::{arg_parser::Cli, driver_main, driver_main_cli};
