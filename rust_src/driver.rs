@@ -2,9 +2,10 @@ use crate::error::Error;
 use clap::Parser;
 use std::env;
 #[derive(Parser, Debug)]
-#[command(version, about = "Compiles input-file.c creating an executable /path/to/input-file using the system gcc", long_about = None)] // Read from `Cargo.toml`
+#[command(version, about = "Compiles /path/to/input-file.c creating an executable /path/to/input-file using the system gcc", long_about = None)] // Read from `Cargo.toml`
 pub struct Cli {
-  /// Input C file name
+  /// Input C source file
+  #[arg(name = "C_FILE")]
   input_file: String,
   /// Run the lexer but stop before parsing
   #[arg(long, default_value_t = false)]
