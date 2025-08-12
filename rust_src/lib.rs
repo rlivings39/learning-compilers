@@ -1,5 +1,4 @@
+mod driver;
 pub mod error;
 
-pub fn driver() {
-  println!("you did it!")
-}
+pub use driver::{Cli, driver_main};
