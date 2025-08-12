@@ -37,14 +37,18 @@ pub struct Cli {
 }
 
 type ArgVec = Vec<String>;
-fn parse_arguments(args: ArgVec) -> Cli {
-  Cli::parse_from(args)
-  // TODO exclusivity checking for --lex, --codegen, etc.
+fn parse_arguments(args: ArgVec) -> Result<Cli, Error> {
+  let cli = Cli::parse_from(args);
+  if cli.lex as i32 + cli.codegen as i32 + cli.tacky as i32 + cli.asm_only as i32 > 1 {
+    return Err("At most 1 of --lex, --codegen, --tacky, --asm-only may be passed".to_string());
+  } else {
+    return Ok(cli);
+  }
 }
 
 pub fn driver_main(args: &mut env::Args) -> Result<(), Error> {
   let args: ArgVec = args.collect();
-  let cli = parse_arguments(args);
+  let cli = parse_arguments(args)?;
   dbg!(cli);
   Ok(())
 }
@@ -55,8 +59,20 @@ mod tests {
 
   #[test]
   fn arg_parser() {
-    // TODO test extra arg parsing logic
-    let cli = parse_arguments(vec!["".to_string(), "file".to_string()]);
+    let cli = parse_arguments(vec!["".to_string(), "file".to_string()]).unwrap();
     assert_eq!(cli.input_file, "file");
   }
+  #[test]
+  fn arg_parser_neg() {
+    assert!(
+      parse_arguments(vec![
+        "".to_string(),
+        "file".to_string(),
+        "--lex".to_string(),
+        "--codegen".to_string()
+      ])
+      .is_err()
+    );
+  }
+  // TODO can I test clap errors properly? Should I?
 }
