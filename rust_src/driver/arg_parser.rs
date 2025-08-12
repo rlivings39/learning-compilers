@@ -6,36 +6,37 @@ use clap::Parser;
 #[command(version, about = "Compiles /path/to/input-file.c creating an executable /path/to/input-file using the system gcc", long_about = None)] // Read from `Cargo.toml`
 /// CLI arg struct for notcc
 pub struct Cli {
+  // TODO can these not be public?
   /// Input C source file
   #[arg(name = "C_FILE")]
-  input_file: String,
+  pub input_file: String,
   /// Run the lexer but stop before parsing
   #[arg(long, default_value_t = false)]
-  lex: bool,
+  pub lex: bool,
   /// Print out the tokens found by the lexer
   #[arg(long = "print-tokens", default_value_t = false)]
-  print_tokens: bool,
+  pub print_tokens: bool,
   /// Run the lexer and parser but stop before codegen
   #[arg(long, default_value_t = false)]
-  parse: bool,
+  pub parse: bool,
   /// Pretty print the output of the parser
   #[arg(long = "pretty-print", default_value_t = false)]
-  pretty_print: bool,
+  pub pretty_print: bool,
   /// Run up to the parser and semantic analysis
   #[arg(long, default_value_t = false)]
-  validate: bool,
+  pub validate: bool,
   /// Run the lexer, parser, and TACKY IR generation stopping before assembly generation
   #[arg(long, default_value_t = false)]
-  tacky: bool,
+  pub tacky: bool,
   /// Pretty print TACKY IR after generation
   #[arg(long = "pretty-print-tacky", default_value_t = false)]
-  pretty_print_tacky: bool,
+  pub pretty_print_tacky: bool,
   /// Run the lexer, parser, codegen but stop before assembly generation
   #[arg(long, default_value_t = false)]
-  codegen: bool,
+  pub codegen: bool,
   /// Emit assembly in input-file.s rather than linking an executable
   #[arg(long = "asm-only", short = 'S', default_value_t = false)]
-  asm_only: bool,
+  pub asm_only: bool,
 }
 
 pub type ArgVec = Vec<String>;
