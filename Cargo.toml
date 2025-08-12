@@ -1,8 +1,10 @@
 [package]
 name = "notcc"
 description = "A compiler for a subset of C written in Rust. Based on the book \"Writing a C Compiler\" by Nora Sandler."
+readme = "rust_src/README.md"
 version = "0.1.0"
 edition = "2024"
+repository = "https://github.com/rlivings39/learning-compilers"
 
 [dependencies]
 clap = { version = "4.5.44", features = ["derive"] }
