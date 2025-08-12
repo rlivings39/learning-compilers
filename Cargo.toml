@@ -8,3 +8,7 @@ edition = "2024"
 [[bin]]
 name = "notcc"
 path = "rust_src/main.rs"
+
+[lib]
+name = "notcc"
+path = "rust_src/lib.rs"
