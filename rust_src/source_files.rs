@@ -1,5 +1,6 @@
 //! Source file and location specification for notcc
 
+use crate::error::Error;
 type LineMap = Vec<[usize; 2]>;
 /// The notcc representation of a SourceFile
 pub struct SourceFile {
@@ -29,6 +30,24 @@ impl SourceFile {
       line_map,
       path,
     };
+  }
+
+  pub fn err_at_index(&self, idx: usize, msg: &str) -> Error {
+    let (line, loc) = self.containing_line_and_loc(idx);
+    let message = format!(
+      "{msg}\n\nin {}:{}:{}\n\n{line}\n{}^",
+      self.path,
+      loc.line + 1,
+      loc.column + 1,
+      " ".repeat(loc.column)
+    );
+    message
+  }
+
+  fn containing_line_and_loc(&self, idx: usize) -> (&str, Location) {
+    let loc = self.char_to_location(idx);
+    let [start, end] = self.line_map[loc.line];
+    (&self.code[start..end], loc)
   }
 
   /// Convert a character offset to a Location with line, column values
@@ -82,5 +101,38 @@ mod tests {
     assert_eq!(loc.column, 11);
     assert_eq!(loc.line, 1);
     assert_eq!(loc.file_path, path);
+  }
+
+  #[test]
+  fn test_containing_line_and_loc() {
+    let code: &'static str = "int main(void) {
+  return 2;
+}";
+    let path = "/foo/bar/baz.c";
+    let source = SourceFile::new(code.to_string(), path.to_string());
+    let (line, loc) = source.containing_line_and_loc(17);
+    assert_eq!(line, "  return 2;");
+    assert_eq!(loc.column, 0);
+    assert_eq!(loc.line, 1);
+  }
+
+  #[test]
+  fn test_err_at_index() {
+    let code: &'static str = "int main(void) {
+  return 2;
+}";
+    let path = "~/foo.c";
+    let source = SourceFile::new(code.to_string(), path.to_string());
+    let msg = source.err_at_index(19, "Something bad");
+    let expected = "Something bad
+
+in ~/foo.c:2:3
+
+  return 2;
+  ^";
+    if msg != expected {
+      eprintln!("Unexpected message\n{msg}");
+      assert!(false)
+    }
   }
 }

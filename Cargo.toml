@@ -8,6 +8,7 @@ repository = "https://github.com/rlivings39/learning-compilers"
 
 [dependencies]
 clap = { version = "4.5.44", features = ["derive"] }
+regex = "1.11.1"
 
 [[bin]]
 name = "notcc"

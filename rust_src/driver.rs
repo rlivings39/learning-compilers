@@ -9,7 +9,6 @@ mod system_cc;
 ///
 /// Use this for lib usage
 pub fn driver_main(args: &arg_parser::Cli) -> Result<(), Error> {
-  dbg!(args);
   let file_name = &args.input_file;
   let output_file_name = file_name.replace(".c", ".i");
   system_cc::preprocess_file(file_name, &output_file_name)?;
@@ -22,7 +21,10 @@ pub fn driver_main(args: &arg_parser::Cli) -> Result<(), Error> {
     }
   };
   let source_file = SourceFile::new(code, file_name.clone());
-  let _ = lex::lex(&source_file)?;
+  let tokens = lex::lex(&source_file)?;
+  if args.print_tokens {
+    println!("Tokens from {}\n\n{:#?}", source_file.path, tokens);
+  }
   Ok(())
 }
 
