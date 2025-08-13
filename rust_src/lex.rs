@@ -218,25 +218,79 @@ mod tests {
       ]
     )
   }
+
+  #[test]
+  fn test_main_function() {
+    let main_prog: &str = "int main  (  void  \n) {
+      return \n\n2;
+    }";
+    assert_eq!(
+      run_lexer(main_prog),
+      vec![
+        Token {
+          kind: TokenKind::KwInt,
+          text_start: 0,
+          text_end: 3,
+          data: TokenData::None
+        },
+        Token {
+          kind: TokenKind::Identifier,
+          text_start: 4,
+          text_end: 8,
+          data: TokenData::Identifier("main".to_string())
+        },
+        Token {
+          kind: TokenKind::LeftParen,
+          text_start: 10,
+          text_end: 11,
+          data: TokenData::None
+        },
+        Token {
+          kind: TokenKind::KwVoid,
+          text_start: 13,
+          text_end: 17,
+          data: TokenData::None
+        },
+        Token {
+          kind: TokenKind::RightParen,
+          text_start: 20,
+          text_end: 21,
+          data: TokenData::None
+        },
+        Token {
+          kind: TokenKind::LeftCurly,
+          text_start: 22,
+          text_end: 23,
+          data: TokenData::None
+        },
+        Token {
+          kind: TokenKind::KwReturn,
+          text_start: 30,
+          text_end: 36,
+          data: TokenData::None
+        },
+        Token {
+          kind: TokenKind::IntConstant,
+          text_start: 39,
+          text_end: 40,
+          data: TokenData::IntConstant(2)
+        },
+        Token {
+          kind: TokenKind::Semicolon,
+          text_start: 40,
+          text_end: 41,
+          data: TokenData::None
+        },
+        Token {
+          kind: TokenKind::RightCurly,
+          text_start: 46,
+          text_end: 47,
+          data: TokenData::None
+        },
+      ]
+    )
+  }
   // TODO more tests
-  //   const mainProg = `
-  //   int main  (  void  \n) {
-  //     return \n\n2;
-  //   }`;
-  //   expect(lex(mainProg)).toEqual([
-  //     { kind: TokenKind.KW_INT },
-  //     { kind: TokenKind.IDENTIFIER, id: "main" },
-  //     { kind: TokenKind.LEFT_PAREN },
-  //     { kind: TokenKind.KW_VOID },
-  //     { kind: TokenKind.RIGHT_PAREN },
-  //     { kind: TokenKind.LEFT_CURLY },
-  //     { kind: TokenKind.KW_RETURN },
-  //     { kind: TokenKind.INT_CONSTANT, value: 2 },
-  //     { kind: TokenKind.SEMICOLON },
-  //     { kind: TokenKind.RIGHT_CURLY },
-  //   ]);
-  //   expect(lex("//comment\n(")).toEqual([{ kind: TokenKind.LEFT_PAREN }]);
-  //   expect(lex("/*comment*/\n(")).toEqual([{ kind: TokenKind.LEFT_PAREN }]);
   //   expect(() => lex("12ab")).toThrow(NotccError);
   // });
 
