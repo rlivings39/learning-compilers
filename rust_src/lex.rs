@@ -7,7 +7,7 @@ use regex::Regex;
 /// Token is the core token type returned by the lexer
 ///
 /// Each token has its source location. Some token types also have auxiliary data.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum TokenKind {
   KwInt,
   KwVoid,
@@ -45,13 +45,13 @@ pub enum TokenKind {
   Eof,
   Bogus,
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TokenData {
   Identifier(String),
   IntConstant(i32),
   None,
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Token {
   kind: TokenKind,
   text_start: usize,
@@ -140,4 +140,154 @@ pub fn lex(file: &SourceFile) -> Result<Vec<Token>, Error> {
     data: TokenData::None,
   });
   Ok(tokens)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  fn make_source(code: &str) -> SourceFile {
+    SourceFile::new(code.to_string(), "".to_string())
+  }
+  fn run_lexer(code: &str) -> Vec<Token> {
+    let res = lex(&&SourceFile::new(code.to_string(), "bogus.c".to_string()));
+    if let Err(e) = &res {
+      eprintln!("{e}");
+      assert!(false, "Lexer failed. Aborting test.")
+    }
+    let mut res = res.unwrap();
+    // Drop the Eof token as it clutters tests
+    res.pop();
+    res
+  }
+  #[test]
+  fn lex_basic_tokens() {
+    assert_eq!(run_lexer("").len(), 0);
+    assert_eq!(run_lexer("   ").len(), 0);
+    assert_eq!(run_lexer(" \n\n  ").len(), 0);
+    assert_eq!(
+      run_lexer("( \n\n  "),
+      vec![Token {
+        kind: TokenKind::LeftParen,
+        text_start: 0,
+        text_end: 1,
+        data: TokenData::None
+      }]
+    );
+    assert_eq!(
+      run_lexer("( )\n\n  "),
+      vec![
+        Token {
+          kind: TokenKind::LeftParen,
+          text_start: 0,
+          text_end: 1,
+          data: TokenData::None
+        },
+        Token {
+          kind: TokenKind::RightParen,
+          text_start: 2,
+          text_end: 3,
+          data: TokenData::None
+        }
+      ]
+    );
+  }
+
+  #[test]
+  fn test_id_tokens() {
+    assert_eq!(
+      run_lexer("  int    x\n\n  ;"),
+      vec![
+        Token {
+          kind: TokenKind::KwInt,
+          text_start: 2,
+          text_end: 5,
+          data: TokenData::None
+        },
+        Token {
+          kind: TokenKind::Identifier,
+          text_start: 9,
+          text_end: 10,
+          data: TokenData::Identifier("x".to_string())
+        },
+        Token {
+          kind: TokenKind::Semicolon,
+          text_start: 14,
+          text_end: 15,
+          data: TokenData::None
+        },
+      ]
+    )
+  }
+  // TODO more tests
+  //   const mainProg = `
+  //   int main  (  void  \n) {
+  //     return \n\n2;
+  //   }`;
+  //   expect(lex(mainProg)).toEqual([
+  //     { kind: TokenKind.KW_INT },
+  //     { kind: TokenKind.IDENTIFIER, id: "main" },
+  //     { kind: TokenKind.LEFT_PAREN },
+  //     { kind: TokenKind.KW_VOID },
+  //     { kind: TokenKind.RIGHT_PAREN },
+  //     { kind: TokenKind.LEFT_CURLY },
+  //     { kind: TokenKind.KW_RETURN },
+  //     { kind: TokenKind.INT_CONSTANT, value: 2 },
+  //     { kind: TokenKind.SEMICOLON },
+  //     { kind: TokenKind.RIGHT_CURLY },
+  //   ]);
+  //   expect(lex("//comment\n(")).toEqual([{ kind: TokenKind.LEFT_PAREN }]);
+  //   expect(lex("/*comment*/\n(")).toEqual([{ kind: TokenKind.LEFT_PAREN }]);
+  //   expect(() => lex("12ab")).toThrow(NotccError);
+  // });
+
+  // test("Lex unary ops", () => {
+  //   expect(lex("-")).toMatchObject([{ kind: TokenKind.MINUS }]);
+  //   expect(lex("--")).toMatchObject([{ kind: TokenKind.DECREMENT }]);
+  //   expect(lex("~~x")).toMatchObject([
+  //     { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
+  //     { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
+  //     { kind: TokenKind.IDENTIFIER },
+  //   ]);
+  //   expect(lex("!")).toMatchObject([{ kind: TokenKind.LOGICAL_NOT }]);
+  // });
+
+  // test("Lex binary ops", () => {
+  //   expect(lex("+   ")).toMatchObject([{ kind: TokenKind.PLUS }]);
+  //   expect(lex("  * ")).toMatchObject([{ kind: TokenKind.TIMES }]);
+  //   expect(lex("/  ")).toMatchObject([{ kind: TokenKind.DIVIDE }]);
+  //   expect(lex("%")).toMatchObject([{ kind: TokenKind.REMAINDER }]);
+  //   expect(lex("a+ 2  ")).toMatchObject([
+  //     { kind: TokenKind.IDENTIFIER, id: "a" },
+  //     { kind: TokenKind.PLUS },
+  //     { kind: TokenKind.INT_CONSTANT },
+  //   ]);
+  //   expect(lex("&&")).toMatchObject([{ kind: TokenKind.AND }]);
+  //   expect(lex("||")).toMatchObject([{ kind: TokenKind.OR }]);
+  //   expect(lex("<")).toMatchObject([{ kind: TokenKind.LESS }]);
+  //   expect(lex("<=")).toMatchObject([{ kind: TokenKind.LESS_EQ }]);
+  //   expect(lex(">")).toMatchObject([{ kind: TokenKind.GREATER }]);
+  //   expect(lex(">=")).toMatchObject([{ kind: TokenKind.GREATER_EQ }]);
+  //   expect(lex("==")).toMatchObject([{ kind: TokenKind.EQUAL }]);
+  //   expect(lex("!=")).toMatchObject([{ kind: TokenKind.NOT_EQUAL }]);
+  // });
+
+  // test("Lex assign", () => {
+  //   expect(lex("  = ")).toMatchObject([{ kind: TokenKind.ASSIGN }]);
+  //   expect(lex("int x  = 2;")).toMatchObject([
+  //     { kind: TokenKind.KW_INT },
+  //     { kind: TokenKind.IDENTIFIER },
+  //     { kind: TokenKind.ASSIGN },
+  //     { kind: TokenKind.INT_CONSTANT },
+  //     { kind: TokenKind.SEMICOLON },
+  //   ]);
+  // });
+
+  // test("Lex if and ternary", () => {
+  //   expect(lex("if")).toMatchObject([{ kind: TokenKind.KW_IF }]);
+  //   expect(lex("else")).toMatchObject([{ kind: TokenKind.KW_ELSE }]);
+  //   expect(lex("? : ")).toMatchObject([
+  //     { kind: TokenKind.QUESTION },
+  //     { kind: TokenKind.COLON },
+  //   ]);
+  // });
 }

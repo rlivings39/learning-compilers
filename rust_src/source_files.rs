@@ -23,6 +23,8 @@ impl SourceFile {
       if c == '\n' {
         line_map.push([prev_idx, idx]);
         prev_idx = idx + 1;
+      } else if idx == code.len() - 1 {
+        line_map.push([prev_idx, idx + 1]);
       }
     }
     return SourceFile {
@@ -101,6 +103,9 @@ mod tests {
     assert_eq!(loc.column, 11);
     assert_eq!(loc.line, 1);
     assert_eq!(loc.file_path, path);
+    loc = source.char_to_location(29);
+    assert_eq!((loc.line, loc.column), (2, 0));
+    assert_eq!(loc.file_path, path);
   }
 
   #[test]
@@ -114,6 +119,11 @@ mod tests {
     assert_eq!(line, "  return 2;");
     assert_eq!(loc.column, 0);
     assert_eq!(loc.line, 1);
+    let source = SourceFile::new("$".to_string(), path.to_string());
+    let (line, loc) = source.containing_line_and_loc(0);
+    assert_eq!(line, "$");
+    assert_eq!(loc.column, 0);
+    assert_eq!(loc.line, 0);
   }
 
   #[test]
