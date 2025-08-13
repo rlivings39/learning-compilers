@@ -7,7 +7,7 @@ This Crate implements a compiler for a subset of C based on the book "Writing a 
 Build the crate and view the CLI help
 
 ```bash
-cargo run --- -h
+cargo run -- -h
 ```
 
 To use this crate as a library have a look at the function `driver_main` which invokes the entire compiler driver as library interface.
