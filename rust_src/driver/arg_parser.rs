@@ -3,7 +3,13 @@ use crate::error::Error;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[command(version, about = "Compiles /path/to/input-file.c creating an executable /path/to/input-file using the system gcc", long_about = None)] // Read from `Cargo.toml`
+#[command(
+  version,
+  about = "Compiles /path/to/input-file.c creating an executable /path/to/input-file",
+  long_about = "Compiles /path/to/input-file.c creating an executable /path/to/input-file
+
+Relies on the system GCC for preprocessing and final assembly"
+)] // Read from `Cargo.toml`
 /// CLI arg struct for notcc
 pub struct Cli {
   // TODO can these not be public?
