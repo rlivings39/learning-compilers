@@ -1,7 +1,7 @@
 //! Main driver code for notcc
 use crate::error::Error;
-use std::env;
-
+use crate::lex;
+use crate::source_files::SourceFile;
 pub mod arg_parser;
 mod system_cc;
 
@@ -21,6 +21,8 @@ pub fn driver_main(args: &arg_parser::Cli) -> Result<(), Error> {
       ));
     }
   };
+  let source_file = SourceFile::new(code, file_name.clone());
+  let _ = lex::lex(&source_file)?;
   Ok(())
 }
 

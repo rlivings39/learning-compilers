@@ -5,3 +5,4 @@ pub use driver::{arg_parser::Cli, driver_main, driver_main_cli};
 
 mod driver;
 mod lex;
+mod source_files;
