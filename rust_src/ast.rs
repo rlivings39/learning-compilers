@@ -1,3 +1,5 @@
+//! The notcc AST
+
 use crate::shared_types::Identifier;
 
 // TODO where to put source locations?

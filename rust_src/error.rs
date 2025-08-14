@@ -1,3 +1,5 @@
+//! Error reporting utilities
+
 pub type Error = String;
 
 pub fn fail(msg: &str) -> Result<(), Error> {
