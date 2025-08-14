@@ -151,7 +151,7 @@ mod tests {
   fn run_lexer(code: &str) -> Vec<Token> {
     let res = lex(&&SourceFile::new(code.to_string(), "bogus.c".to_string()));
     if let Err(e) = &res {
-      eprintln!("{e}");
+      println!("{e}");
       assert!(false, "Lexer failed. Aborting test.")
     }
     let mut res = res.unwrap();
@@ -343,5 +343,24 @@ mod tests {
         "Incorrect lex for {snippet}"
       );
     }
+  }
+
+  #[test]
+  fn lex_negative() {
+    let source = SourceFile::new("\n int x; $ more".to_string(), "bogus.c".to_string());
+    let res = lex(&source);
+    assert!(res.is_err(), "Expected lex of {} to fail", source.code());
+    let msg = res.unwrap_err();
+    // Ensure the message has useful things
+    let patt = format!("{}:2:9", source.path);
+    assert!(msg.contains(&patt), "{patt} not found in {msg}");
+    let code = source.code();
+    assert!(msg.contains(code), "{code} not found in {msg}");
+  }
+
+  #[test]
+  #[should_panic]
+  fn test_tool_negative() {
+    run_lexer("$");
   }
 }
