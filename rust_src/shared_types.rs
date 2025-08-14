@@ -1,5 +1,16 @@
 //! Simple shared types used in notcc
 
+#[derive(Clone, PartialEq, Debug)]
 /// Our identifier type. Isolated here to make it easier to change
 /// to interned in the future.
-pub type Identifier = String;
+pub struct Identifier {
+  val: String,
+}
+
+impl Identifier {
+  pub fn new(name: &str) -> Identifier {
+    Identifier {
+      val: name.to_string(),
+    }
+  }
+}

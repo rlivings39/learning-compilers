@@ -2,13 +2,14 @@ use crate::shared_types::Identifier;
 
 // TODO where to put source locations?
 
+#[derive(Clone, PartialEq, Debug)]
 /// Unary operator kinds
 pub enum UnaryOperator {
   Complement,
   Minus,
   LogicalNot,
 }
-
+#[derive(Clone, PartialEq, Debug)]
 /// Relational operators. Split out from binary operators as they need
 /// special handling during ASM emission.
 pub enum RelOp {
@@ -20,6 +21,7 @@ pub enum RelOp {
   NotEqual,
 }
 
+#[derive(Clone, PartialEq, Debug)]
 /// Binary operators
 pub enum BinaryOp {
   Plus,
@@ -31,6 +33,7 @@ pub enum BinaryOp {
   Or,
 }
 
+#[derive(Clone, PartialEq, Debug)]
 // TODO should we put children in an array of Expr for easier handling later?
 /// Expression definition including necessary children
 pub enum Expr {
@@ -48,6 +51,7 @@ pub enum Expr {
   },
 }
 
+#[derive(Clone, PartialEq, Debug)]
 /// Statements
 pub enum Stmt {
   Return(Expr),
@@ -60,19 +64,78 @@ pub enum Stmt {
   },
 }
 
+#[derive(PartialEq, Debug)]
 /// BlockItem instances can appear at the top level in a function
 pub enum BlockItem {
   Declaration(Identifier, Option<Expr>),
   Stmt(Stmt),
 }
 
+#[derive(PartialEq, Debug)]
 /// A function's representation
 pub struct Function {
   name: Identifier,
   body: Vec<BlockItem>,
 }
 
+#[derive(PartialEq, Debug)]
 /// A program
 pub struct Program {
   function: Function,
+}
+
+#[cfg(test)]
+mod tests {
+  use core::num;
+
+  use super::*;
+  #[allow(unused_imports)]
+  use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
+
+  #[test]
+  fn construct_ast() {
+    // TODO clone is bad. Maybe?
+    // TODO better pattern than if..let?
+    // TODO What if the if..let doesn't match?
+    let num_c = Expr::IntConstant(12);
+    if let Expr::IntConstant(c) = num_c {
+      assert_eq!(c, 12);
+    }
+    let ret_s = Stmt::Return(num_c.clone());
+    if let Stmt::Return(expr) = ret_s.clone() {
+      assert_eq!(expr, num_c);
+    }
+    let func = Function {
+      name: Identifier::new("main"),
+      body: vec![BlockItem::Stmt(ret_s.clone())],
+    };
+    let func2 = Function {
+      name: Identifier::new("main"),
+      body: vec![BlockItem::Stmt(ret_s.clone())],
+    };
+    let prog = Program { function: func };
+    let u_minus = Expr::UnaryExpr(UnaryOperator::Minus, Box::new(num_c.clone()));
+    let comp = Expr::UnaryExpr(UnaryOperator::Complement, Box::new(u_minus.clone()));
+    let v = Expr::Var(Identifier::new("var1"));
+    let assign = Expr::Assignment(Box::new(v.clone()), Box::new(num_c.clone()));
+    let expr_s = Stmt::Expr(assign);
+    let null_s = Stmt::Null;
+    let decl = BlockItem::Declaration(Identifier::new("var1"), None);
+    let decl_init = BlockItem::Declaration(Identifier::new("var1"), Some(num_c.clone()));
+    let if_stmt_no_else = Stmt::If {
+      cond: num_c.clone(),
+      true_stmt: Box::new(expr_s.clone()),
+      false_stmt: None,
+    };
+    let if_stmt_else = Stmt::If {
+      cond: v.clone(),
+      true_stmt: Box::new(expr_s.clone()),
+      false_stmt: Some(Box::new(ret_s)),
+    };
+    let cond_e = Expr::Conditional {
+      cond: Box::new(num_c),
+      true_expr: Box::new(v),
+      false_expr: Box::new(u_minus),
+    };
+  }
 }
