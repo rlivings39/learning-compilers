@@ -14,3 +14,9 @@ impl Identifier {
     }
   }
 }
+
+impl std::cmp::PartialEq<&str> for Identifier {
+  fn eq(&self, other: &&str) -> bool {
+    self.val == *other
+  }
+}

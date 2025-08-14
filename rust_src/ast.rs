@@ -101,20 +101,33 @@ mod tests {
     if let Expr::IntConstant(c) = num_c {
       assert_eq!(c, 12);
     }
+
     let ret_s = Stmt::Return(num_c.clone());
     if let Stmt::Return(expr) = ret_s.clone() {
       assert_eq!(expr, num_c);
     }
+
     let func = Function {
       name: Identifier::new("main"),
       body: vec![BlockItem::Stmt(ret_s.clone())],
     };
+    assert_eq!(func.name, "main");
+    assert_eq!(func.body.len(), 1);
+    match &func.body[0] {
+      BlockItem::Stmt(s) => assert_eq!(*s, ret_s),
+      _ => panic!("Expected a return statement"),
+    }
     let func2 = Function {
       name: Identifier::new("main"),
       body: vec![BlockItem::Stmt(ret_s.clone())],
     };
     let prog = Program { function: func };
+    assert!(!std::ptr::eq(&prog.function, &func2));
     let u_minus = Expr::UnaryExpr(UnaryOperator::Minus, Box::new(num_c.clone()));
+    match u_minus.clone() {
+      Expr::UnaryExpr(_, expr) => assert_eq!(*expr, num_c),
+      _ => panic!("Expected a UnaryExpr"),
+    }
     let comp = Expr::UnaryExpr(UnaryOperator::Complement, Box::new(u_minus.clone()));
     let v = Expr::Var(Identifier::new("var1"));
     let assign = Expr::Assignment(Box::new(v.clone()), Box::new(num_c.clone()));
