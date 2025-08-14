@@ -17,3 +17,6 @@ path = "rust_src/main.rs"
 [lib]
 name = "notcc"
 path = "rust_src/lib.rs"
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"

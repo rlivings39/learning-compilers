@@ -45,7 +45,7 @@ pub enum TokenKind {
   Eof,
   Bogus,
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenData {
   Identifier(String),
   IntConstant(i32),
@@ -145,6 +145,8 @@ pub fn lex(file: &SourceFile) -> Result<Vec<Token>, Error> {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
+
   fn make_source(code: &str) -> SourceFile {
     SourceFile::new(code.to_string(), "".to_string())
   }
@@ -290,58 +292,58 @@ mod tests {
       ]
     )
   }
-  // TODO more tests
-  //   expect(() => lex("12ab")).toThrow(NotccError);
-  // });
 
-  // test("Lex unary ops", () => {
-  //   expect(lex("-")).toMatchObject([{ kind: TokenKind.MINUS }]);
-  //   expect(lex("--")).toMatchObject([{ kind: TokenKind.DECREMENT }]);
-  //   expect(lex("~~x")).toMatchObject([
-  //     { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
-  //     { kind: TokenKind.UNARY_BITWISE_COMPLEMENT },
-  //     { kind: TokenKind.IDENTIFIER },
-  //   ]);
-  //   expect(lex("!")).toMatchObject([{ kind: TokenKind.LOGICAL_NOT }]);
-  // });
-
-  // test("Lex binary ops", () => {
-  //   expect(lex("+   ")).toMatchObject([{ kind: TokenKind.PLUS }]);
-  //   expect(lex("  * ")).toMatchObject([{ kind: TokenKind.TIMES }]);
-  //   expect(lex("/  ")).toMatchObject([{ kind: TokenKind.DIVIDE }]);
-  //   expect(lex("%")).toMatchObject([{ kind: TokenKind.REMAINDER }]);
-  //   expect(lex("a+ 2  ")).toMatchObject([
-  //     { kind: TokenKind.IDENTIFIER, id: "a" },
-  //     { kind: TokenKind.PLUS },
-  //     { kind: TokenKind.INT_CONSTANT },
-  //   ]);
-  //   expect(lex("&&")).toMatchObject([{ kind: TokenKind.AND }]);
-  //   expect(lex("||")).toMatchObject([{ kind: TokenKind.OR }]);
-  //   expect(lex("<")).toMatchObject([{ kind: TokenKind.LESS }]);
-  //   expect(lex("<=")).toMatchObject([{ kind: TokenKind.LESS_EQ }]);
-  //   expect(lex(">")).toMatchObject([{ kind: TokenKind.GREATER }]);
-  //   expect(lex(">=")).toMatchObject([{ kind: TokenKind.GREATER_EQ }]);
-  //   expect(lex("==")).toMatchObject([{ kind: TokenKind.EQUAL }]);
-  //   expect(lex("!=")).toMatchObject([{ kind: TokenKind.NOT_EQUAL }]);
-  // });
-
-  // test("Lex assign", () => {
-  //   expect(lex("  = ")).toMatchObject([{ kind: TokenKind.ASSIGN }]);
-  //   expect(lex("int x  = 2;")).toMatchObject([
-  //     { kind: TokenKind.KW_INT },
-  //     { kind: TokenKind.IDENTIFIER },
-  //     { kind: TokenKind.ASSIGN },
-  //     { kind: TokenKind.INT_CONSTANT },
-  //     { kind: TokenKind.SEMICOLON },
-  //   ]);
-  // });
-
-  // test("Lex if and ternary", () => {
-  //   expect(lex("if")).toMatchObject([{ kind: TokenKind.KW_IF }]);
-  //   expect(lex("else")).toMatchObject([{ kind: TokenKind.KW_ELSE }]);
-  //   expect(lex("? : ")).toMatchObject([
-  //     { kind: TokenKind.QUESTION },
-  //     { kind: TokenKind.COLON },
-  //   ]);
-  // });
+  #[test]
+  fn all_tokens() {
+    // Our code snippets. Use PATTERN_MAP.len() to ensure we have the right number of examples.
+    let code: [(&str, TokenKind, TokenData); PATTERN_MAP.len()] = [
+      (" int ", TokenKind::KwInt, TokenData::None),
+      ("void  ", TokenKind::KwVoid, TokenData::None),
+      ("\nreturn\t  ", TokenKind::KwReturn, TokenData::None),
+      ("if", TokenKind::KwIf, TokenData::None),
+      ("else", TokenKind::KwElse, TokenData::None),
+      ("(", TokenKind::LeftParen, TokenData::None),
+      (")", TokenKind::RightParen, TokenData::None),
+      ("{", TokenKind::LeftCurly, TokenData::None),
+      ("}", TokenKind::RightCurly, TokenData::None),
+      ("[", TokenKind::LeftSquare, TokenData::None),
+      ("]", TokenKind::RightSquare, TokenData::None),
+      (";", TokenKind::Semicolon, TokenData::None),
+      (
+        "a_name",
+        TokenKind::Identifier,
+        TokenData::Identifier("a_name".to_string()),
+      ),
+      ("123", TokenKind::IntConstant, TokenData::IntConstant(123)),
+      ("~", TokenKind::UnaryBitwiseComplement, TokenData::None),
+      ("!", TokenKind::LogicalNot, TokenData::None),
+      ("--", TokenKind::Decrement, TokenData::None),
+      ("-", TokenKind::Minus, TokenData::None),
+      ("+", TokenKind::Plus, TokenData::None),
+      ("*", TokenKind::Times, TokenData::None),
+      ("/", TokenKind::Divide, TokenData::None),
+      ("%", TokenKind::Remainder, TokenData::None),
+      ("&&", TokenKind::And, TokenData::None),
+      ("||", TokenKind::Or, TokenData::None),
+      ("<", TokenKind::Less, TokenData::None),
+      ("<=", TokenKind::LessEq, TokenData::None),
+      ("> ", TokenKind::Greater, TokenData::None),
+      (">=", TokenKind::GreaterEq, TokenData::None),
+      ("==", TokenKind::Equal, TokenData::None),
+      ("!=", TokenKind::NotEqual, TokenData::None),
+      ("=", TokenKind::Assign, TokenData::None),
+      ("?", TokenKind::Question, TokenData::None),
+      (":", TokenKind::Colon, TokenData::None),
+    ];
+    for (snippet, kind, data) in code {
+      let tokens = run_lexer(snippet);
+      assert_eq!(tokens.len(), 1, "Incorrect lex for {snippet}");
+      let token = &tokens[0];
+      assert_eq!(
+        (&token.kind, &token.data),
+        (&kind, &data),
+        "Incorrect lex for {snippet}"
+      );
+    }
+  }
 }
