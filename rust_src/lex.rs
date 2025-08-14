@@ -1,7 +1,7 @@
 //! The notcc lexer
 
 use crate::error::Error;
-use crate::source_files::{Location, SourceFile};
+use crate::source_files::SourceFile;
 use regex::Regex;
 
 /// Token is the core token type returned by the lexer
@@ -145,11 +145,9 @@ pub fn lex(file: &SourceFile) -> Result<Vec<Token>, Error> {
 #[cfg(test)]
 mod tests {
   use super::*;
+  #[allow(unused_imports)]
   use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
 
-  fn make_source(code: &str) -> SourceFile {
-    SourceFile::new(code.to_string(), "".to_string())
-  }
   fn run_lexer(code: &str) -> Vec<Token> {
     let res = lex(&&SourceFile::new(code.to_string(), "bogus.c".to_string()));
     if let Err(e) = &res {

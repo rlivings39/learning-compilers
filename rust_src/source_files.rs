@@ -38,7 +38,7 @@ impl SourceFile {
     let (line, loc) = self.containing_line_and_loc(idx);
     let message = format!(
       "{msg}\n\nin {}:{}:{}\n\n{line}\n{}^",
-      self.path,
+      loc.file_path,
       loc.line + 1,
       loc.column + 1,
       " ".repeat(loc.column)
