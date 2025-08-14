@@ -9,6 +9,7 @@ pub enum UnaryOperator {
   Minus,
   LogicalNot,
 }
+
 #[derive(Clone, PartialEq, Debug)]
 /// Relational operators. Split out from binary operators as they need
 /// special handling during ASM emission.
@@ -86,9 +87,8 @@ pub struct Program {
 
 #[cfg(test)]
 mod tests {
-  use core::num;
-
   use super::*;
+
   #[allow(unused_imports)]
   use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
 
@@ -98,57 +98,58 @@ mod tests {
     // TODO better pattern than if..let?
     // TODO What if the if..let doesn't match?
     let num_c = Expr::IntConstant(12);
-    if let Expr::IntConstant(c) = num_c {
-      assert_eq!(c, 12);
-    }
-
     let ret_s = Stmt::Return(num_c.clone());
-    if let Stmt::Return(expr) = ret_s.clone() {
-      assert_eq!(expr, num_c);
-    }
-
     let func = Function {
       name: Identifier::new("main"),
       body: vec![BlockItem::Stmt(ret_s.clone())],
     };
     assert_eq!(func.name, "main");
     assert_eq!(func.body.len(), 1);
-    match &func.body[0] {
-      BlockItem::Stmt(s) => assert_eq!(*s, ret_s),
-      _ => panic!("Expected a return statement"),
-    }
+    assert_eq!(func.body[0], BlockItem::Stmt(ret_s.clone()));
+
+    let decl = BlockItem::Declaration(Identifier::new("var1"), None);
+    let decl_init = BlockItem::Declaration(Identifier::new("var1"), Some(num_c.clone()));
     let func2 = Function {
       name: Identifier::new("main"),
-      body: vec![BlockItem::Stmt(ret_s.clone())],
+      body: vec![BlockItem::Stmt(ret_s.clone()), decl, decl_init],
     };
     let prog = Program { function: func };
     assert!(!std::ptr::eq(&prog.function, &func2));
+
     let u_minus = Expr::UnaryExpr(UnaryOperator::Minus, Box::new(num_c.clone()));
-    match u_minus.clone() {
-      Expr::UnaryExpr(_, expr) => assert_eq!(*expr, num_c),
-      _ => panic!("Expected a UnaryExpr"),
-    }
+    assert!(matches!(&u_minus, Expr::UnaryExpr(UnaryOperator::Minus, expr) if **expr == num_c));
+
     let comp = Expr::UnaryExpr(UnaryOperator::Complement, Box::new(u_minus.clone()));
+    assert!(matches!(&comp, Expr::UnaryExpr(UnaryOperator::Complement, expr) if **expr == u_minus));
+
     let v = Expr::Var(Identifier::new("var1"));
     let assign = Expr::Assignment(Box::new(v.clone()), Box::new(num_c.clone()));
     let expr_s = Stmt::Expr(assign);
     let null_s = Stmt::Null;
-    let decl = BlockItem::Declaration(Identifier::new("var1"), None);
-    let decl_init = BlockItem::Declaration(Identifier::new("var1"), Some(num_c.clone()));
     let if_stmt_no_else = Stmt::If {
       cond: num_c.clone(),
       true_stmt: Box::new(expr_s.clone()),
       false_stmt: None,
     };
+    assert!(
+      matches!(if_stmt_no_else, Stmt::If{cond, true_stmt, false_stmt} if cond == num_c && *true_stmt == expr_s && false_stmt == None )
+    );
     let if_stmt_else = Stmt::If {
       cond: v.clone(),
-      true_stmt: Box::new(expr_s.clone()),
-      false_stmt: Some(Box::new(ret_s)),
+      true_stmt: Box::new(null_s.clone()),
+      false_stmt: Some(Box::new(ret_s.clone())),
     };
+    assert!(
+      matches!(if_stmt_else, Stmt::If{cond, true_stmt, false_stmt} if cond == v && *true_stmt == null_s && **(false_stmt.as_ref().unwrap()) == ret_s )
+    );
+
     let cond_e = Expr::Conditional {
-      cond: Box::new(num_c),
-      true_expr: Box::new(v),
-      false_expr: Box::new(u_minus),
+      cond: Box::new(num_c.clone()),
+      true_expr: Box::new(v.clone()),
+      false_expr: Box::new(u_minus.clone()),
     };
+    assert!(
+      matches!(cond_e, Expr::Conditional{cond, true_expr, false_expr} if *cond == num_c && *true_expr == v && *false_expr == u_minus)
+    );
   }
 }
