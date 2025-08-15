@@ -36,21 +36,21 @@ fn binop_precedence(token: &Token) -> Option<i32> {
   }
 }
 
-fn is_binop(token: &Token) -> bool {
-  binop_precedence(token).is_some()
-}
-
 impl Parser<'_> {
-  fn expect(&mut self, kind: TokenKind) -> Result<&Token, Error> {
+  fn expect_one_of(&mut self, kinds: &[TokenKind]) -> Result<&Token, Error> {
     let token = match self.tokens.next() {
       Some(t) => t,
-      None => return Err(format!("Unexpected end of file. Expected {kind:?}")),
+      None => return Err(format!("Unexpected end of file. Expected {kinds:?}")),
     };
-    if token.kind != kind {
-      return Err(format!("Expected {kind:?}. Found {:?}", token.kind));
+    if !kinds.contains(&token.kind) {
+      return Err(format!("Expected {kinds:?}. Found {:?}", token.kind));
     }
 
     Ok(token)
+  }
+
+  fn expect(&mut self, kind: TokenKind) -> Result<&Token, Error> {
+    self.expect_one_of(&[kind])
   }
 
   fn take_token(&mut self) -> Result<(), Error> {
@@ -102,19 +102,40 @@ impl Parser<'_> {
 
   // TODO check all parse_expr calls to make sure I have the right starting precedence
   fn parse_expr(&mut self, min_precedence: i32) -> Result<ast::Expr, Error> {
-    let left = self.parse_factor()?;
-    let next_token = self.peek_token()?.clone();
-    let next_precedence = binop_precedence(next_token);
-    while let Some(next_precedence) = next_precedence
+    let mut left = self.parse_factor()?;
+    let mut next_token = self.peek_token()?;
+    while let Some(next_precedence) = binop_precedence(next_token)
       && next_precedence >= min_precedence
     {
-      // match next_token.kind {
-      //   // TokenKind::Assign => {
-      //   //   self.take_token()?;
-      //   // }
-      //   // TokenKind::Question => {}
-      //   // _ => {}
-      // }
+      match next_token.kind {
+        TokenKind::Assign => {
+          self.take_token()?;
+          // Don't increment precedence because assignment is right associative
+          let right = self.parse_expr(next_precedence)?;
+          left = ast::Expr::Assignment(Box::new(left), Box::new(right));
+        }
+        TokenKind::Question => {
+          self.take_token()?;
+          let true_expr = Box::new(self.parse_expr(0)?);
+          self.expect(TokenKind::Colon)?;
+          let false_expr = Box::new(self.parse_expr(next_precedence)?);
+          left = ast::Expr::Conditional {
+            cond: Box::new(left),
+            true_expr,
+            false_expr,
+          };
+        }
+        _ => {
+          // Operators are left-associative so that
+          //   1 + 2 - 3
+          // becomes
+          //   (1+2) - 3
+          let op = self.parse_binop()?;
+          let right = self.parse_expr(next_precedence + 1)?;
+          left = ast::Expr::BinaryExpr(op, Box::new(left), Box::new(right));
+        }
+      }
+      next_token = self.peek_token()?;
     }
     Err("".to_string())
   }
@@ -173,8 +194,107 @@ impl Parser<'_> {
     }
   }
 
-  fn parse_factor(&self) -> Result<ast::Expr, Error> {
-    todo!()
+  fn parse_factor(&mut self) -> Result<ast::Expr, Error> {
+    let token = self.peek_token()?;
+    match token.kind {
+      TokenKind::LeftParen => {
+        self.take_token()?;
+        let expr = self.parse_expr(0)?;
+        self.expect(TokenKind::RightParen)?;
+        Ok(expr)
+      }
+      TokenKind::IntConstant => self.parse_int_constant(),
+      TokenKind::Minus
+      | TokenKind::UnaryBitwiseComplement
+      | TokenKind::Decrement
+      | TokenKind::LogicalNot => self.parse_unary_expr(),
+      TokenKind::Identifier => {
+        let name = self.parse_identifier()?;
+        Ok(ast::Expr::Var(name))
+      }
+      // List out the rest so when we add a new token kind, the compiler reminds
+      // us to deal with it somewhere in this file.
+      TokenKind::RightParen
+      | TokenKind::LeftCurly
+      | TokenKind::RightCurly
+      | TokenKind::LeftSquare
+      | TokenKind::RightSquare
+      | TokenKind::KwInt
+      | TokenKind::KwVoid
+      | TokenKind::KwReturn
+      | TokenKind::Semicolon
+      | TokenKind::Plus
+      | TokenKind::Times
+      | TokenKind::Divide
+      | TokenKind::Remainder
+      | TokenKind::And
+      | TokenKind::Or
+      | TokenKind::Less
+      | TokenKind::LessEq
+      | TokenKind::Greater
+      | TokenKind::GreaterEq
+      | TokenKind::Equal
+      | TokenKind::NotEqual
+      | TokenKind::Assign
+      | TokenKind::KwIf
+      | TokenKind::KwElse
+      | TokenKind::Question
+      | TokenKind::Colon
+      | TokenKind::Bogus
+      | TokenKind::Eof => Err(format!(
+        "Failed to parse {:?}. Expected an expression.",
+        token.kind
+      )),
+    }
+  }
+
+  fn parse_binop(&mut self) -> Result<ast::BinaryOp, Error> {
+    let token = self.peek_token()?;
+    let res = match token.kind {
+      TokenKind::Plus => Ok(ast::BinaryOp::Plus),
+      TokenKind::Minus => Ok(ast::BinaryOp::Subtract),
+      TokenKind::Divide => Ok(ast::BinaryOp::Divide),
+      TokenKind::Times => Ok(ast::BinaryOp::Multiply),
+      TokenKind::Remainder => Ok(ast::BinaryOp::Remainder),
+      TokenKind::And => Ok(ast::BinaryOp::And),
+      TokenKind::Or => Ok(ast::BinaryOp::Or),
+      TokenKind::Greater => Ok(ast::BinaryOp::Greater),
+      TokenKind::GreaterEq => Ok(ast::BinaryOp::GreaterEqual),
+      TokenKind::Less => Ok(ast::BinaryOp::Less),
+      TokenKind::LessEq => Ok(ast::BinaryOp::LessEqual),
+      TokenKind::Equal => Ok(ast::BinaryOp::Equal),
+      TokenKind::NotEqual => Ok(ast::BinaryOp::NotEqual),
+      _ => Err(format!("Expected binary operator. Found {:?}.", token.kind)),
+    };
+    self.take_token()?;
+    res
+  }
+
+  fn parse_int_constant(&mut self) -> Result<ast::Expr, Error> {
+    let token = self.expect(TokenKind::IntConstant)?;
+    let val = match token.data {
+      TokenData::Identifier(_) | TokenData::None => panic!("Expected integer"),
+      TokenData::IntConstant(val) => val,
+    };
+    Ok(ast::Expr::IntConstant(val))
+  }
+
+  fn parse_unary_expr(&mut self) -> Result<ast::Expr, String> {
+    let token = self.expect_one_of(&[
+      TokenKind::Minus,
+      TokenKind::UnaryBitwiseComplement,
+      TokenKind::Decrement,
+      TokenKind::LogicalNot,
+    ])?;
+    let op = match token.kind {
+      TokenKind::Minus => Ok(ast::UnaryOperator::Minus),
+      TokenKind::UnaryBitwiseComplement => Ok(ast::UnaryOperator::Complement),
+      TokenKind::LogicalNot => Ok(ast::UnaryOperator::LogicalNot),
+      TokenKind::Decrement => Err("-- is not supported".to_string()),
+      _ => Err("Unreachable".to_string()),
+    }?;
+    let expr = self.parse_factor()?;
+    Ok(ast::Expr::UnaryExpr(op, Box::new(expr)))
   }
 }
 

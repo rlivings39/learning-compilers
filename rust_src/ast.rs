@@ -13,18 +13,6 @@ pub enum UnaryOperator {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-/// Relational operators. Split out from binary operators as they need
-/// special handling during ASM emission.
-pub enum RelOp {
-  Less,
-  LessEqual,
-  Greater,
-  GreaterEqual,
-  Equal,
-  NotEqual,
-}
-
-#[derive(Clone, PartialEq, Debug)]
 /// Binary operators
 pub enum BinaryOp {
   Plus,
@@ -34,6 +22,12 @@ pub enum BinaryOp {
   Remainder,
   And,
   Or,
+  Less,
+  LessEqual,
+  Greater,
+  GreaterEqual,
+  Equal,
+  NotEqual,
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -43,7 +37,6 @@ pub enum Expr {
   IntConstant(i32),
   // TODO should I use box?
   UnaryExpr(UnaryOperator, Box<Expr>),
-  RelOpExpr(RelOp, Box<Expr>, Box<Expr>),
   BinaryExpr(BinaryOp, Box<Expr>, Box<Expr>),
   Var(Identifier),
   Assignment(Box<Expr>, Box<Expr>),

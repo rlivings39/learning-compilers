@@ -25,7 +25,7 @@ pub fn driver_main(args: &arg_parser::Cli) -> Result<(), Error> {
   if args.print_tokens {
     println!("Tokens from {}\n\n{:#?}", source_file.path, tokens);
   }
-  let program = parse::parse(&tokens)?;
+  let _ = parse::parse(&tokens)?;
   Ok(())
 }
 

@@ -28,6 +28,7 @@ pub fn preprocess_file(file_name: &str, output_file_name: &str) -> Result<(), Er
   Ok(())
 }
 
+#[allow(dead_code)]
 pub fn assemble_output(asm_file: &str, output_exe: &str) -> Result<(), Error> {
   run_cc([asm_file, "-o", output_exe], None)?;
   Ok(())
