@@ -4,6 +4,7 @@ use crate::error::Error;
 use crate::lex::{Token, TokenData, TokenKind};
 use crate::{ast, shared_types::Identifier};
 
+// TODO report error locations
 struct Parser<'a> {
   tokens: std::slice::Iter<'a, Token>,
 }
@@ -137,7 +138,7 @@ impl Parser<'_> {
       }
       next_token = self.peek_token()?;
     }
-    Err("".to_string())
+    Ok(left)
   }
 
   fn parse_declaration(&mut self) -> Result<ast::BlockItem, Error> {
@@ -151,6 +152,7 @@ impl Parser<'_> {
       }
       _ => None,
     };
+    self.expect(TokenKind::Semicolon)?;
     Ok(ast::BlockItem::Declaration(name, init))
   }
 
@@ -303,11 +305,15 @@ pub fn parse(tokens: &[Token]) -> Result<ast::Program, Error> {
     tokens: tokens.iter(),
   };
   let func = parser.parse_function()?;
+  // Ensure we're at the end of the file
+  parser.expect(TokenKind::Eof)?;
   Ok(ast::Program { function: func })
 }
 
 #[cfg(test)]
 mod tests {
+  use crate::{lex, source_files::SourceFile};
+
   use super::*;
   #[allow(unused_imports)]
   use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
@@ -322,5 +328,31 @@ mod tests {
     assert!(res.is_err());
     let err = res.unwrap_err();
     assert!(err.contains("And") && err.contains("end of file"));
+  }
+
+  fn run_parser(code: &str) -> Result<ast::Program, Error> {
+    let source = SourceFile::new(code.to_string(), "bogus.c".to_string());
+    let tokens = lex::lex(&source)?;
+    parse(&tokens)
+  }
+
+  #[test]
+  // A basic smoke test until I get the pretty printer working
+  fn parse_smoke_test() -> Result<(), Box<dyn std::error::Error>> {
+    let prog = run_parser(
+      r#"
+int main (void) {
+  return 2;
+}
+    "#
+      .trim(),
+    )?;
+
+    // Ensure we error for junk at the end
+    let err = run_parser("int main (void) { return 3; } )").unwrap_err();
+    assert!(err.contains("Eof"));
+
+    let err = run_parser("int main (void) { int x x = 2; return 3; }").unwrap_err();
+    Ok(())
   }
 }
