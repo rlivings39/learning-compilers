@@ -1,7 +1,7 @@
 //! Main driver code for notcc
 use crate::error::Error;
-use crate::lex;
 use crate::source_files::SourceFile;
+use crate::{lex, parse};
 pub mod arg_parser;
 mod system_cc;
 
@@ -25,6 +25,7 @@ pub fn driver_main(args: &arg_parser::Cli) -> Result<(), Error> {
   if args.print_tokens {
     println!("Tokens from {}\n\n{:#?}", source_file.path, tokens);
   }
+  let program = parse::parse(&tokens)?;
   Ok(())
 }
 

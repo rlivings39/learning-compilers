@@ -77,14 +77,14 @@ pub enum BlockItem {
 #[derive(PartialEq, Debug)]
 /// A function's representation
 pub struct Function {
-  name: Identifier,
-  body: Vec<BlockItem>,
+  pub name: Identifier,
+  pub body: Vec<BlockItem>,
 }
 
 #[derive(PartialEq, Debug)]
 /// A program
 pub struct Program {
-  function: Function,
+  pub function: Function,
 }
 
 #[cfg(test)]
