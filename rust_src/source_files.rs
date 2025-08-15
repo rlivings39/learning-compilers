@@ -34,16 +34,21 @@ impl SourceFile {
     };
   }
 
-  pub fn err_at_index(&self, idx: usize, msg: &str) -> Error {
-    let (line, loc) = self.containing_line_and_loc(idx);
+  pub fn err_in_range(&self, start: usize, end: usize, msg: &str) -> Error {
+    let (line, loc) = self.containing_line_and_loc(start);
     let message = format!(
-      "{msg}\n\nin {}:{}:{}\n\n{line}\n{}^",
+      "{msg}\n\nin {}:{}:{}\n\n{line}\n{}{}",
       loc.file_path,
       loc.line + 1,
       loc.column + 1,
-      " ".repeat(loc.column)
+      " ".repeat(loc.column),
+      "^".repeat(end - start)
     );
     message
+  }
+
+  pub fn err_at_index(&self, idx: usize, msg: &str) -> Error {
+    self.err_in_range(idx, idx + 1, msg)
   }
 
   fn containing_line_and_loc(&self, idx: usize) -> (&str, Location) {
@@ -79,6 +84,8 @@ pub struct Location {
 #[cfg(test)]
 mod tests {
   use super::*;
+  #[allow(unused_imports)]
+  use pretty_assertions::assert_eq;
   #[test]
   fn make_source_file() {
     let code: &'static str = "int main(void) {
@@ -144,5 +151,22 @@ in ~/foo.c:2:3
       eprintln!("Unexpected message\n{msg}");
       assert!(false)
     }
+  }
+
+  #[test]
+  fn test_err_at_range() {
+    let code: &'static str = "int main(void) {
+  return 2;
+}";
+    let path = "~/foo.c";
+    let source = SourceFile::new(code.to_string(), path.to_string());
+    let msg = source.err_in_range(19, 25, "Something bad");
+    let expected = "Something bad
+
+in ~/foo.c:2:3
+
+  return 2;
+  ^^^^^^";
+    assert_eq!(msg, expected);
   }
 }

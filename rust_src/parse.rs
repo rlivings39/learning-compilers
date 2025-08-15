@@ -2,11 +2,13 @@
 
 use crate::error::Error;
 use crate::lex::{Token, TokenData, TokenKind};
+use crate::source_files::SourceFile;
 use crate::{ast, shared_types::Identifier};
 
 // TODO report error locations
 struct Parser<'a> {
   tokens: std::slice::Iter<'a, Token>,
+  file: &'a SourceFile,
 }
 
 fn check_token_exists(token: Option<&Token>) -> Result<&Token, Error> {
@@ -44,7 +46,11 @@ impl Parser<'_> {
       None => return Err(format!("Unexpected end of file. Expected {kinds:?}")),
     };
     if !kinds.contains(&token.kind) {
-      return Err(format!("Expected {kinds:?}. Found {:?}", token.kind));
+      return Err(self.file.err_in_range(
+        token.text_start,
+        token.text_end,
+        &format!("Expected {kinds:?}. Found {:?}", token.kind),
+      ));
     }
 
     Ok(token)
@@ -300,9 +306,10 @@ impl Parser<'_> {
   }
 }
 
-pub fn parse(tokens: &[Token]) -> Result<ast::Program, Error> {
+pub fn parse(tokens: &[Token], source: &SourceFile) -> Result<ast::Program, Error> {
   let mut parser = Parser {
     tokens: tokens.iter(),
+    file: source,
   };
   let func = parser.parse_function()?;
   // Ensure we're at the end of the file
@@ -323,6 +330,7 @@ mod tests {
     let tokens: [Token; 0] = [];
     let mut parser = Parser {
       tokens: tokens.iter(),
+      file: &SourceFile::new(String::new(), String::new()),
     };
     let res = parser.expect(TokenKind::And);
     assert!(res.is_err());
@@ -333,7 +341,7 @@ mod tests {
   fn run_parser(code: &str) -> Result<ast::Program, Error> {
     let source = SourceFile::new(code.to_string(), "bogus.c".to_string());
     let tokens = lex::lex(&source)?;
-    parse(&tokens)
+    parse(&tokens, &source)
   }
 
   #[test]
