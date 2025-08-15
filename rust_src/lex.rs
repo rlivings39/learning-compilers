@@ -1,6 +1,7 @@
 //! The notcc lexer
 
 use crate::error::Error;
+use crate::shared_types::Identifier;
 use crate::source_files::SourceFile;
 use regex::Regex;
 
@@ -47,16 +48,16 @@ pub enum TokenKind {
 }
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenData {
-  Identifier(String),
+  Identifier(Identifier),
   IntConstant(i32),
   None,
 }
 #[derive(Debug, PartialEq)]
 pub struct Token {
-  kind: TokenKind,
-  text_start: usize,
-  text_end: usize,
-  data: TokenData,
+  pub kind: TokenKind,
+  pub text_start: usize,
+  pub text_end: usize,
+  pub data: TokenData,
 }
 
 const PATTERN_MAP: [(&'static str, TokenKind); 33] = [
@@ -121,7 +122,7 @@ pub fn lex(file: &SourceFile) -> Result<Vec<Token>, Error> {
       return Err(file.err_at_index(idx, "Failed to lex"));
     }
     let data = match match_kind {
-      TokenKind::Identifier => TokenData::Identifier(match_str.to_string()),
+      TokenKind::Identifier => TokenData::Identifier(Identifier::new(match_str)),
       TokenKind::IntConstant => TokenData::IntConstant(match_str.parse::<i32>().unwrap()),
       _ => TokenData::None,
     };
@@ -207,7 +208,7 @@ mod tests {
           kind: TokenKind::Identifier,
           text_start: 9,
           text_end: 10,
-          data: TokenData::Identifier("x".to_string())
+          data: TokenData::Identifier(Identifier::new("x"))
         },
         Token {
           kind: TokenKind::Semicolon,
@@ -237,7 +238,7 @@ mod tests {
           kind: TokenKind::Identifier,
           text_start: 4,
           text_end: 8,
-          data: TokenData::Identifier("main".to_string())
+          data: TokenData::Identifier(Identifier::new("main"))
         },
         Token {
           kind: TokenKind::LeftParen,
@@ -310,7 +311,7 @@ mod tests {
       (
         "a_name",
         TokenKind::Identifier,
-        TokenData::Identifier("a_name".to_string()),
+        TokenData::Identifier(Identifier::new("a_name")),
       ),
       ("123", TokenKind::IntConstant, TokenData::IntConstant(123)),
       ("~", TokenKind::UnaryBitwiseComplement, TokenData::None),
