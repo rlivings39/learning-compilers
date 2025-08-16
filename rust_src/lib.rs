@@ -7,5 +7,6 @@ mod ast;
 mod driver;
 mod lex;
 mod parse;
+mod pretty_print;
 mod shared_types;
 mod source_files;
