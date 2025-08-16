@@ -355,12 +355,13 @@ int main (void) {
     "#
       .trim(),
     )?;
+    assert_eq!(prog.function.name, "main");
 
     // Ensure we error for junk at the end
     let err = run_parser("int main (void) { return 3; } )").unwrap_err();
     assert!(err.contains("Eof"));
 
-    let err = run_parser("int main (void) { int x x = 2; return 3; }").unwrap_err();
+    run_parser("int main (void) { int x x = 2; return 3; }").unwrap_err();
     Ok(())
   }
 }
