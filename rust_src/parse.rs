@@ -366,7 +366,7 @@ int main (void) {
   }
 
   #[track_caller]
-  fn assert_has_pretty_print(code: &str, pretty_print: &str) -> Result<(), Error> {
+  fn assert_has_pretty_print(code: &str, pretty_print: &str) {
     let prog = match run_parser(code.trim()) {
       Ok(prog) => prog,
       // Panic here because it gives better error locations and diagnostics
@@ -376,10 +376,20 @@ int main (void) {
       pretty_print::pretty_print(&prog).trim(),
       pretty_print.trim()
     );
-    Ok(())
   }
+
+  #[track_caller]
+  fn assert_errors<F, T>(f: F, msg: Option<&str>)
+  where
+    F: Fn() -> Result<T, Error>,
+    T: std::fmt::Debug,
+  {
+    let msg = msg.unwrap_or("Expected an error");
+    f().expect_err(msg);
+  }
+
   #[test]
-  fn basic_main() -> Result<(), Error> {
+  fn basic_main() {
     let main = r#"
   int main (void) {
     return 2;
@@ -390,11 +400,11 @@ Program(
     return $2;
   }
 )"#;
-    assert_has_pretty_print(main, expected)
+    assert_has_pretty_print(main, expected);
   }
 
   #[test]
-  fn parse_uminus() -> Result<(), Error> {
+  fn parse_uminus() {
     let main = r#"
   int main (void) {
     return -2;
@@ -405,7 +415,7 @@ Program(
     return Minus($2);
   }
 )"#;
-    assert_has_pretty_print(main, expected)?;
+    assert_has_pretty_print(main, expected);
 
     let main = r#"
 int main (void) {
@@ -433,5 +443,190 @@ int main (void) {
     )
     .unwrap_err();
     assert!(err.contains("not supported"));
+  }
+
+  #[test]
+  fn binop_parsing() {
+    let all_ops_prog = "int main(void) { return 1 - 3 * 4 + 5 % 6;}";
+    let expected = r#"
+Program(
+  Function main() {
+    return Plus(Subtract($1, Multiply($3, $4)), Remainder($5, $6));
+  }
+)"#;
+    assert_has_pretty_print(all_ops_prog, expected);
+
+    let paren_ops_prog = "int main(void) { return (1 - 3) * 4 + 5 % 6;}";
+    let expected = r#"
+Program(
+  Function main() {
+    return Plus(Multiply(Subtract($1, $3), $4), Remainder($5, $6));
+  }
+)"#;
+    assert_has_pretty_print(paren_ops_prog, expected);
+  }
+
+  #[test]
+  fn logical_ops() {
+    let logical_ops_prog = "int main(void) { return 1 && 2 || 3 < 4 <= 5 > 6 >= 7 == 8 != 9;}";
+    let expected = r#"
+Program(
+  Function main() {
+    return Or(And($1, $2), NotEqual(Equal(GreaterEqual(Greater(LessEqual(Less($3, $4), $5), $6), $7), $8), $9));
+  }
+)"#;
+    assert_has_pretty_print(logical_ops_prog, expected);
+  }
+
+  #[test]
+  fn assignments() {
+    let main = r#"
+    int main(void) {
+      ;
+      int x = 1;
+      int y;
+      int z;
+      y = 2;
+      z = y + (x=y=3);
+      return y + x + z;
+    }"#;
+    let expected = r#"
+Program(
+  Function main() {
+    ;
+    Declaration(x, $1);
+    Declaration(y);
+    Declaration(z);
+    =($y, $2);
+    =($z, Plus($y, =($x, =($y, $3))));
+    return Plus(Plus($y, $x), $z);
+  }
+)"#;
+    assert_has_pretty_print(main, expected);
+  }
+
+  #[test]
+  fn if_no_else() {
+    let main = r#"
+    int main(void) {
+      if (0)
+        return 0;
+    }"#;
+    let expected = r#"
+Program(
+  Function main() {
+    If($0) {
+      return $0;
+    }
+  }
+)"#;
+    assert_has_pretty_print(main, expected);
+  }
+
+  #[test]
+  fn if_else() {
+    let main = r#"
+    int main(void) {
+      if (0)
+        return 0;
+      else
+        return 1;
+    }"#;
+    let expected = r#"
+Program(
+  Function main() {
+    If($0) {
+      return $0;
+    } Else {
+      return $1;
+    }
+  }
+)"#;
+    assert_has_pretty_print(main, expected);
+  }
+
+  #[test]
+  fn if_else_if() {
+    assert_has_pretty_print(
+      r#"
+    int main(void) {
+      if (0)
+        return 0;
+      else if(2)
+        return 1;
+    }
+    "#,
+      r#"
+Program(
+  Function main() {
+    If($0) {
+      return $0;
+    } Else {
+      If($2) {
+        return $1;
+      }
+    }
+  }
+)
+  "#,
+    );
+  }
+
+  #[test]
+  fn if_else_if_else() {
+    assert_has_pretty_print(
+      r#"
+    int main(void) {
+      if (0)
+        return 0;
+      else if(2)
+        return 1;
+      else
+        return 2;
+    }
+    "#,
+      r#"
+Program(
+  Function main() {
+    If($0) {
+      return $0;
+    } Else {
+      If($2) {
+        return $1;
+      } Else {
+        return $2;
+      }
+    }
+  }
+)
+      "#,
+    );
+  }
+
+  #[test]
+  fn conditional_expr() {
+    assert_has_pretty_print(
+      r#"
+      int main(void) {
+        int a = 7;
+        int x;
+        x = 0 ? 1 + 2 : 3*a;
+        return x;
+      }
+    "#,
+      r#"
+Program(
+  Function main() {
+    Declaration(a, $7);
+    Declaration(x);
+    =($x, Conditional($0, Plus($1, $2), Multiply($3, $a)));
+    return $x;
+  }
+)
+      "#,
+    );
+
+    assert_errors(|| run_parser("int main(void) { return 0 ? :;} "), None);
+    assert_errors(|| run_parser("int main(void) { 0 ? 1: ;"), None)
   }
 }
