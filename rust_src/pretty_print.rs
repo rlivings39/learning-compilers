@@ -62,7 +62,7 @@ fn print_declaration(id: &Identifier, init: &Option<ast::Expr>, indent: usize) -
   let init_str = init
     .as_ref()
     .map_or("".to_string(), |e| format!(", {}", print_expr(e)));
-  print_line(&format!("Declaration ({}{});", id, init_str), indent)
+  print_line(&format!("Declaration({}{});", id, init_str), indent)
 }
 
 fn print_if(
@@ -126,7 +126,7 @@ fn print_program(prog: &ast::Program, indent: usize) -> String {
   let f = print_function(&prog.function, indent + INDENT_INCREMENT);
   format!(
     "{}{}{}",
-    print_line("Program (", indent),
+    print_line("Program(", indent),
     f,
     print_line(")", indent)
   )
@@ -151,6 +151,8 @@ mod tests {
     Ok(pretty_print(&prog))
   }
   #[test]
+  // This is a basic pretty printer test. The tests for the parser use the pretty
+  // printer and also lock down output. So we don't duplicate those here.
   fn pretty_print_basic() {
     let code = r#"
 int main(void) {
@@ -160,10 +162,10 @@ int main(void) {
 }"#;
     assert_eq!(
       run_pretty_printer(code).unwrap(),
-      r#"Program (
+      r#"Program(
   Function main() {
-    Declaration (x);
-    Declaration (y, $2);
+    Declaration(x);
+    Declaration(y, $2);
     return Plus($y, $2);
   }
 )

@@ -319,7 +319,7 @@ pub fn parse(tokens: &[Token], source: &SourceFile) -> Result<ast::Program, Erro
 
 #[cfg(test)]
 mod tests {
-  use crate::{lex, source_files::SourceFile};
+  use crate::{lex, pretty_print, source_files::SourceFile};
 
   use super::*;
   #[allow(unused_imports)]
@@ -363,5 +363,75 @@ int main (void) {
 
     run_parser("int main (void) { int x x = 2; return 3; }").unwrap_err();
     Ok(())
+  }
+
+  #[track_caller]
+  fn assert_has_pretty_print(code: &str, pretty_print: &str) -> Result<(), Error> {
+    let prog = match run_parser(code.trim()) {
+      Ok(prog) => prog,
+      // Panic here because it gives better error locations and diagnostics
+      Err(e) => panic!("{e}"),
+    };
+    assert_eq!(
+      pretty_print::pretty_print(&prog).trim(),
+      pretty_print.trim()
+    );
+    Ok(())
+  }
+  #[test]
+  fn basic_main() -> Result<(), Error> {
+    let main = r#"
+  int main (void) {
+    return 2;
+  }"#;
+    let expected = r#"
+Program(
+  Function main() {
+    return $2;
+  }
+)"#;
+    assert_has_pretty_print(main, expected)
+  }
+
+  #[test]
+  fn parse_uminus() -> Result<(), Error> {
+    let main = r#"
+  int main (void) {
+    return -2;
+  }"#;
+    let expected = r#"
+Program(
+  Function main() {
+    return Minus($2);
+  }
+)"#;
+    assert_has_pretty_print(main, expected)?;
+
+    let main = r#"
+int main (void) {
+  return -(-2);
+}
+"#;
+    let expected = r#"
+Program(
+  Function main() {
+    return Minus(Minus($2));
+  }
+)
+"#;
+    assert_has_pretty_print(main, expected)
+  }
+
+  #[test]
+  fn decrement_neg() {
+    let err = run_parser(
+      r#"
+int main (void) {
+  return --2;
+}
+    "#,
+    )
+    .unwrap_err();
+    assert!(err.contains("not supported"));
   }
 }
