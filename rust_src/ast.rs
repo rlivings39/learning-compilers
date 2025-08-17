@@ -30,20 +30,23 @@ pub enum BinaryOp {
   NotEqual,
 }
 
+/// Reference type for nested Exprs to break type cycles
+pub type ExprRef = Box<Expr>;
+
 #[derive(Clone, PartialEq, Debug)]
 // TODO should we put children in an array of Expr for easier handling later?
 /// Expression definition including necessary children
 pub enum Expr {
   IntConstant(i32),
   // TODO should I use box?
-  UnaryExpr(UnaryOperator, Box<Expr>),
-  BinaryExpr(BinaryOp, Box<Expr>, Box<Expr>),
+  UnaryExpr(UnaryOperator, ExprRef),
+  BinaryExpr(BinaryOp, ExprRef, ExprRef),
   Var(Identifier),
-  Assignment(Box<Expr>, Box<Expr>),
+  Assignment(ExprRef, ExprRef),
   Conditional {
-    cond: Box<Expr>,
-    true_expr: Box<Expr>,
-    false_expr: Box<Expr>,
+    cond: ExprRef,
+    true_expr: ExprRef,
+    false_expr: ExprRef,
   },
 }
 
