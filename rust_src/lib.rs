@@ -8,5 +8,8 @@ mod driver;
 mod lex;
 mod parse;
 mod pretty_print;
+mod semantics;
 mod shared_types;
 mod source_files;
+#[cfg(test)]
+mod test_tools;

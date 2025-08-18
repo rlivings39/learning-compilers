@@ -24,6 +24,9 @@ impl Identifier {
       val: name.to_string(),
     }
   }
+  pub fn val(&self) -> &String {
+    &self.val
+  }
 }
 
 impl std::cmp::PartialEq<&str> for Identifier {

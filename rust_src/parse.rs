@@ -322,8 +322,20 @@ mod tests {
   use crate::{lex, pretty_print, source_files::SourceFile};
 
   use super::*;
+  use crate::test_tools::{assert_has_pretty_print, run_parser};
   #[allow(unused_imports)]
   use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
+
+  #[track_caller]
+  fn assert_errors<F, T>(f: F, msg: Option<&str>)
+  where
+    F: Fn() -> Result<T, Error>,
+    T: std::fmt::Debug,
+  {
+    let msg = msg.unwrap_or("Expected an error");
+    f().expect_err(msg);
+  }
+
   #[test]
   fn end_of_file() {
     // First check if token iterator is finished
@@ -336,12 +348,6 @@ mod tests {
     assert!(res.is_err());
     let err = res.unwrap_err();
     assert!(err.contains("And") && err.contains("end of file"));
-  }
-
-  fn run_parser(code: &str) -> Result<ast::Program, Error> {
-    let source = SourceFile::new(code.to_string(), "bogus.c".to_string());
-    let tokens = lex::lex(&source)?;
-    parse(&tokens, &source)
   }
 
   #[test]
@@ -363,29 +369,6 @@ int main (void) {
 
     run_parser("int main (void) { int x x = 2; return 3; }").unwrap_err();
     Ok(())
-  }
-
-  #[track_caller]
-  fn assert_has_pretty_print(code: &str, pretty_print: &str) {
-    let prog = match run_parser(code.trim()) {
-      Ok(prog) => prog,
-      // Panic here because it gives better error locations and diagnostics
-      Err(e) => panic!("{e}"),
-    };
-    assert_eq!(
-      pretty_print::pretty_print(&prog).trim(),
-      pretty_print.trim()
-    );
-  }
-
-  #[track_caller]
-  fn assert_errors<F, T>(f: F, msg: Option<&str>)
-  where
-    F: Fn() -> Result<T, Error>,
-    T: std::fmt::Debug,
-  {
-    let msg = msg.unwrap_or("Expected an error");
-    f().expect_err(msg);
   }
 
   #[test]
