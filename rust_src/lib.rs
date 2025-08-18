@@ -11,5 +11,6 @@ mod pretty_print;
 mod semantics;
 mod shared_types;
 mod source_files;
+mod tacky;
 #[cfg(test)]
 mod test_tools;
