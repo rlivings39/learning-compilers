@@ -1,22 +1,55 @@
-use std::fmt::format;
+use std::{collections::HashMap, fmt::format, hash::Hash};
 
 use crate::{ast, error::Error, shared_types::Identifier};
 
-struct VariableResolution {}
+type VarTable = HashMap<String, String>;
+struct VariableResolution {
+  var_table: VarTable,
+  var_index: i32,
+}
+
 impl VariableResolution {
-  fn record_var_name(&mut self, name: &Identifier) -> Identifier {
-    Identifier::new(&format!("{}_new", name.val()))
+  fn new() -> VariableResolution {
+    VariableResolution {
+      var_table: VarTable::new(),
+      var_index: 0,
+    }
   }
+  fn record_var_name(&mut self, name: &Identifier) -> Result<Identifier, Error> {
+    let new_name = self.var_table.get(name.val());
+    if let Some(name) = new_name {
+      return Err(format!("Variable {} already defined", name));
+    }
+    let new_name = format!("{}.{}", name.val(), self.var_index);
+    self.var_index += 1;
+    Ok(Identifier::new(&new_name))
+  }
+
   fn resolve_in_expr(&self, init: &mut ast::Expr) -> Result<(), Error> {
     todo!()
   }
-  fn resolve_in_stmt(&self, stmt: &mut ast::Stmt) -> Result<(), String> {
-    todo!()
+  fn resolve_in_stmt(&mut self, stmt: &mut ast::Stmt) -> Result<(), String> {
+    match stmt {
+      ast::Stmt::Return(expr) | ast::Stmt::Expr(expr) => self.resolve_in_expr(expr),
+      ast::Stmt::Null => Ok(()),
+      ast::Stmt::If {
+        cond,
+        true_stmt,
+        false_stmt,
+      } => {
+        self.resolve_in_expr(cond)?;
+        self.resolve_in_stmt(true_stmt)?;
+        if let Some(stmt) = false_stmt {
+          self.resolve_in_stmt(stmt)?;
+        }
+        Ok(())
+      }
+    }
   }
   fn resolve_in_block(&mut self, block: &mut ast::BlockItem) -> Result<(), Error> {
     match block {
       ast::BlockItem::Declaration(identifier, expr) => {
-        let new_name = self.record_var_name(identifier);
+        let new_name = self.record_var_name(identifier)?;
         if let Some(init) = expr {
           self.resolve_in_expr(init)?;
         }
@@ -42,7 +75,7 @@ impl VariableResolution {
 /// The result is a new ast::Program
 /// TODO should I mutate?
 pub fn run_semantic_analysis(prog: &mut ast::Program) -> Result<(), Error> {
-  let mut resolver = VariableResolution {};
+  let mut resolver = VariableResolution::new();
   resolver.resolve_vars(prog)
 }
 
@@ -77,7 +110,7 @@ Program(
       r#"
 Program(
   Function main() {
-    Declaration(var_new);
+    Declaration(var.0);
   }
 )
 "#,
