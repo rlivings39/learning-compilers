@@ -2,21 +2,25 @@
 
 use crate::{ast, shared_types::Identifier};
 
+/// TACKY Program representation
 pub struct Program {
   pub function: Function,
 }
 
+/// TACKY Function representation
 pub struct Function {
   pub name: Identifier,
   pub body: Vec<Instruction>,
 }
 
+/// TACKY Value representation
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
   IntConstant(i32),
   Var(Identifier),
 }
 
+/// TACKY Value representation
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
   Return(Value),
