@@ -11,11 +11,13 @@ pub struct Function {
   pub body: Vec<Instruction>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
   IntConstant(i32),
   Var(Identifier),
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
   Return(Value),
   UnaryMinus {
@@ -61,55 +63,71 @@ mod tests {
     let var0 = tacky::Value::Var(Identifier::new("tmp0"));
     let var1 = tacky::Value::Var(Identifier::new("tmp1"));
     let c0 = tacky::Value::IntConstant(37);
-    let comp = tacky::Instruction::Complement { src: c0, dst: var0 };
-    let uminus = tacky::Instruction::UnaryMinus { src: c0, dst: var1 };
-    let ret = tacky::Instruction::Return(var1);
+    let comp = tacky::Instruction::Complement {
+      src: c0.clone(),
+      dst: var0.clone(),
+    };
+    let uminus = tacky::Instruction::UnaryMinus {
+      src: c0.clone(),
+      dst: var1.clone(),
+    };
+    let ret = tacky::Instruction::Return(var1.clone());
     let func = tacky::Function {
       name: Identifier::new("main"),
-      body: vec![comp, uminus, ret],
+      body: vec![comp.clone(), uminus.clone(), ret.clone()],
     };
+    assert_eq!(func.name, "main");
+    assert_eq!(func.body.len(), 3);
     let prog = tacky::Program { function: func };
-    let div_op = tacky::Instruction::BinaryOp {
+    assert_eq!(prog.function.name, "main");
+    let _div_op = tacky::Instruction::BinaryOp {
       op: ast::BinaryOp::Divide,
-      lhs: c0,
-      rhs: var0,
-      dst: var1,
+      lhs: c0.clone(),
+      rhs: var0.clone(),
+      dst: var1.clone(),
     };
-    let plus_op = tacky::Instruction::BinaryOp {
+    let _plus_op = tacky::Instruction::BinaryOp {
       op: ast::BinaryOp::Plus,
-      lhs: c0,
-      rhs: var0,
-      dst: var1,
+      lhs: c0.clone(),
+      rhs: var0.clone(),
+      dst: var1.clone(),
     };
-    let minus_op = tacky::Instruction::BinaryOp {
+    let _minus_op = tacky::Instruction::BinaryOp {
       op: ast::BinaryOp::Subtract,
-      lhs: c0,
-      rhs: var0,
-      dst: var1,
+      lhs: c0.clone(),
+      rhs: var0.clone(),
+      dst: var1.clone(),
     };
-    let times_op = tacky::Instruction::BinaryOp {
+    let _times_op = tacky::Instruction::BinaryOp {
       op: ast::BinaryOp::Multiply,
-      lhs: c0,
-      rhs: var0,
-      dst: var1,
+      lhs: c0.clone(),
+      rhs: var0.clone(),
+      dst: var1.clone(),
     };
-    let remainder_op = tacky::Instruction::BinaryOp {
+    let _remainder_op = tacky::Instruction::BinaryOp {
       op: ast::BinaryOp::Remainder,
-      lhs: c0,
-      rhs: var0,
-      dst: var1,
+      lhs: c0.clone(),
+      rhs: var0.clone(),
+      dst: var1.clone(),
     };
-    let not = tacky::Instruction::LogicalNot { src: c0, dst: var0 };
+    let _not = tacky::Instruction::LogicalNot {
+      src: c0.clone(),
+      dst: var0.clone(),
+    };
     let label_name = Identifier::new("label1");
-    let label = tacky::Instruction::Label(label_name);
-    let jmp = tacky::Instruction::Jump(label_name);
-    let j0 = tacky::Instruction::JumpIfZero {
-      cond: var1,
-      target: label_name,
+    let _label = tacky::Instruction::Label(label_name.clone());
+    let _jmp = tacky::Instruction::Jump(label_name.clone());
+    let _j0 = tacky::Instruction::JumpIfZero {
+      cond: var1.clone(),
+      target: label_name.clone(),
     };
-    let jn0 = tacky::Instruction::JumpIfNotZero {
-      cond: c0,
-      target: label_name,
+    let _jn0 = tacky::Instruction::JumpIfNotZero {
+      cond: c0.clone(),
+      target: label_name.clone(),
+    };
+    let _cpy = tacky::Instruction::Copy {
+      src: c0.clone(),
+      dst: var0.clone(),
     };
   }
 }
