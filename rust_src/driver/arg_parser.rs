@@ -28,6 +28,9 @@ pub struct Cli {
   /// Pretty print the output of the parser
   #[arg(long = "pretty-print", default_value_t = false)]
   pub pretty_print: bool,
+  /// Pretty print the output of semantic analysis
+  #[arg(long = "pretty-print-semantics", default_value_t = false)]
+  pub pretty_print_semantics: bool,
   /// Run up to the parser and semantic analysis
   #[arg(long, default_value_t = false)]
   pub validate: bool,

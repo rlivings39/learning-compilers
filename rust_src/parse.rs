@@ -319,7 +319,7 @@ pub fn parse(tokens: &[Token], source: &SourceFile) -> Result<ast::Program, Erro
 
 #[cfg(test)]
 mod tests {
-  use crate::{lex, pretty_print, source_files::SourceFile};
+  use crate::source_files::SourceFile;
 
   use super::*;
   use crate::test_tools::{assert_has_pretty_print, run_parser};

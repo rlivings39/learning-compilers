@@ -37,6 +37,12 @@ pub fn driver_main(args: &arg_parser::Cli) -> Result<(), Error> {
     return Ok(());
   }
   semantics::run_semantic_analysis(&mut prog)?;
+  if args.pretty_print_semantics {
+    print!("{}", pretty_print::pretty_print(&prog));
+  }
+  if args.validate {
+    return Ok(());
+  }
   Ok(())
 }
 

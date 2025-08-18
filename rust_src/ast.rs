@@ -50,6 +50,23 @@ pub enum Expr {
   },
 }
 
+impl Expr {
+  pub fn kind_to_str(&self) -> &str {
+    match self {
+      Expr::IntConstant(_) => "Constant",
+      Expr::UnaryExpr(_, _) => "UnaryOperator",
+      Expr::BinaryExpr(_, _, _) => "BinaryOperator",
+      Expr::Var(_) => "Variable",
+      Expr::Assignment(_, _) => "Assignment",
+      Expr::Conditional {
+        cond: _,
+        true_expr: _,
+        false_expr: _,
+      } => "Conditional",
+    }
+  }
+}
+
 #[derive(Clone, PartialEq, Debug)]
 /// Statements
 pub enum Stmt {
