@@ -2,6 +2,15 @@
 
 use crate::error::Error;
 type LineMap = Vec<[usize; 2]>;
+
+#[derive(Clone, PartialEq, Debug)]
+/// Source locations
+pub struct SourceLocation {
+  pub start: usize,
+  pub end: usize,
+  pub path: String,
+}
+
 /// The notcc representation of a SourceFile
 pub struct SourceFile {
   code: String,
@@ -13,6 +22,15 @@ impl SourceFile {
   /// Return a reference to the code in this SourceFile
   pub fn code(&self) -> &String {
     &self.code
+  }
+
+  /// Create a source location for this file with the given start and end
+  pub fn source_location(&self, start: usize, end: usize) -> SourceLocation {
+    SourceLocation {
+      start,
+      end,
+      path: self.path.clone(),
+    }
   }
 
   /// Construct a new SourceFile given its code and a path
@@ -51,14 +69,14 @@ impl SourceFile {
     self.err_in_range(idx, idx + 1, msg)
   }
 
-  fn containing_line_and_loc(&self, idx: usize) -> (&str, Location) {
-    let loc = self.char_to_location(idx);
+  fn containing_line_and_loc(&self, idx: usize) -> (&str, LineColLocation) {
+    let loc = self.char_to_line_col(idx);
     let [start, end] = self.line_map[loc.line];
     (&self.code[start..end], loc)
   }
 
   /// Convert a character offset to a Location with line, column values
-  pub fn char_to_location(&self, idx: usize) -> Location {
+  fn char_to_line_col(&self, idx: usize) -> LineColLocation {
     let mut row: usize = 0;
     let mut col: usize = 0;
     for (row_idx, bounds) in self.line_map.iter().enumerate() {
@@ -67,7 +85,7 @@ impl SourceFile {
         col = idx - bounds[0];
       }
     }
-    Location {
+    LineColLocation {
       line: row,
       column: col,
       file_path: self.path.clone(),
@@ -75,7 +93,7 @@ impl SourceFile {
   }
 }
 
-pub struct Location {
+pub struct LineColLocation {
   pub line: usize,
   pub column: usize,
   pub file_path: String,
@@ -94,23 +112,23 @@ mod tests {
     let path = "/foo/bar/baz.c";
     let source = SourceFile::new(code.to_string(), path.to_string());
     assert_eq!(source.code(), code);
-    let mut loc = source.char_to_location(0);
+    let mut loc = source.char_to_line_col(0);
     assert_eq!(loc.column, 0);
     assert_eq!(loc.line, 0);
     assert_eq!(loc.file_path, path);
-    loc = source.char_to_location(6);
+    loc = source.char_to_line_col(6);
     assert_eq!(loc.column, 6);
     assert_eq!(loc.line, 0);
     assert_eq!(loc.file_path, path);
-    loc = source.char_to_location(17);
+    loc = source.char_to_line_col(17);
     assert_eq!(loc.column, 0);
     assert_eq!(loc.line, 1);
     assert_eq!(loc.file_path, path);
-    loc = source.char_to_location(28);
+    loc = source.char_to_line_col(28);
     assert_eq!(loc.column, 11);
     assert_eq!(loc.line, 1);
     assert_eq!(loc.file_path, path);
-    loc = source.char_to_location(29);
+    loc = source.char_to_line_col(29);
     assert_eq!((loc.line, loc.column), (2, 0));
     assert_eq!(loc.file_path, path);
   }
