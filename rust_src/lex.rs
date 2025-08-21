@@ -46,6 +46,7 @@ pub enum TokenKind {
   Eof,
   Bogus,
 }
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenData {
   Identifier(Identifier),
