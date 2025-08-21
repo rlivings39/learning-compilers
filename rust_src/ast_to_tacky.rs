@@ -126,10 +126,8 @@ impl AstToTacky {
      *  end label
      */
     let res = self.make_temp();
-    let end_name = "cond_end_label";
-    let end_label = self.make_label(end_name);
-    let false_name = "cond_false_label";
-    let false_label = self.make_label(false_name);
+    let (end_label, end_name) = self.make_label("cond_end_label");
+    let (false_label, false_name) = self.make_label("cond_false_label");
     let mut true_instrs: InstructionVec = Vec::new();
     let true_val = self.convert_expr(true_expr, &mut true_instrs);
     let mut false_instrs: InstructionVec = Vec::new();
@@ -138,7 +136,7 @@ impl AstToTacky {
     let cond_val = self.convert_expr(cond, instructions);
     instructions.push(tacky::Instruction::JumpIfZero {
       cond: cond_val,
-      target: Identifier::new(false_name),
+      target: Identifier::new(&false_name),
     });
     instructions.append(&mut true_instrs);
     instructions.extend_from_slice(&[
@@ -146,7 +144,7 @@ impl AstToTacky {
         src: true_val,
         dst: res.clone(),
       },
-      tacky::Instruction::Jump(Identifier::new(end_name)),
+      tacky::Instruction::Jump(Identifier::new(&end_name)),
       false_label,
     ]);
     instructions.append(&mut false_instrs);
@@ -180,10 +178,9 @@ impl AstToTacky {
       false
     };
     let target_name = if is_and { "false_label" } else { "true_label" };
-    let target_id = Identifier::new(target_name);
-    let short_circuit_label = self.make_label(target_name);
-    let end_name = "end";
-    let end_label = self.make_label(end_name);
+    let (short_circuit_label, target_name) = self.make_label(target_name);
+    let target_id = Identifier::new(&target_name);
+    let (end_label, end_name) = self.make_label("end");
     let jump_factory = if is_and {
       |cond, target| tacky::Instruction::JumpIfZero { cond, target }
     } else {
@@ -206,7 +203,7 @@ impl AstToTacky {
     instructions.extend_from_slice(&[
       second_jump,
       copy1,
-      tacky::Instruction::Jump(Identifier::new(end_name)),
+      tacky::Instruction::Jump(Identifier::new(&end_name)),
       short_circuit_label,
       copy2,
       end_label,
@@ -287,8 +284,7 @@ impl AstToTacky {
     instructions: &mut InstructionVec,
   ) {
     let cond_val = self.convert_expr(cond, instructions);
-    let end_name = "if_end_label";
-    let end_label: tacky::Instruction = self.make_label(end_name);
+    let (end_label, end_name) = self.make_label("if_end_label");
 
     if let Some(false_stmt) = false_stmt {
       /*
@@ -302,13 +298,12 @@ impl AstToTacky {
        *   False branch instructions
        *   End label
        */
-      let else_name = "else_label";
-      let else_label = self.make_label(else_name);
+      let (else_label, else_name) = self.make_label("else_label");
       let jump_else = tacky::Instruction::JumpIfZero {
         cond: cond_val,
-        target: Identifier::new(else_name),
+        target: Identifier::new(&else_name),
       };
-      let jump_end = tacky::Instruction::Jump(Identifier::new(end_name));
+      let jump_end = tacky::Instruction::Jump(Identifier::new(&end_name));
       instructions.push(jump_else);
       self.convert_stmt(true_stmt, instructions);
       instructions.push(jump_end);
@@ -320,7 +315,7 @@ impl AstToTacky {
       // condition is false and execute the true branch statements otherwise
       let jump_end = tacky::Instruction::JumpIfZero {
         cond: cond_val,
-        target: Identifier::new(end_name),
+        target: Identifier::new(&end_name),
       };
       instructions.push(jump_end);
       self.convert_stmt(true_stmt, instructions);
@@ -328,7 +323,7 @@ impl AstToTacky {
     }
   }
 
-  fn make_label(&mut self, name: &str) -> tacky::Instruction {
+  fn make_label(&mut self, name: &str) -> (tacky::Instruction, String) {
     let mut counter = 0;
     let mut label_name: String = name.to_string();
     while self.label_set.contains(&label_name) {
@@ -336,8 +331,8 @@ impl AstToTacky {
       counter += 1;
     }
     let label = tacky::Instruction::Label(Identifier::new(&label_name));
-    self.label_set.insert(label_name);
-    label
+    self.label_set.insert(label_name.clone());
+    (label, label_name)
   }
 
   fn make_temp(&mut self) -> tacky::Value {
@@ -358,28 +353,173 @@ mod tests {
   use super::*;
   use crate::pretty_print_tacky::pretty_print_tacky;
   use crate::semantics::run_semantic_analysis;
-  use crate::test_tools::run_parser;
+  use crate::test_tools::{assert_tacky_has_pretty_print, run_parser};
   use pretty_assertions::assert_eq;
   #[test]
-  fn basic_tacky() -> Result<(), Box<dyn std::error::Error>> {
+  fn logical_ops() {
+    let main = "int main(void) {
+    return !(3 < 4 <= 5 > 6 >= 7 == 8 != 9);
+  }";
+    let expected = r#"
+Function main () {
+  Less($3,$4,%notcc.tmp.0)
+  LessEqual(%notcc.tmp.0,$5,%notcc.tmp.1)
+  Greater(%notcc.tmp.1,$6,%notcc.tmp.2)
+  GreaterEqual(%notcc.tmp.2,$7,%notcc.tmp.3)
+  Equal(%notcc.tmp.3,$8,%notcc.tmp.4)
+  NotEqual(%notcc.tmp.4,$9,%notcc.tmp.5)
+  Not(%notcc.tmp.5, %notcc.tmp.6)
+  Return(%notcc.tmp.6)
+}
+    "#;
+    assert_tacky_has_pretty_print(main, expected);
+  }
+
+  #[test]
+  fn short_circuiting_and() {
+    let code = r#"int main(void) {
+    return (1*2) && (2-3);
+  }"#;
+    let expected = r#"
+Function main () {
+  Multiply($1,$2,%notcc.tmp.0)
+  JumpIfZero(%notcc.tmp.0, false_label)
+  Subtract($2,$3,%notcc.tmp.1)
+  JumpIfZero(%notcc.tmp.1, false_label)
+  Copy($1, %notcc.tmp.2)
+  Jump(end)
+  Label(false_label)
+  Copy($0, %notcc.tmp.2)
+  Label(end)
+  Return(%notcc.tmp.2)
+}
+  "#;
+    assert_tacky_has_pretty_print(code, expected);
+  }
+
+  #[test]
+  fn short_circuiting_or() {
+    let code = r#"
+int main(void) {
+  return 1 < 2 || 2 >= 3;
+}
+  "#;
+    let expected = r#"
+Function main () {
+  Less($1,$2,%notcc.tmp.0)
+  JumpIfNotZero(%notcc.tmp.0, true_label)
+  GreaterEqual($2,$3,%notcc.tmp.1)
+  JumpIfNotZero(%notcc.tmp.1, true_label)
+  Copy($0, %notcc.tmp.2)
+  Jump(end)
+  Label(true_label)
+  Copy($1, %notcc.tmp.2)
+  Label(end)
+  Return(%notcc.tmp.2)
+}
+  "#;
+    assert_tacky_has_pretty_print(code, expected);
+  }
+
+  #[test]
+  fn label_mangling() {
+    let code = r#"
+    int main(void) {
+      return 1 && 2 && 3;
+    }
+    "#;
+    let expected = r#"
+Function main () {
+  JumpIfZero($1, false_label)
+  JumpIfZero($2, false_label)
+  Copy($1, %notcc.tmp.0)
+  Jump(end)
+  Label(false_label)
+  Copy($0, %notcc.tmp.0)
+  Label(end)
+  JumpIfZero(%notcc.tmp.0, false_label0)
+  JumpIfZero($3, false_label0)
+  Copy($1, %notcc.tmp.1)
+  Jump(end0)
+  Label(false_label0)
+  Copy($0, %notcc.tmp.1)
+  Label(end0)
+  Return(%notcc.tmp.1)
+}
+    "#;
+    assert_tacky_has_pretty_print(code, expected);
+  }
+
+  #[test]
+  fn assign() {
     let code = r#"
     int main(void) {
       int x = 2;
       int y;
-      y = x + 3;
-      if (y > 4)
-        x = x + 1;
-      else
-        y = y - 1;
-
-      return x+y;
+      y = 4;
+      int z = x * y;
+      return z + (y = 3) + 2;
     }
     "#;
-    let mut prog = run_parser(code)?;
-    run_semantic_analysis(&mut prog)?;
-    let tacky = ast_to_tacky(&prog);
-    assert_eq!(tacky.function.name, "main");
-    assert!(pretty_print_tacky(&tacky).contains("main"));
-    Ok(())
+    let expected = r#"
+Function main () {
+  Copy($2, %x.0)
+  Copy($4, %y.1)
+  Multiply(%x.0,%y.1,%notcc.tmp.0)
+  Copy(%notcc.tmp.0, %z.2)
+  Copy($3, %y.1)
+  Plus(%z.2,%y.1,%notcc.tmp.1)
+  Plus(%notcc.tmp.1,$2,%notcc.tmp.2)
+  Return(%notcc.tmp.2)
+}
+    "#;
+    assert_tacky_has_pretty_print(code, expected);
+  }
+
+  #[test]
+  fn no_return() {
+    let code = "int main(void) { int x = 0; }";
+    let expected = r#"
+Function main () {
+  Copy($0, %x.0)
+  Return($0)
+}
+    "#;
+    assert_tacky_has_pretty_print(code, expected);
+  }
+
+  #[test]
+  fn if_conditional() {
+    let code = r#"
+    int main(void) {
+      int x = 2;
+      int y;
+      if (x)
+        y = x+1 ? 1 : 2;
+      else
+        y = 3;
+      return y;
+    }
+    "#;
+    let expected = r#"
+Function main () {
+  Copy($2, %x.0)
+  JumpIfZero(%x.0, else_label)
+  Plus(%x.0,$1,%notcc.tmp.1)
+  JumpIfZero(%notcc.tmp.1, cond_false_label)
+  Copy($1, %notcc.tmp.0)
+  Jump(cond_end_label)
+  Label(cond_false_label)
+  Copy($2, %notcc.tmp.0)
+  Label(cond_end_label)
+  Copy(%notcc.tmp.0, %y.1)
+  Jump(if_end_label)
+  Label(else_label)
+  Copy($3, %y.1)
+  Label(if_end_label)
+  Return(%y.1)
+}
+    "#;
+    assert_tacky_has_pretty_print(code, expected);
   }
 }
