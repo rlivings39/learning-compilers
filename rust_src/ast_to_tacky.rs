@@ -7,6 +7,7 @@ use crate::{ast, shared_types::Identifier, tacky};
 /// Converter object that does the work going from AST to TACKY
 struct AstToTacky {
   label_set: HashSet<String>,
+  var_idx: usize,
 }
 
 type InstructionVec = Vec<tacky::Instruction>;
@@ -15,6 +16,7 @@ impl AstToTacky {
   fn new() -> AstToTacky {
     AstToTacky {
       label_set: HashSet::new(),
+      var_idx: 0,
     }
   }
 
@@ -85,9 +87,140 @@ impl AstToTacky {
       } => self.convert_if_stmt(cond, true_stmt, false_stmt.as_ref(), instructions),
     };
   }
+  fn convert_short_circuiting_binary(
+    &mut self,
+    binary_operator: &ast::BinaryOp,
+    left: &ast::Expr,
+    right: &ast::Expr,
+    instructions: &mut InstructionVec,
+  ) -> tacky::Value {
+    // TODO describe IR structure
+    // Collect the instructions for the left and right operands separately to be able to
+    // properly implement short-circuiting
+    let mut left_instrs: InstructionVec = Vec::new();
+    let left = self.convert_expr(left, &mut left_instrs);
+    let mut right_instrs: InstructionVec = Vec::new();
+    let right = self.convert_expr(right, &mut right_instrs);
+    let is_and = if let ast::BinaryOp::And = binary_operator {
+      true
+    } else {
+      false
+    };
+    let target_name = if is_and { "false_label" } else { "true_label" };
+    let target_id = Identifier::new(target_name);
+    let short_circuit_label = self.make_label(target_name);
+    let end_name = "end";
+    let end_label = self.make_label(end_name);
+    let (first_jump, second_jump) = if is_and {
+      (
+        tacky::Instruction::JumpIfZero {
+          cond: left,
+          target: target_id.clone(),
+        },
+        tacky::Instruction::JumpIfZero {
+          cond: right,
+          target: target_id,
+        },
+      )
+    } else {
+      (
+        tacky::Instruction::JumpIfNotZero {
+          cond: left,
+          target: target_id.clone(),
+        },
+        tacky::Instruction::JumpIfNotZero {
+          cond: right,
+          target: target_id,
+        },
+      )
+    };
+    let res = self.make_temp();
+    let copy1 = tacky::Instruction::Copy {
+      src: tacky::Value::IntConstant(if is_and { 1 } else { 0 }),
+      dst: res.clone(),
+    };
+    let copy2 = tacky::Instruction::Copy {
+      src: tacky::Value::IntConstant(if is_and { 0 } else { 1 }),
+      dst: res.clone(),
+    };
+    instructions.append(&mut left_instrs);
+    instructions.push(first_jump);
+    instructions.append(&mut right_instrs);
+    instructions.extend_from_slice(&[
+      second_jump,
+      copy1,
+      tacky::Instruction::Jump(Identifier::new(end_name)),
+      short_circuit_label,
+      copy2,
+      end_label,
+    ]);
+    return res;
+  }
+
+  fn convert_unary(
+    &mut self,
+    unary_operator: &ast::UnaryOperator,
+    expr: &ast::Expr,
+    instructions: &mut InstructionVec,
+  ) -> tacky::Value {
+    let src = self.convert_expr(expr, instructions);
+    let dst = self.make_temp();
+    let dst_clone = dst.clone();
+    let instr = match unary_operator {
+      ast::UnaryOperator::Complement => tacky::Instruction::Complement { src, dst },
+      ast::UnaryOperator::Minus => tacky::Instruction::UnaryMinus { src, dst },
+      ast::UnaryOperator::LogicalNot => tacky::Instruction::LogicalNot { src, dst },
+    };
+    instructions.push(instr);
+    return dst_clone;
+  }
+
+  fn convert_binary(
+    &mut self,
+    binary_operator: &ast::BinaryOp,
+    left: &ast::Expr,
+    right: &ast::Expr,
+    instructions: &mut InstructionVec,
+  ) -> tacky::Value {
+    // Handle the short-circuiting ops separately as they need special treatment
+    match binary_operator {
+      ast::BinaryOp::And | ast::BinaryOp::Or => {
+        return self.convert_short_circuiting_binary(binary_operator, left, right, instructions);
+      }
+      _ => ..,
+    };
+    let tacky_left = self.convert_expr(left, instructions);
+    let tacky_right = self.convert_expr(right, instructions);
+    let dst = self.make_temp();
+    let dst_clone = dst.clone();
+    let instr = tacky::Instruction::BinaryOp {
+      op: binary_operator.clone(),
+      lhs: tacky_left,
+      rhs: tacky_right,
+      dst,
+    };
+    instructions.push(instr);
+    return dst_clone;
+  }
 
   fn convert_expr(&mut self, expr: &ast::Expr, instructions: &mut InstructionVec) -> tacky::Value {
-    todo!()
+    match expr {
+      ast::Expr::IntConstant(val) => tacky::Value::IntConstant(*val),
+      ast::Expr::UnaryExpr(unary_operator, expr) => {
+        self.convert_unary(unary_operator, expr, instructions)
+      }
+      ast::Expr::BinaryExpr(binary_op, left, right) => {
+        self.convert_binary(binary_op, left, right, instructions)
+      }
+      ast::Expr::Var(identifier) => todo!(),
+      ast::Expr::Assignment(expr, expr1) => todo!(),
+      ast::Expr::Conditional {
+        cond,
+        true_expr,
+        false_expr,
+      } => todo!(),
+    };
+    todo!();
   }
 
   fn convert_if_stmt(
@@ -149,6 +282,12 @@ impl AstToTacky {
     let label = tacky::Instruction::Label(Identifier::new(&label_name));
     self.label_set.insert(label_name);
     label
+  }
+
+  fn make_temp(&mut self) -> tacky::Value {
+    let var = tacky::Value::Var(Identifier::new(&format!("notcc.tmp.{}", self.var_idx)));
+    self.var_idx += 1;
+    var
   }
 }
 

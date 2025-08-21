@@ -57,7 +57,6 @@ class AstToTacky {
     binOp: ast.BinaryExpr,
     _op: "and" | "or"
   ): ValAndInstructions {
-    // TODO
     const { val: lhsVal, instrs: lhsInstrs } = this.convertExpr(binOp.lhs);
     const { val: rhsVal, instrs: rhsInstrs } = this.convertExpr(binOp.rhs);
     const isAnd = _op === "and";
