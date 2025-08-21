@@ -2,11 +2,13 @@
 
 use crate::{ast, shared_types::Identifier};
 
+#[derive(Debug)]
 /// TACKY Program representation
 pub struct Program {
   pub function: Function,
 }
 
+#[derive(Debug)]
 /// TACKY Function representation
 pub struct Function {
   pub name: Identifier,

@@ -87,6 +87,79 @@ impl AstToTacky {
       } => self.convert_if_stmt(cond, true_stmt, false_stmt.as_ref(), instructions),
     };
   }
+  fn convert_var(&self, identifier: &Identifier) -> tacky::Value {
+    tacky::Value::Var(identifier.clone())
+  }
+
+  fn convert_assignment(
+    &mut self,
+    lhs: &ast::Expr,
+    rhs: &ast::Expr,
+    instructions: &mut InstructionVec,
+  ) -> tacky::Value {
+    let lhs_val = self.convert_expr(lhs, instructions);
+    let rhs_val = self.convert_expr(rhs, instructions);
+    instructions.push(tacky::Instruction::Copy {
+      src: rhs_val,
+      dst: lhs_val.clone(),
+    });
+    lhs_val
+  }
+
+  fn convert_conditional(
+    &mut self,
+    cond: &ast::Expr,
+    true_expr: &ast::Expr,
+    false_expr: &ast::Expr,
+    instructions: &mut InstructionVec,
+  ) -> tacky::Value {
+    /* Here we set up something like
+     *
+     *  condition instructions..
+     *  if cond == false jump to false label
+     *  true instructions
+     *  copy true value to result
+     *  jump to end
+     *  false label:
+     *  false instructions
+     *  copy false value to result
+     *  end label
+     */
+    let res = self.make_temp();
+    let end_name = "cond_end_label";
+    let end_label = self.make_label(end_name);
+    let false_name = "cond_false_label";
+    let false_label = self.make_label(false_name);
+    let mut true_instrs: InstructionVec = Vec::new();
+    let true_val = self.convert_expr(true_expr, &mut true_instrs);
+    let mut false_instrs: InstructionVec = Vec::new();
+    let false_val = self.convert_expr(false_expr, &mut true_instrs);
+    // Start instruction construction with condition value and instructions
+    let cond_val = self.convert_expr(cond, instructions);
+    instructions.push(tacky::Instruction::JumpIfZero {
+      cond: cond_val,
+      target: Identifier::new(false_name),
+    });
+    instructions.append(&mut true_instrs);
+    instructions.extend_from_slice(&[
+      tacky::Instruction::Copy {
+        src: true_val,
+        dst: res.clone(),
+      },
+      tacky::Instruction::Jump(Identifier::new(end_name)),
+      false_label,
+    ]);
+    instructions.append(&mut false_instrs);
+    instructions.extend_from_slice(&[
+      tacky::Instruction::Copy {
+        src: false_val,
+        dst: res.clone(),
+      },
+      end_label,
+    ]);
+    res
+  }
+
   fn convert_short_circuiting_binary(
     &mut self,
     binary_operator: &ast::BinaryOp,
@@ -111,29 +184,13 @@ impl AstToTacky {
     let short_circuit_label = self.make_label(target_name);
     let end_name = "end";
     let end_label = self.make_label(end_name);
-    let (first_jump, second_jump) = if is_and {
-      (
-        tacky::Instruction::JumpIfZero {
-          cond: left,
-          target: target_id.clone(),
-        },
-        tacky::Instruction::JumpIfZero {
-          cond: right,
-          target: target_id,
-        },
-      )
+    let jump_factory = if is_and {
+      |cond, target| tacky::Instruction::JumpIfZero { cond, target }
     } else {
-      (
-        tacky::Instruction::JumpIfNotZero {
-          cond: left,
-          target: target_id.clone(),
-        },
-        tacky::Instruction::JumpIfNotZero {
-          cond: right,
-          target: target_id,
-        },
-      )
+      |cond, target| tacky::Instruction::JumpIfNotZero { cond, target }
     };
+    let first_jump = jump_factory(left, target_id.clone());
+    let second_jump = jump_factory(right, target_id);
     let res = self.make_temp();
     let copy1 = tacky::Instruction::Copy {
       src: tacky::Value::IntConstant(if is_and { 1 } else { 0 }),
@@ -212,15 +269,14 @@ impl AstToTacky {
       ast::Expr::BinaryExpr(binary_op, left, right) => {
         self.convert_binary(binary_op, left, right, instructions)
       }
-      ast::Expr::Var(identifier) => todo!(),
-      ast::Expr::Assignment(expr, expr1) => todo!(),
+      ast::Expr::Var(identifier) => self.convert_var(identifier),
+      ast::Expr::Assignment(lhs, rhs) => self.convert_assignment(lhs, rhs, instructions),
       ast::Expr::Conditional {
         cond,
         true_expr,
         false_expr,
-      } => todo!(),
-    };
-    todo!();
+      } => self.convert_conditional(cond, true_expr, false_expr, instructions),
+    }
   }
 
   fn convert_if_stmt(
@@ -295,4 +351,33 @@ impl AstToTacky {
 pub fn ast_to_tacky(ast: &ast::Program) -> tacky::Program {
   let mut converter = AstToTacky::new();
   return converter.convert_program(ast);
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::semantics::run_semantic_analysis;
+  use crate::test_tools::run_parser;
+  use pretty_assertions::assert_eq;
+  #[test]
+  fn basic_tacky() -> Result<(), Box<dyn std::error::Error>> {
+    let code = r#"
+    int main(void) {
+      int x = 2;
+      int y;
+      y = x + 3;
+      if (y > 4)
+        x = x + 1;
+      else
+        y = y - 1;
+
+      return x+y;
+    }
+    "#;
+    let mut prog = run_parser(code)?;
+    run_semantic_analysis(&mut prog)?;
+    let tacky = ast_to_tacky(&prog);
+    assert_eq!(tacky.function.name, "main");
+    Ok(())
+  }
 }

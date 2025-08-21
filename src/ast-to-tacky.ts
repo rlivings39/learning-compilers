@@ -108,7 +108,7 @@ class AstToTacky {
     const instructions = [
       ...lhsInstrs,
       ...rhsInstrs,
-      tacky.Copy(rhs, lhs as tacky.Assignable), // TODO get rid of case
+      tacky.Copy(rhs, lhs as tacky.Assignable), // TODO get rid of cast
     ];
     return { val: lhs, instrs: instructions };
   }
