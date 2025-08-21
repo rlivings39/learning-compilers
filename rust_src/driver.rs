@@ -2,7 +2,7 @@
 use crate::error::Error;
 use crate::pretty_print_tacky::pretty_print_tacky;
 use crate::source_files::SourceFile;
-use crate::{ast_to_tacky, lex, parse, pretty_print, semantics};
+use crate::{ast_to_tacky, lex, parse, pretty_print, semantics, tacky_to_asm};
 pub mod arg_parser;
 mod system_cc;
 
@@ -51,6 +51,7 @@ pub fn driver_main(args: &arg_parser::Cli) -> Result<(), Error> {
   if args.tacky {
     return Ok(());
   }
+  let _asm = tacky_to_asm::tacky_to_asm(&tacky_prog);
 
   Ok(())
 }
