@@ -356,6 +356,7 @@ pub fn ast_to_tacky(ast: &ast::Program) -> tacky::Program {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::pretty_print_tacky::pretty_print_tacky;
   use crate::semantics::run_semantic_analysis;
   use crate::test_tools::run_parser;
   use pretty_assertions::assert_eq;
@@ -378,6 +379,7 @@ mod tests {
     run_semantic_analysis(&mut prog)?;
     let tacky = ast_to_tacky(&prog);
     assert_eq!(tacky.function.name, "main");
+    assert!(pretty_print_tacky(&tacky).contains("main"));
     Ok(())
   }
 }

@@ -1,5 +1,6 @@
 //! Main driver code for notcc
 use crate::error::Error;
+use crate::pretty_print_tacky::pretty_print_tacky;
 use crate::source_files::SourceFile;
 use crate::{ast_to_tacky, lex, parse, pretty_print, semantics};
 pub mod arg_parser;
@@ -43,7 +44,13 @@ pub fn driver_main(args: &arg_parser::Cli) -> Result<(), Error> {
   if args.validate {
     return Ok(());
   }
-  let _tacky = ast_to_tacky::ast_to_tacky(&prog);
+  let tacky_prog = ast_to_tacky::ast_to_tacky(&prog);
+  if args.pretty_print_tacky {
+    print!("{}", pretty_print_tacky(&tacky_prog));
+  }
+  if args.tacky {
+    return Ok(());
+  }
 
   Ok(())
 }

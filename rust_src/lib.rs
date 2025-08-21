@@ -9,9 +9,11 @@ mod driver;
 mod lex;
 mod parse;
 mod pretty_print;
+mod pretty_print_tacky;
 mod semantics;
 mod shared_types;
 mod source_files;
 mod tacky;
+
 #[cfg(test)]
 mod test_tools;
