@@ -1,11 +1,12 @@
 //! ASM IR
 
 use crate::shared_types::Identifier;
-
+#[derive(Debug, Clone)]
 pub enum Immediate {
-  ImmediateInt(i32),
+  Int(i32),
 }
 
+#[derive(Debug, Clone)]
 pub enum RegId {
   AX,
   R10,
@@ -13,6 +14,7 @@ pub enum RegId {
   R11,
 }
 
+#[derive(Debug, Clone)]
 pub enum Operand {
   Immediate(Immediate),
   Register(RegId),
@@ -20,12 +22,14 @@ pub enum Operand {
   Stack(usize),
 }
 
+#[derive(Debug, Clone)]
 pub enum BinOp {
   Add,
   Sub,
   Mul,
 }
 
+#[derive(Debug, Clone)]
 pub enum ConditionCode {
   E,
   NE,
@@ -35,6 +39,7 @@ pub enum ConditionCode {
   LE,
 }
 
+#[derive(Debug, Clone)]
 pub enum Instruction {
   Move {
     src: Operand,
@@ -62,11 +67,13 @@ pub enum Instruction {
 }
 
 pub type InstructionVec = Vec<Instruction>;
+#[derive(Debug)]
 pub struct Function {
-  name: Identifier,
-  instructions: InstructionVec,
+  pub name: Identifier,
+  pub instructions: InstructionVec,
 }
 
+#[derive(Debug)]
 pub struct Program {
-  function: Function,
+  pub function: Function,
 }
