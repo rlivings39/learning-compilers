@@ -31,36 +31,37 @@ Download the repo and
 
 ```bash
 cd learning-compilers
-npm install
-npm run build
-npm run test
+cargo build
+cargo test
 ```
 
 to configure, build, and run the tests.
 
-Then you can run the compiler by executing `./dist/main.js`. See the help for up to date info:
+Then you can run the compiler by executing `cargo run - arg1 arg2` or executing the right binary in `target/`. See the help for up to date info:
 
 ```bash
-$./dist/main.js -h
+$ cargo run - -h
+Compiles /path/to/input-file.c creating an executable /path/to/input-file
 
-Usage: notcc [flags] /path/to/input-file.c
+Usage: notcc [OPTIONS] <C_FILE>
 
-Compiles input-file.c creating an executable /path/to/input-file using the system gcc
+Arguments:
+  <C_FILE>  Input C source file
 
 Options:
-
---lex                Run the lexer but stop before parsing
---print-tokens       Print out the tokens found by the lexer
---parse              Run the lexer and parser but stop before codegen
---pretty-print       Pretty print the output of the parser
---tacky              Run the lexer, parser, and TACKY IR generation stopping before assembly generation
---pretty-print-tacky Pretty print TACKY IR after generation
---codegen            Run the lexer, parser, codegen but stop before assembly generation
--S, --asm-only       Emit assembly in input-file.s rather than linking an executable
--h, --help           Show the help
+      --lex                     Run the lexer but stop before parsing
+      --print-tokens            Print out the tokens found by the lexer
+      --parse                   Run the lexer and parser but stop before codegen
+      --pretty-print            Pretty print the output of the parser
+      --pretty-print-semantics  Pretty print the output of semantic analysis
+      --validate                Run up to the parser and semantic analysis
+      --tacky                   Run the lexer, parser, and TACKY IR generation stopping before assembly generation
+      --pretty-print-tacky      Pretty print TACKY IR after generation
+      --codegen                 Run the lexer, parser, codegen but stop before assembly generation
+  -S, --asm-only                Emit assembly in input-file.s rather than linking an executable
+  -h, --help                    Print help (see more with '--help')
+  -V, --version                 Print version
 ```
-
-Running `npm link` will let you refer to this with its name `notcc`.
 
 ## The four compiler passes
 
