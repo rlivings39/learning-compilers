@@ -100,7 +100,7 @@ fn emit_jpmcc(
 ) -> String {
   let cc_str = cc_to_suffix(condition_code);
   let target = mangle_label(identifier);
-  let asm = format!("jmp{cc_str} {target}");
+  let asm = format!("j{cc_str} {target}");
   asm
 }
 
