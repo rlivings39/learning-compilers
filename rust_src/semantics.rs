@@ -139,16 +139,12 @@ pub fn run_semantic_analysis(prog: &mut ast::Program) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::test_tools::{assert_prog_has_pretty_print, run_parser};
+  use crate::test_tools::{assert_prog_has_pretty_print, run_parser, run_parser_unwrap};
   use crate::{ast, shared_types::Identifier};
 
   #[track_caller]
   fn assert_has_pretty_print_after_semantics(code: &str, pretty_print: &str) {
-    let prog = run_parser(code);
-    let mut prog = match prog {
-      Err(e) => panic!("{e}"),
-      Ok(prog) => prog,
-    };
+    let mut prog = run_parser_unwrap(code);
     let res = run_semantic_analysis(&mut prog);
     if let Err(e) = res {
       panic!("{e}");

@@ -123,13 +123,15 @@ pub fn pretty_print_tacky(prog: &tacky::Program) -> String {
 mod tests {
   use super::*;
   use crate::{
-    ast_to_tacky::ast_to_tacky, semantics::run_semantic_analysis, test_tools::run_parser,
+    ast_to_tacky::ast_to_tacky,
+    semantics::run_semantic_analysis,
+    test_tools::{run_parser, run_parser_unwrap},
   };
   use pretty_assertions::assert_eq;
   #[test]
   fn print_basic() -> Result<(), Box<dyn std::error::Error>> {
     let main = "int main(void) { return -(~(-(-(4)))); }";
-    let mut ast = run_parser(main)?;
+    let mut ast = run_parser_unwrap(main);
     run_semantic_analysis(&mut ast)?;
     let tacky = ast_to_tacky(&ast);
     let tacky_str = pretty_print_tacky(&tacky);
@@ -149,7 +151,7 @@ Function main () {
   #[test]
   fn print_binops_basic() -> Result<(), Box<dyn std::error::Error>> {
     let main = "int main(void) { return 1 % 5 + 2 * 3 / 4; }";
-    let mut ast = run_parser(main)?;
+    let mut ast = run_parser_unwrap(main);
     run_semantic_analysis(&mut ast)?;
     let tacky = ast_to_tacky(&ast);
     let tacky_str = pretty_print_tacky(&tacky);

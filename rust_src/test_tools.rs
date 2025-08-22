@@ -13,25 +13,25 @@ pub fn run_parser(code: &str) -> Result<ast::Program, Error> {
   parse::parse(&tokens, &source)
 }
 
+/// Run the parser on a code string. Panic with a good message on error.
+pub fn run_parser_unwrap(code: &str) -> ast::Program {
+  match run_parser(code) {
+    Err(e) => panic!("{e}"),
+    Ok(prog) => prog,
+  }
+}
+
 /// Parse the given code string and ensure that its pretty print matches pretty_print
 #[track_caller]
 pub fn assert_has_pretty_print(code: &str, pretty_print: &str) {
-  let prog = match run_parser(code.trim()) {
-    Ok(prog) => prog,
-    // Panic here because it gives better error locations and diagnostics
-    Err(e) => panic!("{e}"),
-  };
+  let prog = run_parser_unwrap(code);
   assert_prog_has_pretty_print(&prog, pretty_print);
 }
 
 /// Parse the given code string to TACKY and ensure that its pretty print matches pretty_print
 #[track_caller]
 pub fn assert_tacky_has_pretty_print(code: &str, pretty_print: &str) {
-  let mut prog = match run_parser(code.trim()) {
-    Ok(prog) => prog,
-    // Panic here because it gives better error locations and diagnostics
-    Err(e) => panic!("{e}"),
-  };
+  let mut prog = run_parser_unwrap(code);
   match run_semantic_analysis(&mut prog) {
     Err(e) => panic!("{e}"),
     Ok(..) => ..,

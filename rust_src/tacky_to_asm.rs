@@ -1,6 +1,6 @@
 //! Convert TACKY IR to ASM
 
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap, fmt::DebugStruct, hash::Hash};
 
 use crate::{asm, ast, shared_types::Identifier, tacky};
 
@@ -218,50 +218,152 @@ impl MoveToStack {
     }
   }
 
-  /// Move pseudo register operands to the stack. Returns needed stack space.
   fn move_to_stack(&mut self, prog: &mut asm::Program) -> i32 {
     prog
       .function
       .instructions
       .iter_mut()
       .for_each(|instr| match instr {
-        asm::Instruction::Move { src, dst } => {
+        asm::Instruction::Neg(operand)
+        | asm::Instruction::Not(operand)
+        | asm::Instruction::Idiv(operand)
+        | asm::Instruction::SetCC(_, operand) => self.to_stack(operand),
+        asm::Instruction::Move { src, dst }
+        | asm::Instruction::Binary { op: _, src, dst }
+        | asm::Instruction::Cmp { src, dst } => {
           self.to_stack(src);
           self.to_stack(dst);
         }
-        asm::Instruction::Return => todo!(),
-        asm::Instruction::Neg(operand) => todo!(),
-        asm::Instruction::Not(operand) => todo!(),
-        asm::Instruction::AllocateStack(_) => todo!(),
-        asm::Instruction::Binary { op, src, dst } => todo!(),
-        asm::Instruction::Idiv(operand) => todo!(),
-        asm::Instruction::Cdq => todo!(),
-        asm::Instruction::Cmp { src, dst } => todo!(),
-        asm::Instruction::Jmp(identifier) => todo!(),
-        asm::Instruction::JmpCC(condition_code, identifier) => todo!(),
-        asm::Instruction::SetCC(condition_code, operand) => todo!(),
-        asm::Instruction::Label(identifier) => todo!(),
+        asm::Instruction::Return
+        | asm::Instruction::AllocateStack(..)
+        | asm::Instruction::Cdq
+        | asm::Instruction::Jmp(..)
+        | asm::Instruction::JmpCC(..)
+        | asm::Instruction::Label(..) => (), // Nothing to do as there are no operands
       });
     self.stack_size
   }
 }
+
+/// Move stack operands to registers as needed to comply with x64 instruction rules.
+/// Also prepends a stack allocation operation to function bodies
+fn fix_stack_operands(prog: &mut asm::Program, stack_size: i32) {
+  let instructions: &mut asm::InstructionVec = &mut prog.function.instructions;
+  instructions.insert(
+    0,
+    asm::Instruction::AllocateStack(stack_size.try_into().unwrap()),
+  );
+  let mut new_instructions: asm::InstructionVec = Vec::new();
+  instructions.iter_mut().for_each(|instr| match instr {
+    asm::Instruction::Move {
+      src: src @ asm::Operand::Stack(..),
+      dst: asm::Operand::Stack(..),
+    } => {
+      // If both operands are on the stack, use an
+      // intermediate register:
+      //
+      // Move(Stack(-4), Stack(-8))
+      //
+      // becomes:
+      //
+      // Move(Stack(-4), Register)
+      // Move(Register, Stack(-4))
+      let reg = asm::Operand::Register(asm::RegId::R10);
+      let mv_reg = asm::Instruction::Move {
+        src: src.clone(),
+        dst: reg.clone(),
+      };
+      *src = reg;
+      new_instructions.extend_from_slice(&[mv_reg, instr.clone()]);
+    }
+    asm::Instruction::Binary {
+      op: asm::BinOp::Mul,
+      dst: dst @ asm::Operand::Stack(..),
+      ..
+    } => {
+      // Mul doesn't support stack argument for destination
+      let reg11 = asm::Operand::Register(asm::RegId::R11);
+      let stack_dst = dst.clone();
+      let mv_stack_to_reg = asm::Instruction::Move {
+        src: dst.clone(),
+        dst: reg11.clone(),
+      };
+      *dst = reg11.clone();
+      let mv_register_to_stack = asm::Instruction::Move {
+        src: reg11,
+        dst: stack_dst,
+      };
+      new_instructions.extend_from_slice(&[mv_stack_to_reg, instr.clone(), mv_register_to_stack]);
+    }
+    asm::Instruction::Cmp {
+      dst: dst @ asm::Operand::Immediate(asm::Immediate::Int(..)),
+      ..
+    } => {
+      // Cmp doesn't support constants as the destination
+      let reg11 = asm::Operand::Register(asm::RegId::R11);
+      let mv_reg11 = asm::Instruction::Move {
+        src: dst.clone(),
+        dst: reg11.clone(),
+      };
+      *dst = reg11;
+      new_instructions.extend_from_slice(&[mv_reg11, instr.clone()]);
+    }
+    asm::Instruction::Idiv(operand @ asm::Operand::Immediate(..)) => {
+      // Idiv can't take an immediate operand
+      let reg = asm::Operand::Register(asm::RegId::R10);
+      let mv_reg = asm::Instruction::Move {
+        src: operand.clone(),
+        dst: reg.clone(),
+      };
+      *operand = reg;
+      new_instructions.extend_from_slice(&[mv_reg, instr.clone()]);
+    }
+    asm::Instruction::Return
+    | asm::Instruction::Idiv(..)
+    | asm::Instruction::Move { .. }
+    | asm::Instruction::Cmp { .. }
+    | asm::Instruction::Binary { .. }
+    | asm::Instruction::Neg(..)
+    | asm::Instruction::Not(..)
+    | asm::Instruction::AllocateStack(..)
+    | asm::Instruction::Cdq
+    | asm::Instruction::Jmp(..)
+    | asm::Instruction::JmpCC(..)
+    | asm::Instruction::SetCC(..)
+    | asm::Instruction::Label(..) => {
+      // Nothing to do as these have 0 or 1 operand or special cases were handled above
+      new_instructions.push(instr.clone())
+    }
+  });
+}
+
+/// Move pseudo register operands to the stack. Returns needed stack space.
+fn move_to_stack(prog: &mut asm::Program) -> i32 {
+  let mut mts = MoveToStack::new();
+  mts.move_to_stack(prog)
+}
+
 /// Convert TACKY IR to ASM
 pub fn tacky_to_asm(prog: &tacky::Program) -> asm::Program {
-  let asm_prog: asm::Program = program_to_asm(prog);
-
+  let mut asm_prog: asm::Program = program_to_asm(prog);
+  let stack_size = move_to_stack(&mut asm_prog);
+  fix_stack_operands(&mut asm_prog, stack_size);
   asm_prog
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::{ast_to_tacky::ast_to_tacky, test_tools::run_parser};
+  use crate::{
+    ast_to_tacky::ast_to_tacky,
+    test_tools::{run_parser, run_parser_unwrap},
+  };
   use pretty_assertions::assert_eq;
 
   #[test]
   fn ast_to_asm() -> Result<(), Box<dyn std::error::Error>> {
     let main = "int main(void) { return 2; }";
-    let ast = run_parser(main)?;
+    let ast = run_parser_unwrap(main);
     let tacky = ast_to_tacky(&ast);
     let prog = tacky_to_asm(&tacky);
     assert_eq!(prog.function.name, "main");
@@ -269,11 +371,12 @@ mod tests {
     // into eax, ret to return
     match prog.function.instructions[..] {
       [
+        asm::Instruction::AllocateStack(0),
         asm::Instruction::Move {
           src: asm::Operand::Immediate(asm::Immediate::Int(val)),
           dst: asm::Operand::Register(..),
         },
-        asm::Instruction::Return, // TODO stack
+        asm::Instruction::Return,
       ] => assert_eq!(val, 2),
       _ => panic!(
         "Did not find expected instructions in {:?}",
@@ -290,17 +393,17 @@ mod tests {
         name: Identifier::new("main"),
         instructions: vec![asm::Instruction::Move {
           src: asm::Operand::Pseudo(Identifier::new("reg1")),
-          dst: asm::Operand::Register(asm::RegId::AX),
+          dst: asm::Operand::Pseudo(Identifier::new("reg2")),
         }],
       },
     };
-    let mut mts = MoveToStack::new();
-    mts.move_to_stack(&mut prog);
+    let stack_size = move_to_stack(&mut prog);
+    assert_eq!(stack_size, 8);
     match prog.function.instructions[..] {
       [
         asm::Instruction::Move {
           src: asm::Operand::Stack(-4),
-          dst: _,
+          dst: asm::Operand::Stack(-8),
         },
       ] => ..,
       _ => panic!(
@@ -309,4 +412,47 @@ mod tests {
       ),
     };
   }
+
+  #[test]
+  fn binops() {
+    let code = r#"
+    int main (void) {
+      return 1 + 2 * 3 - 4;
+    }
+    "#;
+    let asm_prog = tacky_to_asm(&ast_to_tacky(&run_parser_unwrap(code)));
+    let binops: Vec<&asm::Instruction> = asm_prog
+      .function
+      .instructions
+      .iter()
+      .filter(|instr| {
+        if let asm::Instruction::Binary { .. } = instr {
+          true
+        } else {
+          false
+        }
+      })
+      .collect();
+    // Ensure instructions are in the right order
+    match binops[..] {
+      [
+        asm::Instruction::Binary {
+          op: asm::BinOp::Mul,
+          src: asm::Operand::Immediate(asm::Immediate::Int(3)),
+          ..
+        },
+        asm::Instruction::Binary {
+          op: asm::BinOp::Add,
+          ..
+        },
+        asm::Instruction::Binary {
+          op: asm::BinOp::Sub,
+          ..
+        },
+      ] => ..,
+      _ => panic!("BinOps not as expected {binops:?}"),
+    };
+  }
+
+  // TODO finish porting tests
 }

@@ -319,7 +319,7 @@ pub fn parse(tokens: &[Token], source: &SourceFile) -> Result<ast::Program, Erro
 
 #[cfg(test)]
 mod tests {
-  use crate::source_files::SourceFile;
+  use crate::{source_files::SourceFile, test_tools::run_parser_unwrap};
 
   use super::*;
   use crate::test_tools::{assert_has_pretty_print, run_parser};
@@ -353,14 +353,14 @@ mod tests {
   #[test]
   // A basic smoke test until I get the pretty printer working
   fn parse_smoke_test() -> Result<(), Box<dyn std::error::Error>> {
-    let prog = run_parser(
+    let prog = run_parser_unwrap(
       r#"
 int main (void) {
   return 2;
 }
     "#
       .trim(),
-    )?;
+    );
     assert_eq!(prog.function.name, "main");
 
     // Ensure we error for junk at the end
