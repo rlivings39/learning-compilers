@@ -131,7 +131,7 @@ impl AstToTacky {
     let mut true_instrs: InstructionVec = Vec::new();
     let true_val = self.convert_expr(true_expr, &mut true_instrs);
     let mut false_instrs: InstructionVec = Vec::new();
-    let false_val = self.convert_expr(false_expr, &mut true_instrs);
+    let false_val = self.convert_expr(false_expr, &mut false_instrs);
     // Start instruction construction with condition value and instructions
     let cond_val = self.convert_expr(cond, instructions);
     instructions.push(tacky::Instruction::JumpIfZero {
