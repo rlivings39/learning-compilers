@@ -1,8 +1,6 @@
 # learning-compilers
 
-**Note** I've decided to [switch the implementation to Rust](./rust_src/README.md) as that's more relevant to my career goals and something to learn. The TypeScript version will receive no more updates.
-
-This is my attempt at working through [*Writing a C Compiler*](https://norasandler.com/book/) by Nora Sandler. The compiler is written in TypeScript leveraging its functional programming abilities.
+This is my attempt at working through [*Writing a C Compiler*](https://norasandler.com/book/) by Nora Sandler. The compiler is written in Rust.
 
 [NQCC2](https://github.com/nlsandler/nqcc2) is the author's reference implementation.
 
