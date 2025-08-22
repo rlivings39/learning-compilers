@@ -1,6 +1,6 @@
 //! Convert TACKY IR to ASM
 
-use std::{collections::HashMap, fmt::DebugStruct, hash::Hash};
+use std::collections::HashMap;
 
 use crate::{asm, ast, shared_types::Identifier, tacky};
 
@@ -170,7 +170,7 @@ fn instr_to_asm(instr: &tacky::Instruction) -> asm::InstructionVec {
     tacky::Instruction::Copy { src, dst } => {
       let src = val_to_asm(src);
       let dst = val_to_asm(dst);
-      vec![asm::Instruction::Move { src: src, dst: dst }]
+      vec![asm::Instruction::Move { src, dst }]
     }
   }
 }
@@ -248,6 +248,7 @@ impl MoveToStack {
 /// Move stack operands to registers as needed to comply with x64 instruction rules.
 /// Also prepends a stack allocation operation to function bodies
 fn fix_stack_operands(prog: &mut asm::Program, stack_size: i32) {
+  // TODO this function is way too big
   let instructions: &mut asm::InstructionVec = &mut prog.function.instructions;
   instructions.insert(
     0,
@@ -255,27 +256,6 @@ fn fix_stack_operands(prog: &mut asm::Program, stack_size: i32) {
   );
   let mut new_instructions: asm::InstructionVec = Vec::new();
   instructions.iter_mut().for_each(|instr| match instr {
-    asm::Instruction::Move {
-      src: src @ asm::Operand::Stack(..),
-      dst: asm::Operand::Stack(..),
-    } => {
-      // If both operands are on the stack, use an
-      // intermediate register:
-      //
-      // Move(Stack(-4), Stack(-8))
-      //
-      // becomes:
-      //
-      // Move(Stack(-4), Register)
-      // Move(Register, Stack(-4))
-      let reg = asm::Operand::Register(asm::RegId::R10);
-      let mv_reg = asm::Instruction::Move {
-        src: src.clone(),
-        dst: reg.clone(),
-      };
-      *src = reg;
-      new_instructions.extend_from_slice(&[mv_reg, instr.clone()]);
-    }
     asm::Instruction::Binary {
       op: asm::BinOp::Mul,
       dst: dst @ asm::Operand::Stack(..),
@@ -308,6 +288,32 @@ fn fix_stack_operands(prog: &mut asm::Program, stack_size: i32) {
       *dst = reg11;
       new_instructions.extend_from_slice(&[mv_reg11, instr.clone()]);
     }
+    asm::Instruction::Move { src, dst, .. }
+    | asm::Instruction::Binary { src, dst, .. }
+    | asm::Instruction::Cmp { src, dst, .. } => {
+      match (&src, &dst) {
+        (asm::Operand::Stack(..), asm::Operand::Stack(..)) => {
+          // If both operands are on the stack, use an
+          // intermediate register:
+          //
+          // Move(Stack(-4), Stack(-8))
+          //
+          // becomes:
+          //
+          // Move(Stack(-4), Register)
+          // Move(Register, Stack(-4))
+          let reg = asm::Operand::Register(asm::RegId::R10);
+          let mv_reg = asm::Instruction::Move {
+            src: src.clone(),
+            dst: reg.clone(),
+          };
+          *src = reg;
+          new_instructions.extend_from_slice(&[mv_reg, instr.clone()]);
+        }
+        _ => new_instructions.push(instr.clone()),
+      };
+    }
+
     asm::Instruction::Idiv(operand @ asm::Operand::Immediate(..)) => {
       // Idiv can't take an immediate operand
       let reg = asm::Operand::Register(asm::RegId::R10);
@@ -320,9 +326,6 @@ fn fix_stack_operands(prog: &mut asm::Program, stack_size: i32) {
     }
     asm::Instruction::Return
     | asm::Instruction::Idiv(..)
-    | asm::Instruction::Move { .. }
-    | asm::Instruction::Cmp { .. }
-    | asm::Instruction::Binary { .. }
     | asm::Instruction::Neg(..)
     | asm::Instruction::Not(..)
     | asm::Instruction::AllocateStack(..)
@@ -335,6 +338,7 @@ fn fix_stack_operands(prog: &mut asm::Program, stack_size: i32) {
       new_instructions.push(instr.clone())
     }
   });
+  prog.function.instructions = new_instructions;
 }
 
 /// Move pseudo register operands to the stack. Returns needed stack space.
@@ -354,10 +358,7 @@ pub fn tacky_to_asm(prog: &tacky::Program) -> asm::Program {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::{
-    ast_to_tacky::ast_to_tacky,
-    test_tools::{run_parser, run_parser_unwrap},
-  };
+  use crate::{ast_to_tacky::ast_to_tacky, test_tools::run_parser_unwrap};
   use pretty_assertions::assert_eq;
 
   #[test]

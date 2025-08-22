@@ -123,9 +123,7 @@ pub fn pretty_print_tacky(prog: &tacky::Program) -> String {
 mod tests {
   use super::*;
   use crate::{
-    ast_to_tacky::ast_to_tacky,
-    semantics::run_semantic_analysis,
-    test_tools::{run_parser, run_parser_unwrap},
+    ast_to_tacky::ast_to_tacky, semantics::run_semantic_analysis, test_tools::run_parser_unwrap,
   };
   use pretty_assertions::assert_eq;
   #[test]

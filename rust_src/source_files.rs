@@ -3,6 +3,7 @@
 use crate::error::Error;
 type LineMap = Vec<[usize; 2]>;
 
+#[allow(dead_code)]
 #[derive(Clone, PartialEq, Debug)]
 /// Source locations
 pub struct SourceLocation {
@@ -24,6 +25,7 @@ impl SourceFile {
     &self.code
   }
 
+  #[allow(dead_code)]
   /// Create a source location for this file with the given start and end
   pub fn source_location(&self, start: usize, end: usize) -> SourceLocation {
     SourceLocation {

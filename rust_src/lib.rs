@@ -7,6 +7,7 @@ mod asm;
 mod ast;
 mod ast_to_tacky;
 mod driver;
+mod emit_asm;
 mod lex;
 mod parse;
 mod pretty_print;

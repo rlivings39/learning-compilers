@@ -23,8 +23,14 @@ where
   }
   Ok(res)
 }
+
 pub fn preprocess_file(file_name: &str, output_file_name: &str) -> Result<(), Error> {
   run_cc(["-E", "-P", file_name, "-o", output_file_name], None)?;
+  Ok(())
+}
+
+pub fn assemble_file(file_name: &str, output_file_name: &str) -> Result<(), Error> {
+  run_cc([file_name, "-o", output_file_name], None)?;
   Ok(())
 }
 

@@ -350,11 +350,7 @@ pub fn ast_to_tacky(ast: &ast::Program) -> tacky::Program {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
-  use crate::pretty_print_tacky::pretty_print_tacky;
-  use crate::semantics::run_semantic_analysis;
-  use crate::test_tools::{assert_tacky_has_pretty_print, run_parser};
-  use pretty_assertions::assert_eq;
+  use crate::test_tools::assert_tacky_has_pretty_print;
   #[test]
   fn logical_ops() {
     let main = "int main(void) {
