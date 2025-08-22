@@ -19,7 +19,7 @@ pub enum Operand {
   Immediate(Immediate),
   Register(RegId),
   Pseudo(Identifier),
-  Stack(usize),
+  Stack(i32),
 }
 
 #[derive(Debug, Clone)]

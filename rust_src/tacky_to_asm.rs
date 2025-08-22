@@ -1,5 +1,7 @@
 //! Convert TACKY IR to ASM
 
+use std::{collections::HashMap, hash::Hash};
+
 use crate::{asm, ast, shared_types::Identifier, tacky};
 
 fn simple_binary_to_asm(
@@ -190,6 +192,59 @@ fn program_to_asm(prog: &tacky::Program) -> asm::Program {
   asm::Program { function: func }
 }
 
+struct MoveToStack {
+  stack_size: i32,
+  // Symbol to stack offset
+  symbol_map: HashMap<String, i32>,
+}
+impl MoveToStack {
+  fn new() -> MoveToStack {
+    MoveToStack {
+      stack_size: 0,
+      symbol_map: HashMap::new(),
+    }
+  }
+
+  fn to_stack(&mut self, val: &mut asm::Operand) {
+    if let asm::Operand::Pseudo(id) = val {
+      let offset = if let Some(offset) = self.symbol_map.get(id.val()) {
+        *offset
+      } else {
+        self.stack_size += 4;
+        self.symbol_map.insert(id.val().clone(), self.stack_size);
+        self.stack_size
+      };
+      *val = asm::Operand::Stack(-offset);
+    }
+  }
+
+  /// Move pseudo register operands to the stack. Returns needed stack space.
+  fn move_to_stack(&mut self, prog: &mut asm::Program) -> i32 {
+    prog
+      .function
+      .instructions
+      .iter_mut()
+      .for_each(|instr| match instr {
+        asm::Instruction::Move { src, dst } => {
+          self.to_stack(src);
+          self.to_stack(dst);
+        }
+        asm::Instruction::Return => todo!(),
+        asm::Instruction::Neg(operand) => todo!(),
+        asm::Instruction::Not(operand) => todo!(),
+        asm::Instruction::AllocateStack(_) => todo!(),
+        asm::Instruction::Binary { op, src, dst } => todo!(),
+        asm::Instruction::Idiv(operand) => todo!(),
+        asm::Instruction::Cdq => todo!(),
+        asm::Instruction::Cmp { src, dst } => todo!(),
+        asm::Instruction::Jmp(identifier) => todo!(),
+        asm::Instruction::JmpCC(condition_code, identifier) => todo!(),
+        asm::Instruction::SetCC(condition_code, operand) => todo!(),
+        asm::Instruction::Label(identifier) => todo!(),
+      });
+    self.stack_size
+  }
+}
 /// Convert TACKY IR to ASM
 pub fn tacky_to_asm(prog: &tacky::Program) -> asm::Program {
   let asm_prog: asm::Program = program_to_asm(prog);
@@ -226,5 +281,32 @@ mod tests {
       ),
     };
     Ok(())
+  }
+
+  #[test]
+  fn pseudo_to_stack() {
+    let mut prog = asm::Program {
+      function: asm::Function {
+        name: Identifier::new("main"),
+        instructions: vec![asm::Instruction::Move {
+          src: asm::Operand::Pseudo(Identifier::new("reg1")),
+          dst: asm::Operand::Register(asm::RegId::AX),
+        }],
+      },
+    };
+    let mut mts = MoveToStack::new();
+    mts.move_to_stack(&mut prog);
+    match prog.function.instructions[..] {
+      [
+        asm::Instruction::Move {
+          src: asm::Operand::Stack(-4),
+          dst: _,
+        },
+      ] => ..,
+      _ => panic!(
+        "Operand not moved to stack: {:?}",
+        prog.function.instructions
+      ),
+    };
   }
 }
