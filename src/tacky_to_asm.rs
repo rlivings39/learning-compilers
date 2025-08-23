@@ -361,12 +361,14 @@ mod tests {
   use crate::{ast_to_tacky::ast_to_tacky, test_tools::run_parser_unwrap};
   use pretty_assertions::assert_eq;
 
+  fn code_to_asm(code: &str) -> asm::Program {
+    tacky_to_asm(&ast_to_tacky(&run_parser_unwrap(code)))
+  }
+
   #[test]
   fn ast_to_asm() -> Result<(), Box<dyn std::error::Error>> {
     let main = "int main(void) { return 2; }";
-    let ast = run_parser_unwrap(main);
-    let tacky = ast_to_tacky(&ast);
-    let prog = tacky_to_asm(&tacky);
+    let prog = code_to_asm(main);
     assert_eq!(prog.function.name, "main");
     // Expect 3 instructions: subq to allocate stack, movel to move output
     // into eax, ret to return
@@ -421,7 +423,7 @@ mod tests {
       return 1 + 2 * 3 - 4;
     }
     "#;
-    let asm_prog = tacky_to_asm(&ast_to_tacky(&run_parser_unwrap(code)));
+    let asm_prog = code_to_asm(code);
     let binops: Vec<&asm::Instruction> = asm_prog
       .function
       .instructions
@@ -455,5 +457,77 @@ mod tests {
     };
   }
 
+  macro_rules! check_move_type {
+    // The macro takes a value to match ($value:expr) and the name of the expected variant ($variant:path).
+    ($value:expr, $variant:path) => {
+      match $value {
+        asm::Instruction::Move {
+          src: asm::Operand::Register($variant),
+          ..
+        } => (),
+        _ => panic!("Expected move from {:?}. Found: {:?}", $variant, $value),
+      }
+    };
+  }
+  #[test]
+  fn div_rem_asm() {
+    let code = "int main(void) { return 1 / 2 % 3; }";
+    let asm = code_to_asm(code);
+    let mut div_indices: Vec<usize> = Vec::new();
+    let instructions = &asm.function.instructions;
+    instructions.iter().zip(0..).for_each(|(instr, idx)| {
+      match instr {
+        asm::Instruction::Idiv(..) => div_indices.push(idx),
+        _ => (),
+      };
+    });
+    assert_eq!(div_indices.len(), 2);
+    // Ensure we have registers for inputs
+    div_indices.iter().for_each(|idx| {
+      let instr = &instructions[*idx];
+      assert!(
+        matches!(instr, asm::Instruction::Idiv(asm::Operand::Register(..))),
+        "Expected Idiv to have a register operand. Found: {instr:?}"
+      );
+    });
+    // Ensure we read from the right registers
+    check_move_type!(&instructions[div_indices[0] + 1], asm::RegId::AX);
+    check_move_type!(&instructions[div_indices[1] + 1], asm::RegId::DX);
+  }
+
+  #[test]
+  fn cmp_rewrites() {
+    // Ensure comparison doesn't have constant as 2nd operand
+    let code = "int main(void) { return 1 < 2; }";
+    let asm = code_to_asm(code);
+    let instructions = &asm.function.instructions;
+    // Get Cmp instruction
+    let cmp = instructions
+      .iter()
+      .find(|i| matches!(i, asm::Instruction::Cmp { .. }))
+      .expect("Failed to find a Cmp instruction");
+    // Verify that the destination is not a constant
+    assert!(matches!(
+      cmp,
+      asm::Instruction::Cmp {
+        dst: asm::Operand::Register(..),
+        ..
+      }
+    ));
+    // Also check that we call setcc with the L code
+    let set_instr: Vec<&asm::Instruction> = instructions
+      .iter()
+      .filter(|i| matches!(i, asm::Instruction::SetCC(..)))
+      .collect();
+    assert_eq!(set_instr.len(), 1);
+    assert!(
+      matches!(
+        set_instr[0],
+        asm::Instruction::SetCC(asm::ConditionCode::L, ..)
+      ),
+      "Expected condition code to be L. Found {:?}",
+      set_instr[0]
+    );
+  }
   // TODO finish porting tests
 }
