@@ -8,7 +8,7 @@ The [tests](https://github.com/nlsandler/writing-a-c-compiler-tests/) provided w
 
 ## Current status
 
-This compiler is complete through Chapter 5 of the book meaning it compiles programs of the form
+This compiler is complete through Chapter 6 of the book meaning it compiles programs of the form
 
 ```c
 int main(void) {
@@ -62,6 +62,8 @@ Options:
   -h, --help                    Print help (see more with '--help')
   -V, --version                 Print version
 ```
+
+See [original_typescript/README.md](original_typescript/README.md) for instructions on using the original TypeScript implementation.
 
 ## The four compiler passes
 

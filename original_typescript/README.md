@@ -7,7 +7,7 @@ This directory contains the legacy TypeScript implementation of `notcc`. It's le
 Download the repo and
 
 ```bash
-cd learning-compilers
+cd learning-compilers/original_typescript
 npm install
 npm run build
 npm run test
