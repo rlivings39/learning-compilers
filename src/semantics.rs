@@ -21,7 +21,13 @@ fn check_lvalue(expr: &ast::Expr) -> Result<(), Error> {
   }
 }
 
-type VarTable = HashMap<String, String>;
+#[derive(Clone)]
+struct VarEntry {
+  name: String,
+  in_current_scope: bool,
+}
+
+type VarTable = HashMap<String, VarEntry>;
 struct VariableResolution {
   var_table: VarTable,
   var_index: i32,
@@ -36,23 +42,30 @@ impl VariableResolution {
   }
 
   /// Resolve a variable name that has already been mangled
-  fn resolve_var_name(&self, name: &Identifier) -> Result<&String, Error> {
-    let new_name = self.var_table.get(name.val());
-    new_name.ok_or(format!("Could not find identifier {}", name.val()))
+  fn resolve_var_name(&self, name: &Identifier) -> Result<&VarEntry, Error> {
+    let new_entry = self.var_table.get(name.val());
+    new_entry.ok_or(format!("Could not find identifier {}", name.val()))
   }
 
   /// Return a globally unique variable name to avoid collisions in ASM
   fn record_var_name(&mut self, name: &Identifier) -> Result<Identifier, Error> {
     let orig_name = name.val();
     let new_name = self.var_table.get(orig_name);
-    if let Some(name) = new_name {
-      return Err(format!("Variable {} already defined", name));
+    // If we find the variable in this scope, fail for a redeclaration
+    if let Some(name) = new_name
+      && name.in_current_scope
+    {
+      return Err(format!("Variable {} already defined", name.name));
     }
     let new_name = format!("{}.{}", orig_name, self.var_index);
     self.var_index += 1;
-    self
-      .var_table
-      .insert(orig_name.to_string(), new_name.clone());
+    self.var_table.insert(
+      orig_name.to_string(),
+      VarEntry {
+        name: new_name.clone(),
+        in_current_scope: true,
+      },
+    );
     Ok(Identifier::new(&new_name))
   }
 
@@ -71,7 +84,7 @@ impl VariableResolution {
       }
       ast::Expr::Var(identifier) => {
         let new_name = self.resolve_var_name(&identifier)?;
-        *identifier = Identifier::new(new_name);
+        *identifier = Identifier::new(&new_name.name);
         Ok(())
       }
       ast::Expr::Conditional {
@@ -101,9 +114,25 @@ impl VariableResolution {
         }
         Ok(())
       }
-      ast::Stmt::Compound(block) => todo!(),
+      ast::Stmt::Compound(block) => {
+        // We're entering a new block so adjust name resolution by backing up
+        // the current var table and using a new one with in_current_scope set to false
+        let old_table = self.var_table.clone();
+
+        // Note that the vars are not in the current scope
+        self.var_table.iter_mut().for_each(|(_, v)| {
+          v.in_current_scope = false;
+        });
+        for block_item in &mut block.items {
+          self.resolve_in_block(block_item)?;
+        }
+        // Restore the old table as we leave the scope
+        self.var_table = old_table;
+        Ok(())
+      }
     }
   }
+
   fn resolve_in_block(&mut self, block: &mut ast::BlockItem) -> Result<(), Error> {
     match block {
       ast::BlockItem::Declaration(identifier, expr) => {
@@ -289,5 +318,51 @@ Program(
     assert!(err.contains("lvalue") && err.contains("Constant"));
 
     Ok(())
+  }
+
+  #[test]
+  fn resolve_compound() {
+    let main = r#"
+    int main(void) {
+      int x = 0;
+      int outer = 0;
+      {
+        int y = x + 1;
+        int x = y + 2;
+        {
+          int z = x + 1;
+          int x = z + 2;
+          outer = x;
+        }
+      }
+      {
+        int x = outer;
+        return x;
+      }
+    }
+    "#;
+
+    let expected = r#"
+Program(
+  Function main() {
+    Declaration(x.0, $0);
+    Declaration(outer.1, $0);
+    Block (
+      Declaration(y.2, Plus($x.0, $1));
+      Declaration(x.3, Plus($y.2, $2));
+      Block (
+        Declaration(z.4, Plus($x.3, $1));
+        Declaration(x.5, Plus($z.4, $2));
+        =($outer.1, $x.5);
+      )
+    )
+    Block (
+      Declaration(x.6, $outer.1);
+      return $x.6;
+    )
+  }
+)
+    "#;
+    assert_has_pretty_print_after_semantics(main, expected);
   }
 }

@@ -98,7 +98,15 @@ fn print_stmt(stmt: &ast::Stmt, indent: usize) -> String {
       true_stmt,
       false_stmt,
     } => print_if(cond, true_stmt, false_stmt, indent),
-    ast::Stmt::Compound(block) => todo!(),
+    ast::Stmt::Compound(block) => {
+      let mut res: String = print_line("Block (", indent);
+
+      block.items.iter().for_each(|block_item| {
+        res += &print_block(block_item, indent + INDENT_INCREMENT);
+      });
+      res += &print_line(")", indent);
+      res
+    }
   }
 }
 
