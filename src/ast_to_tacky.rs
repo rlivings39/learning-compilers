@@ -34,6 +34,7 @@ impl AstToTacky {
     let mut instructions: InstructionVec = Vec::new();
     func
       .body
+      .items
       .iter()
       .for_each(|block| self.convert_block_item(block, &mut instructions));
 
@@ -85,6 +86,7 @@ impl AstToTacky {
         true_stmt,
         false_stmt,
       } => self.convert_if_stmt(cond, true_stmt, false_stmt.as_ref(), instructions),
+      ast::Stmt::Compound(block) => todo!(),
     };
   }
   fn convert_var(&self, identifier: &Identifier) -> tacky::Value {

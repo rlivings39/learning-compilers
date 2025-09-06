@@ -101,6 +101,7 @@ impl VariableResolution {
         }
         Ok(())
       }
+      ast::Stmt::Compound(block) => todo!(),
     }
   }
   fn resolve_in_block(&mut self, block: &mut ast::BlockItem) -> Result<(), Error> {
@@ -120,6 +121,7 @@ impl VariableResolution {
     let res: Result<(), Error> = prog
       .function
       .body
+      .items
       .iter_mut()
       .map(|block: &mut ast::BlockItem| self.resolve_in_block(block))
       .collect();
@@ -156,7 +158,7 @@ mod tests {
   fn basic_var_resolve() {
     let decl = ast::BlockItem::Declaration(Identifier::new("var"), None);
     let func = ast::Function {
-      body: vec![decl],
+      body: ast::Block::new(vec![decl]),
       name: Identifier::new("main"),
     };
     let mut prog = ast::Program { function: func };

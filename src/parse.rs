@@ -78,12 +78,7 @@ impl Parser<'_> {
     }
   }
 
-  fn parse_function(&mut self) -> Result<ast::Function, Error> {
-    self.expect(TokenKind::KwInt)?;
-    let id = self.parse_identifier()?;
-    self.expect(TokenKind::LeftParen)?;
-    self.expect(TokenKind::KwVoid)?;
-    self.expect(TokenKind::RightParen)?;
+  fn parse_block(&mut self) -> Result<ast::Block, Error> {
     self.expect(TokenKind::LeftCurly)?;
     let mut next_token = self.peek_token()?;
     let mut body: Vec<ast::BlockItem> = Vec::new();
@@ -92,6 +87,16 @@ impl Parser<'_> {
       next_token = self.peek_token()?;
     }
     self.expect(TokenKind::RightCurly)?;
+    Ok(ast::Block::new(body))
+  }
+
+  fn parse_function(&mut self) -> Result<ast::Function, Error> {
+    self.expect(TokenKind::KwInt)?;
+    let id = self.parse_identifier()?;
+    self.expect(TokenKind::LeftParen)?;
+    self.expect(TokenKind::KwVoid)?;
+    self.expect(TokenKind::RightParen)?;
+    let body = self.parse_block()?;
     Ok(ast::Function {
       body: body,
       name: id,
@@ -193,6 +198,10 @@ impl Parser<'_> {
           true_stmt: Box::new(true_stmt),
           false_stmt: false_stmt.map(|s| Box::new(s)),
         })
+      }
+      TokenKind::LeftCurly => {
+        let block = self.parse_block()?;
+        Ok(ast::Stmt::Compound(block))
       }
       _ => {
         let stmt = ast::Stmt::Expr(self.parse_expr(1)?);
@@ -384,6 +393,38 @@ Program(
   }
 )"#;
     assert_has_pretty_print(main, expected);
+  }
+
+  #[test]
+  fn parse_compound() {
+    let main = r#"
+    int main(void) {
+      {
+        int x = 2;
+        return x + 2;
+      }
+    }
+    "#;
+    let ast = run_parser_unwrap(main);
+    assert!(
+      matches!(
+        ast.function.body.items[0],
+        ast::BlockItem::Stmt(ast::Stmt::Compound(_))
+      ),
+      "Expected to find a compound statement in {ast:#?}"
+    )
+  }
+
+  #[test]
+  fn parse_compound_neg() {
+    let main = r#"
+    int main(void) {
+      {
+        int x = 2;
+        return x + 2;
+    }
+    "#;
+    assert_errors(|| run_parser(main), None);
   }
 
   #[test]

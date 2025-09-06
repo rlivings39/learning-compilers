@@ -98,6 +98,7 @@ fn print_stmt(stmt: &ast::Stmt, indent: usize) -> String {
       true_stmt,
       false_stmt,
     } => print_if(cond, true_stmt, false_stmt, indent),
+    ast::Stmt::Compound(block) => todo!(),
   }
 }
 
@@ -111,6 +112,7 @@ fn print_block(block: &ast::BlockItem, indent: usize) -> String {
 fn print_function(func: &ast::Function, indent: usize) -> String {
   let body = func
     .body
+    .items
     .iter()
     .map(|block| print_block(block, indent + INDENT_INCREMENT))
     .collect::<Vec<String>>()

@@ -78,20 +78,32 @@ pub enum Stmt {
     true_stmt: Box<Stmt>,
     false_stmt: Option<Box<Stmt>>,
   },
+  Compound(Block),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 /// BlockItem instances can appear at the top level in a function
 pub enum BlockItem {
   Declaration(Identifier, Option<Expr>),
   Stmt(Stmt),
 }
 
+#[derive(PartialEq, Debug, Clone)]
+/// Blocks encompass 0 or more BlockItems
+pub struct Block {
+  pub items: Vec<BlockItem>,
+}
+
+impl Block {
+  pub fn new(items: Vec<BlockItem>) -> Block {
+    Block { items }
+  }
+}
 #[derive(PartialEq, Debug)]
 /// A function's representation
 pub struct Function {
   pub name: Identifier,
-  pub body: Vec<BlockItem>,
+  pub body: Block,
 }
 
 #[derive(PartialEq, Debug)]
@@ -116,17 +128,17 @@ mod tests {
     let ret_s = Stmt::Return(num_c.clone());
     let func = Function {
       name: Identifier::new("main"),
-      body: vec![BlockItem::Stmt(ret_s.clone())],
+      body: Block::new(vec![BlockItem::Stmt(ret_s.clone())]),
     };
     assert_eq!(func.name, "main");
-    assert_eq!(func.body.len(), 1);
-    assert_eq!(func.body[0], BlockItem::Stmt(ret_s.clone()));
+    assert_eq!(func.body.items.len(), 1);
+    assert_eq!(func.body.items[0], BlockItem::Stmt(ret_s.clone()));
 
     let decl = BlockItem::Declaration(Identifier::new("var1"), None);
     let decl_init = BlockItem::Declaration(Identifier::new("var1"), Some(num_c.clone()));
     let func2 = Function {
       name: Identifier::new("main"),
-      body: vec![BlockItem::Stmt(ret_s.clone()), decl, decl_init],
+      body: Block::new(vec![BlockItem::Stmt(ret_s.clone()), decl, decl_init]),
     };
     let prog = Program { function: func };
     assert!(!std::ptr::eq(&prog.function, &func2));
