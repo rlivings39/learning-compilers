@@ -26,17 +26,8 @@ impl AstToTacky {
   }
 
   fn convert_function(&mut self, func: &ast::Function) -> tacky::Function {
-    // let mut instructions: InstructionVec = func
-    //   .body
-    //   .iter()
-    //   .flat_map(|block| self.convert_block_item(block))
-    //   .collect();
     let mut instructions: InstructionVec = Vec::new();
-    func
-      .body
-      .items
-      .iter()
-      .for_each(|block| self.convert_block_item(block, &mut instructions));
+    self.convert_block(&func.body, &mut &mut instructions);
 
     // Tack (ha) on a return statement to handle cases
     // when main omits it or for void return. If func already
@@ -51,6 +42,13 @@ impl AstToTacky {
       name: func.name.clone(),
     };
     function
+  }
+
+  fn convert_block(&mut self, block: &ast::Block, instructions: &mut InstructionVec) {
+    block
+      .items
+      .iter()
+      .for_each(|block| self.convert_block_item(block, instructions));
   }
 
   fn convert_block_item(&mut self, block: &ast::BlockItem, instructions: &mut InstructionVec) {
@@ -86,7 +84,7 @@ impl AstToTacky {
         true_stmt,
         false_stmt,
       } => self.convert_if_stmt(cond, true_stmt, false_stmt.as_ref(), instructions),
-      ast::Stmt::Compound(block) => todo!(),
+      ast::Stmt::Compound(block) => self.convert_block(block, instructions),
     };
   }
   fn convert_var(&self, identifier: &Identifier) -> tacky::Value {
@@ -519,5 +517,35 @@ Function main () {
 }
     "#;
     assert_tacky_has_pretty_print(code, expected);
+  }
+
+  #[test]
+  fn compound_statement() {
+    let main = r#"
+    int main(void) {
+      int x = 0;
+      int outer;
+      {
+        int y = x + 1;
+        int x = y + 2;
+        outer = x -1;
+      }
+      return outer;
+    }
+    "#;
+
+    let expected = r#"
+Function main () {
+  Copy($0, %x.0)
+  Plus(%x.0,$1,%notcc.tmp.0)
+  Copy(%notcc.tmp.0, %y.2)
+  Plus(%y.2,$2,%notcc.tmp.1)
+  Copy(%notcc.tmp.1, %x.3)
+  Subtract(%x.3,$1,%notcc.tmp.2)
+  Copy(%notcc.tmp.2, %outer.1)
+  Return(%outer.1)
+}
+    "#;
+    assert_tacky_has_pretty_print(main, expected);
   }
 }

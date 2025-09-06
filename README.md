@@ -8,20 +8,22 @@ The [tests](https://github.com/nlsandler/writing-a-c-compiler-tests/) provided w
 
 ## Current status
 
-This compiler is complete through Chapter 6 of the book meaning it compiles programs of the form
+This compiler is complete through Chapter 7 of the book meaning it compiles programs of the form
 
 ```c
 int main(void) {
   int x = 3;
   int y = 2;
-  if (y)
-    return x > y ? 1 : 0;
-  else
+  if (y) {
+    int z = 3;
+    return x > y+z ? 1 : 0;
+  } else {
     return ~(-4) * (x + 12) || y > 12;
+  }
 }
 ```
 
-for any combination of `~, -`, binary ops `+, -, *, /, %, <, <=, >, >=, ==, !=, !, &&, ||`, parentheses, `int` variables, if/else, conditional expressions (`?:`), and any integer constants.
+for any combination of `~, -`, binary ops `+, -, *, /, %, <, <=, >, >=, ==, !=, !, &&, ||`, parentheses, `int` variables, if/else, conditional expressions (`?:`), blocks in `{}` with nested declarations, and any integer constants.
 
 See the [current grammar](#current-grammar) section for full details of what is supported.
 
